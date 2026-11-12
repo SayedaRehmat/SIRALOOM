@@ -9,6 +9,8 @@ from contextlib import contextmanager
 from math import comb, isnan
 from pathlib import Path
 
+from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
+
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
@@ -108,6 +110,11 @@ def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
         "DP": ("1", "Integer"),
         "FT": ("1", "String"),
         "GL": ("3", "Float"),
+        # VCFv4.0 describes GQ/HQ as numeric (not an integer-only type).
+        # Float is the permissive implicit representation; explicit headers
+        # may declare either Integer or Float.
+        "GQ": ("1", "Float"),
+        "HQ": ("2", "Float"),
     }
     definition = reserved.get(field_id)
     if definition is None:
@@ -798,9 +805,20 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     reserved_vcf40_definition = None
     if fileformat == "VCFv4.0" and kind == "FORMAT":
         reserved_vcf40_definition = _reserved_vcf40_format_definition(identifier)
+    reserved_vcf40_type_matches = (
+        parsed["Type"] == reserved_vcf40_definition["Type"]
+        if reserved_vcf40_definition is not None
+        else True
+    )
+    if (
+        fileformat == "VCFv4.0"
+        and kind == "FORMAT"
+        and identifier in {"GQ", "HQ"}
+    ):
+        reserved_vcf40_type_matches = parsed["Type"] in {"Integer", "Float"}
     if reserved_vcf40_definition is not None and (
         number != reserved_vcf40_definition["Number"]
-        or parsed["Type"] != reserved_vcf40_definition["Type"]
+        or not reserved_vcf40_type_matches
     ):
         raise StrictVCFValidationError(
             f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
@@ -1487,6 +1505,11 @@ def _validate_record(
         keys = fmt.split(":")
         if len(keys) != len(set(keys)) or any(not FORMAT_KEY_RE.fullmatch(k) for k in keys):
             raise StrictVCFValidationError(f"Malformed or duplicate FORMAT key at line {line_no}", code="VCF_FORMAT_INVALID")
+        if fileformat == "VCFv4.0" and len(fields) > 9 and "GT" not in keys:
+            raise StrictVCFValidationError(
+                f"VCFv4.0 sample genotype data require FORMAT/GT at line {line_no}",
+                code="VCF_FORMAT_INVALID",
+            )
         if "GT" in keys and keys[0] != "GT":
             raise StrictVCFValidationError(
                 f"GT must be the first FORMAT key when present at line {line_no}",
@@ -1563,10 +1586,14 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
+    # Caller header declarations are provenance evidence only. They cannot
+    # authorize caller-specific changes to VCF-reserved value semantics.
     fileformat: str | None = None
     chrom_header: list[str] | None = None
     found_header = False
     records = 0
+    sample_record_count = 0
+    sample_records_without_gt = 0
     alternate_allele_count = 0
     multiallelic = 0
     reference_only = 0
@@ -1717,6 +1744,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_HEADER_INVALID",
                 )
             fields = line.split("\t")
+            if len(fields) > 9:
+                sample_record_count += 1
+                record_format_keys = fields[8].split(":") if fields[8] not in {"", "."} else []
+                if "GT" not in record_format_keys:
+                    sample_records_without_gt += 1
             if chrom_header is None or len(fields) != len(chrom_header):
                 expected = len(chrom_header) if chrom_header is not None else 0
                 raise StrictVCFValidationError(
@@ -1730,7 +1762,9 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         or _reserved_base_modification_format_definition(format_key) is not None
                     ):
                         base_modification_format_fields.add(format_key)
-            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat, format_definitions)
+            _chrom, _pos, alts = _validate_record(
+                fields, line_no, reference_contigs, fileformat, format_definitions,
+            )
             if fileformat == "VCFv4.5" and _pos > 0:
                 _validate_vcf45_reference_block_coverage(
                     fields,
@@ -2049,7 +2083,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
-                        )
+                            )
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
                         format_keys=format_keys,
@@ -2195,6 +2229,13 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
 
     return {
         "fileformat": fileformat,
+        "caller_provenance": inspect_caller_provenance(
+            path,
+            fileformat=fileformat,
+            gvcf_marker_count=gvcf_markers,
+            sample_record_count=sample_record_count,
+            sample_records_without_gt=sample_records_without_gt,
+        ),
         "records": records,
         "alternate_allele_count": alternate_allele_count,
         "reference_only_records": reference_only,

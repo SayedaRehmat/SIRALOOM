@@ -15,7 +15,7 @@ from backend.app.domain.vcf_tools import (
     VCFToolError,
     normalize_vcf_with_bcftools,
 )
-from backend.app.domain.vcf_validation import validate_vcf_strict
+from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
 pytestmark = pytest.mark.skipif(shutil.which("bcftools") is None, reason="bcftools is required for production normalization golden tests")
 
@@ -267,3 +267,88 @@ def test_pinned_bcftools_trims_unseen_gvcf_wildcard_without_changing_called_geno
     # Removing allele 2 retains PL entries for 0/0, 0/1, and 1/1; the
     # removed 0/2 and 1/2 likelihoods must not be reassigned to 1/1.
     assert fields[9] == "0/1:15,9:100,50,60:0/1:1"
+
+
+def test_dragen_multiallelic_germline_fields_are_remapped_by_vcf_cardinality(tmp_path: Path):
+    reference = make_reference(tmp_path)
+    source = tmp_path / "dragen-multiallelic.vcf"
+    output = tmp_path / "dragen-multiallelic.normalized.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        '##source=DRAGEN_SNV\n'
+        '##DRAGENVersion=4.3.0\n'
+        '##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele counts">\n'
+        '##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequencies">\n'
+        '##INFO=<ID=AN,Number=1,Type=Integer,Description="Allele number">\n'
+        '##INFO=<ID=DP,Number=1,Type=Integer,Description="Unfiltered site depth">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Informative allele depths">\n'
+        '##FORMAT=<ID=AF,Number=A,Type=Float,Description="Informative allele fractions">\n'
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Informative depth">\n'
+        '##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">\n'
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">\n'
+        '##FORMAT=<ID=GL,Number=G,Type=Float,Description="Log10 genotype likelihoods">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior values">\n'
+        '##FORMAT=<ID=PRI,Number=G,Type=Float,Description="Genotype priors">\n'
+        '##FORMAT=<ID=F1R2,Number=R,Type=Integer,Description="Read orientation counts">\n'
+        '##FORMAT=<ID=F2R1,Number=R,Type=Integer,Description="Read orientation counts">\n'
+        '##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC,G\t50\tPASS\tAC=1,1;AF=0.5,0.5;AN=2;DP=9\t"
+        "GT:AD:AF:DP:GQ:PL:GL:GP:PRI:F1R2:F2R1:PS\t"
+        "1|2:0,5,4:0.556,0.444:9:15:177,144,46,122,0,72:"
+        "-17.704,-14.420,-4.626,-12.220,0.000,-7.244:"
+        "107.6,109.6,14.65,87.58,0.152,40.82:"
+        "0.00,34.77,37.77,34.77,69.54,37.77:0,3,2:0,2,2:2\n",
+        encoding="utf-8",
+    )
+
+    stats = normalize_vcf_with_bcftools(source, output, reference_fasta=reference)
+
+    assert stats["tool"] == "bcftools"
+    assert stats["multiallelic_mode"] == MULTIALLELIC_POLICY
+    # Normalization preserves caller-reported DRAGEN GP values verbatim, but
+    # those values exceed the VCF-reserved probability range. The transformed
+    # file is therefore not accepted by strict VCF intake without an
+    # authenticated, separately governed caller-semantic exception.
+    with pytest.raises(StrictVCFValidationError) as exc_info:
+        validate_vcf_strict(output)
+    assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
+    with gzip.open(output, "rt", encoding="utf-8") as handle:
+        rows = [line.rstrip("\n").split("\t") for line in handle if not line.startswith("#")]
+
+    assert [row[4] for row in rows] == ["C", "G"]
+    assert [row[7].split("SIRALOOM_ORIG=", 1)[1] for row in rows] == [
+        "1|2|A|C,G|1",
+        "1|2|A|C,G|2",
+    ]
+
+    parsed = []
+    for row in rows:
+        keys = row[8].split(":")
+        values = row[9].split(":")
+        parsed.append(dict(zip(keys, values)))
+
+    assert [item["AD"] for item in parsed] == ["0,5", "0,4"]
+    assert [[float(value) for value in item["AF"].split(",")] for item in parsed] == [
+        pytest.approx([0.556]),
+        pytest.approx([0.444]),
+    ]
+    assert [item["PL"] for item in parsed] == ["177,144,46", "177,122,72"]
+    assert [[float(value) for value in item["GL"].split(",")] for item in parsed] == [
+        pytest.approx([-17.704, -14.420, -4.626]),
+        pytest.approx([-17.704, -12.220, -7.244]),
+    ]
+    assert [[float(value) for value in item["GP"].split(",")] for item in parsed] == [
+        pytest.approx([107.6, 109.6, 14.65]),
+        pytest.approx([107.6, 87.58, 40.82]),
+    ]
+    assert [[float(value) for value in item["PRI"].split(",")] for item in parsed] == [
+        pytest.approx([0.00, 34.77, 37.77]),
+        pytest.approx([0.00, 34.77, 37.77]),
+    ]
+    assert [item["F1R2"] for item in parsed] == ["0,3", "0,2"]
+    assert [item["F2R1"] for item in parsed] == ["0,2", "0,2"]
+    assert [item["PS"] for item in parsed] == ["2", "2"]
+    assert [item["SIRALOOM_SOURCE_GT"] for item in parsed] == ["1|2", "1|2"]
