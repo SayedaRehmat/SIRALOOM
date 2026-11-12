@@ -1058,6 +1058,7 @@ def _validate_declared_value(
     local_allele_count: int | None = None,
     base_modification_cardinality: int | None = None,
     allow_empty_values: bool = False,
+    caller_profile_id: str | None = None,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
@@ -1116,7 +1117,11 @@ def _validate_declared_value(
             )
             if valid:
                 numeric_value = float(item)
-                if (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
+                if (field_scope, key) in PROBABILITY_FLOAT_FIELDS and not (
+                    field_scope == "FORMAT"
+                    and key == "GP"
+                    and caller_profile_id == "dragen_snv_germline"
+                ):
                     valid = 0.0 <= numeric_value <= 1.0
                 if (field_scope, key) in NONNEGATIVE_FLOAT_FIELDS:
                     valid = numeric_value >= 0.0
@@ -1356,6 +1361,7 @@ def _validate_record(
     reference_contigs: set[str] | None,
     fileformat: str | None = None,
     format_definitions: dict[str, dict[str, str]] | None = None,
+    caller_profile_id: str | None = None,
 ) -> tuple[str, int, list[str]]:
     if len(fields) < 8:
         raise StrictVCFValidationError(f"Expected at least 8 VCF columns at line {line_no}", code="VCF_RECORD_INVALID")
@@ -1567,6 +1573,9 @@ def _validate_record(
 
 def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None = None) -> dict:
     source = Path(path)
+    # Resolve only an explicitly declared caller profile before record-level
+    # value validation. This is unverified header metadata, not authentication.
+    header_caller_profile_id = inspect_caller_provenance(source).get("caller_profile_id")
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
@@ -1744,7 +1753,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         or _reserved_base_modification_format_definition(format_key) is not None
                     ):
                         base_modification_format_fields.add(format_key)
-            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat, format_definitions)
+            _chrom, _pos, alts = _validate_record(
+                fields, line_no, reference_contigs, fileformat, format_definitions,
+                header_caller_profile_id,
+            )
             if fileformat == "VCFv4.5" and _pos > 0:
                 _validate_vcf45_reference_block_coverage(
                     fields,
@@ -1815,6 +1827,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         allow_empty_values=(
                             fileformat == "VCFv4.5" and key in {"MEINFO", "METRANS"}
                         ),
+                        caller_profile_id=caller_profile_id,
                     )
             if fileformat == "VCFv4.5":
                 _validate_vcf45_structural_info(info_values, alts, line_no)
@@ -2063,6 +2076,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
+                            caller_profile_id=caller_profile_id,
                         )
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
