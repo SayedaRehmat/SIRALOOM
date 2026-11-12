@@ -48,6 +48,26 @@ def validate_analysis_input_artifact(
     if artifact.validation_status != "VALID":
         raise ValueError("Analysis input VCF must pass ingestion validation")
 
+    artifact_metadata = artifact.metadata_json or {}
+    workflow_eligibility = artifact_metadata.get("workflow_eligibility")
+    if workflow_eligibility in {"REVIEW_REQUIRED", "INELIGIBLE"}:
+        validation_metadata = artifact_metadata.get("validation")
+        caller_provenance = (
+            validation_metadata.get("caller_provenance")
+            if isinstance(validation_metadata, dict)
+            else None
+        )
+        compatibility_status = (
+            caller_provenance.get("caller_semantic_compatibility_status")
+            if isinstance(caller_provenance, dict)
+            else None
+        )
+        raise ValueError(
+            "Analysis input VCF requires caller semantic compatibility review "
+            "before genotype-based clinical analysis"
+            + (f" (status={compatibility_status})" if compatibility_status else "")
+        )
+
     artifact_build = normalize_build(artifact.genome_build)
     requested_build = normalize_build(reference_build)
     if artifact_build not in SUPPORTED_ANALYSIS_BUILDS:
