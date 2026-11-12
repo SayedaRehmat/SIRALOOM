@@ -1074,7 +1074,6 @@ def _validate_declared_value(
     local_allele_count: int | None = None,
     base_modification_cardinality: int | None = None,
     allow_empty_values: bool = False,
-    caller_profile_id: str | None = None,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
@@ -1134,16 +1133,7 @@ def _validate_declared_value(
             if valid:
                 numeric_value = float(item)
                 if (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
-                    if (
-                        field_scope == "FORMAT"
-                        and key == "GP"
-                        and caller_profile_id == "dragen_snv_germline"
-                    ):
-                        # DRAGEN v4.3.0 uses a Phred scale, not probabilities.
-                        # Preserve the scale but still reject negative/NaN values.
-                        valid = numeric_value >= 0.0
-                    else:
-                        valid = 0.0 <= numeric_value <= 1.0
+                    valid = 0.0 <= numeric_value <= 1.0
                 if (field_scope, key) in NONNEGATIVE_FLOAT_FIELDS:
                     valid = numeric_value >= 0.0
                 if _base_modification_field_kind(key) == "fraction":
@@ -1596,14 +1586,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
-    # Resolve only a narrowly supported caller-specific value convention
-    # before record-level validation. Header metadata remains unverified.
-    header_caller_provenance = inspect_caller_provenance(source)
-    header_value_semantics_profile_id = (
-        "dragen_snv_germline"
-        if header_caller_provenance.get("dragen_gp_phred_semantics_applicable")
-        else None
-    )
+    # Caller header declarations are provenance evidence only. They cannot
+    # authorize caller-specific changes to VCF-reserved value semantics.
     fileformat: str | None = None
     chrom_header: list[str] | None = None
     found_header = False
@@ -1851,7 +1835,6 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         allow_empty_values=(
                             fileformat == "VCFv4.5" and key in {"MEINFO", "METRANS"}
                         ),
-                        caller_profile_id=header_value_semantics_profile_id,
                     )
             if fileformat == "VCFv4.5":
                 _validate_vcf45_structural_info(info_values, alts, line_no)
@@ -2100,8 +2083,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
-                            caller_profile_id=header_value_semantics_profile_id,
-                        )
+                            )
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
                         format_keys=format_keys,
