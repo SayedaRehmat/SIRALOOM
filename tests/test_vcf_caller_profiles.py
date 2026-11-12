@@ -362,3 +362,46 @@ def test_dragen_gp_phred_scale_override_requires_exact_unambiguous_release(
         with pytest.raises(StrictVCFValidationError) as exc_info:
             validate_vcf_strict(path)
         assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_deepvariant_model_metadata_alone_identifies_partial_caller_provenance(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "deepvariant-model-without-release.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##DeepVariant_model_type=WGS\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\t.\tA\tC\t50\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    provenance = validate_vcf_strict(path)["caller_provenance"]
+
+    assert provenance["caller_profile_id"] == "deepvariant_germline"
+    assert provenance["identity_status"] == "PARTIAL"
+    assert provenance["caller_version"] is None
+    assert provenance["deepvariant_model_type"] == "WGS"
+    assert provenance["deepvariant_model_type_status"] == "DECLARED"
+
+
+def test_conflicting_dragen_pipeline_source_markers_do_not_enable_gp_override(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "conflicting-dragen-source-markers.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##source=DRAGEN_SNV\n"
+        "##source=DRAGEN_CNV\n"
+        "##DRAGENVersion=4.3.0\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tC\t50\tPASS\t.\tGT:GP\t0/1:107.6,0.152,40.82\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc_info:
+        validate_vcf_strict(path)
+
+    assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
