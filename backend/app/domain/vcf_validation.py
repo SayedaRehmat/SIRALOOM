@@ -1594,7 +1594,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     # Resolve only a narrowly supported caller-specific value convention
     # before record-level validation. Header metadata remains unverified.
     header_caller_provenance = inspect_caller_provenance(source)
-    header_caller_profile_id = (
+    header_value_semantics_profile_id = (
         "dragen_snv_germline"
         if header_caller_provenance.get("dragen_gp_phred_semantics_applicable")
         else None
@@ -1846,7 +1846,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         allow_empty_values=(
                             fileformat == "VCFv4.5" and key in {"MEINFO", "METRANS"}
                         ),
-                        caller_profile_id=header_caller_profile_id,
+                        caller_profile_id=header_value_semantics_profile_id,
                     )
             if fileformat == "VCFv4.5":
                 _validate_vcf45_structural_info(info_values, alts, line_no)
@@ -2095,7 +2095,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
-                            caller_profile_id=header_caller_profile_id,
+                            caller_profile_id=header_value_semantics_profile_id,
                         )
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
