@@ -100,6 +100,8 @@ def _inject_explicit_local_execution_for_scientific_unit_tests(monkeypatch, requ
         "split_multiallelic_vcf",
         "validate_vcf_index_concordance",
     ):
+        if hasattr(vcf_tools, name):
+            monkeypatch.setattr(vcf_tools, name, inject(getattr(vcf_tools, name)))
         if hasattr(module, name):
             monkeypatch.setattr(module, name, inject(getattr(module, name)))
 
@@ -108,6 +110,12 @@ def _inject_explicit_local_execution_for_scientific_unit_tests(monkeypatch, requ
         monkeypatch.setattr(ingestion, "validate_vcf", inject(original_validate))
         if hasattr(module, "validate_vcf"):
             monkeypatch.setattr(module, "validate_vcf", inject(module.validate_vcf))
+        if module_name == "test_artifact_validation":
+            monkeypatch.setattr(
+                module.validation,
+                "validate_vcf",
+                inject(module.validation.validate_vcf),
+            )
 
     if module_name == "test_artifact_validation":
         monkeypatch.setattr(
