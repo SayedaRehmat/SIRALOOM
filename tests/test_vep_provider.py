@@ -560,3 +560,20 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
     assert tool_request.outputs[0].name == "vep-output.json"
     assert result.metadata["tool_execution_record_id"]
     assert result.payload[0]["allele_string"] == "A/G"
+
+
+def test_vep_annotation_refuses_to_run_without_case_bound_execution(tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    toolchain, _cache_file = _manifested_toolchain(tmp_path, binary)
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+    provider.persistent_execution_service = None
+    variant = CanonicalVariant(
+        genome_build="GRCh38", chromosome="1", position=100, reference="A", alternate="G"
+    )
+    request = provider.prepare_request(
+        "annotate", {"variants": [variant], "genome_build": "GRCh38"}
+    )
+
+    with pytest.raises(VEPProviderError, match="case-bound qualified execution environment"):
+        provider.execute(request)
