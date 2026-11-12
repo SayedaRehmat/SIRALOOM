@@ -83,6 +83,9 @@ The object records:
 - source marker values and evidence keys;
 - declared INFO, FORMAT, FILTER, and ALT IDs;
 - documented semantic notes only for fields declared in the file;
+- caller-profile checks of documented INFO/FORMAT Number and Type declarations for known fields when those fields are present.
+
+These are family-level documented conventions, not a complete release-specific specification. Optional fields are not required to be present. A structurally valid VCF whose known caller field declaration differs from the documented convention remains structurally valid but receives caller_semantic_compatibility_status=DECLARATION_MISMATCH and a field-level discrepancy. SIRALOOM does not silently reinterpret the field or convert that mismatch into a malformed-VCF error.
 - VCF specification version and GVCF/reference-confidence marker status;
 - a SHA-256 digest of command-line header lines, not the raw command line;
 - explicit assay_mode_status, release_qualification_status, and clinical_qualification_status.
