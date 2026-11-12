@@ -405,3 +405,25 @@ def test_conflicting_dragen_pipeline_source_markers_do_not_enable_gp_override(
         validate_vcf_strict(path)
 
     assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+@pytest.mark.parametrize("gp_values", ["-1,0,2", "NaN,0,2"])
+def test_dragen_phred_scaled_gp_values_must_remain_nonnegative(
+    tmp_path: Path, gp_values: str
+) -> None:
+    path = tmp_path / "dragen-gp-negative-or-nan.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##source=DRAGEN_SNV\n"
+        "##DRAGENVersion=4.3.0\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t10\t.\tA\tC\t50\tPASS\t.\tGT:GP\t0/1:{gp_values}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc_info:
+        validate_vcf_strict(path)
+
+    assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
