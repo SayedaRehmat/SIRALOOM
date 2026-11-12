@@ -2346,17 +2346,33 @@ def validate_vcf_strict(
                 "reason_code": "UNRESOLVED_SPANNING_DELETION_CONTEXT",
             })
 
+    caller_provenance = inspect_caller_provenance(
+        path,
+        fileformat=fileformat,
+        gvcf_marker_count=gvcf_markers,
+        sample_record_count=sample_record_count,
+        sample_records_without_gt=sample_records_without_gt,
+    )
+    if caller_semantic_attestation is not None:
+        caller_provenance["caller_semantic_compatibility_status"] = "CALLER_SPEC_SEMANTIC_DEVIATION"
+        caller_provenance["caller_semantic_compatibility_review_required"] = True
+        caller_provenance["dragen_gp_phred_semantics_applicable"] = True
+        caller_provenance["field_semantic_deviations"] = [
+            *caller_provenance.get("field_semantic_deviations", []),
+            {
+                "namespace": "FORMAT",
+                "field_id": "GP",
+                "status": "CALLER_SPEC_SEMANTIC_DEVIATION",
+                "caller_release": "4.2",
+                "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+                "clinical_interpretation": "REVIEW_REQUIRED",
+            },
+        ]
     return {
         "fileformat": fileformat,
         "caller_semantic_attestation": caller_semantic_attestation,
         "caller_semantic_compatibility_review_required": dragen_gp_phred_semantics_applicable,
-        "caller_provenance": inspect_caller_provenance(
-            path,
-            fileformat=fileformat,
-            gvcf_marker_count=gvcf_markers,
-            sample_record_count=sample_record_count,
-            sample_records_without_gt=sample_records_without_gt,
-        ),
+        "caller_provenance": caller_provenance,
         "records": records,
         "alternate_allele_count": alternate_allele_count,
         "reference_only_records": reference_only,
