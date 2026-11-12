@@ -83,9 +83,10 @@ The object records:
 - source marker values and evidence keys;
 - declared INFO, FORMAT, FILTER, and ALT IDs;
 - documented semantic notes only for fields declared in the file;
-- caller-profile checks of documented INFO/FORMAT Number and Type declarations for known fields when those fields are present.
+- caller-profile checks of documented INFO/FORMAT Number and Type declarations for known fields when those fields are present;
+- the required FORMAT/GT field for sample-bearing output from the three recognized small-variant caller profiles, checked both in the header and in sample record FORMAT keys.
 
-These are family-level documented conventions, not a complete release-specific specification. Optional fields are not required to be present. A structurally valid VCF whose known caller field declaration differs from the documented convention remains structurally valid but receives caller_semantic_compatibility_status=DECLARATION_MISMATCH and a field-level discrepancy. SIRALOOM does not silently reinterpret the field or convert that mismatch into a malformed-VCF error.
+These are family-level documented conventions, not a complete release-specific specification. The GT requirement is a caller-profile/clinical sample-callset requirement; it is not a claim that every VCF version requires every FORMAT key. Optional fields are not required to be present. A structurally valid VCF whose known caller field declaration differs from the documented convention remains structurally valid but receives caller_semantic_compatibility_status=DECLARATION_MISMATCH and a field-level discrepancy. A sample-bearing file from a recognized caller that omits GT from its header or one or more sample record FORMAT keys receives MISSING_REQUIRED_FORMAT_FIELD. These caller-profile outcomes are distinct from structural VCF validity; SIRALOOM does not silently reinterpret fields or convert a caller-semantic mismatch into a malformed-VCF error.
 - VCF specification version and GVCF/reference-confidence marker status;
 - a SHA-256 digest of command-line header lines, not the raw command line;
 - explicit assay_mode_status, release_qualification_status, and clinical_qualification_status.
