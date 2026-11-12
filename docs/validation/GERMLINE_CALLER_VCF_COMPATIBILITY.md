@@ -48,9 +48,9 @@ The same FORMAT/INFO field name is not a promise of identical read counting, fil
 
 | Evidence | GATK HaplotypeCaller | DeepVariant | DRAGEN |
 |---|---|---|---|
-| FORMAT/AD | Allelic depths; GATK documentation distinguishes unfiltered allele evidence from FORMAT/DP | Read depth for each allele | Based on informative reads |
-| FORMAT/DP | Approximate sample depth after documented read filters | Read depth | Informative depth for variant calls |
-| INFO/DP | Site-level approximate depth | Depends on output context | Unfiltered site depth for ordinary variant records |
+| FORMAT/AD | Unfiltered allele depth in REF/ALT order, excluding uninformative reads | Read depth for each allele | Based on informative reads |
+| FORMAT/DP | Filtered sample-level depth; includes uninformative reads that pass caller filters | Read depth | Informative depth for variant calls |
+| INFO/DP | Approximate site-level depth, distinct from sample FORMAT/DP | Depends on output context | Unfiltered site depth for ordinary variant records |
 | FORMAT/AF or VAF | Not a universal mandatory HaplotypeCaller field | VAF is Number=A in the documented output | FORMAT/AF is based on informative depth, Number=A |
 | FORMAT/GQ | Genotype quality derived from likelihood evidence; GATK documents a cap of 99 | Conditional genotype quality in the documented header | Caller-specific GQ; germline GVCF hom-reference and variant-call behavior differ |
 | FORMAT/PL | Normalized Phred-scaled genotype likelihoods | Phred-scaled genotype likelihoods | Phred-scaled genotype likelihoods when emitted |
