@@ -20,10 +20,10 @@ from backend.app.infrastructure.db.models import (
 )
 
 
-def _seed(tmp_path, monkeypatch, *, license_status="NOT_REQUIRED", retention_permission="PERMITTED"):
+def _seed(tmp_path, monkeypatch, *, license_status="NOT_REQUIRED", retention_permission="PERMITTED", database_url=None):
     import backend.app.domain.evidence_response_retention as retention
 
-    engine = create_engine("sqlite+pysqlite:///:memory:")
+    engine = create_engine(database_url or "sqlite+pysqlite:///:memory:", pool_pre_ping=True)
     Base.metadata.create_all(engine)
     db = Session(engine)
     organization = Organization(id=uuid4(), name="Retention test lab")
