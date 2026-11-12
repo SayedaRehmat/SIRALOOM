@@ -136,6 +136,46 @@ def test_worker_validates_persisted_vcf_and_records_site_only_eligibility(
         assert audit is not None
 
 
+def test_worker_marks_unknown_caller_without_gt_ineligible_for_genotype_analysis(
+    validation_runtime, monkeypatch
+):
+    caller_provenance = {
+        "identity_status": "UNKNOWN",
+        "caller_semantic_compatibility_status": "NOT_ASSESSED",
+        "caller_semantic_compatibility_review_required": False,
+        "sample_records_without_gt": 1,
+    }
+    monkeypatch.setattr(
+        validation,
+        "validate_vcf",
+        lambda _path: ValidationResult(
+            status="VALID",
+            file_kind="VCF",
+            record_count=1,
+            sample_names=["SAMPLE1"],
+            detected_build=None,
+            errors=[],
+            warnings=[],
+            fileformat="VCFv4.3",
+            metadata={"caller_provenance": caller_provenance},
+        ),
+    )
+
+    result = validation.validate_persisted_artifact(validation_runtime["artifact_id"])
+
+    assert result["status"] == "VALID"
+    with validation_runtime["factory"]() as db:
+        artifact = db.get(Artifact, validation_runtime["artifact_id"])
+        case = db.get(Case, validation_runtime["case_id"])
+        assert artifact.validation_status == "VALID"
+        assert artifact.metadata_json["workflow_eligibility"] == "INELIGIBLE"
+        assert artifact.metadata_json["workflow_eligibility_reason"]["code"] == (
+            "SAMPLE_GENOTYPE_FIELD_MISSING_FOR_ANALYSIS"
+        )
+        assert artifact.metadata_json["workflow_eligibility_reason"]["sample_records_without_gt"] == 1
+        assert case.status == "ARTIFACT_UPLOADED"
+
+
 def test_worker_tool_unavailability_does_not_classify_vcf_as_invalid(
     validation_runtime, monkeypatch
 ):
