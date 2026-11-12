@@ -50,7 +50,7 @@ def validate_analysis_input_artifact(
 
     artifact_metadata = artifact.metadata_json or {}
     workflow_eligibility = artifact_metadata.get("workflow_eligibility")
-    if workflow_eligibility in {"REVIEW_REQUIRED", "INELIGIBLE"}:
+    if workflow_eligibility == "REVIEW_REQUIRED":
         validation_metadata = artifact_metadata.get("validation")
         caller_provenance = (
             validation_metadata.get("caller_provenance")
@@ -66,6 +66,13 @@ def validate_analysis_input_artifact(
             "Analysis input VCF requires caller semantic compatibility review "
             "before genotype-based clinical analysis"
             + (f" (status={compatibility_status})" if compatibility_status else "")
+        )
+    if workflow_eligibility == "INELIGIBLE":
+        reason = artifact_metadata.get("workflow_eligibility_reason")
+        reason_code = reason.get("code") if isinstance(reason, dict) else None
+        raise ValueError(
+            "Analysis input VCF is not eligible for genotype-based clinical analysis"
+            + (f" (reason={reason_code})" if reason_code else "")
         )
 
     artifact_build = normalize_build(artifact.genome_build)
