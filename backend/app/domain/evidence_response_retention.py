@@ -49,6 +49,36 @@ def _authorized_reviewer(db: Session, *, organization_id: UUID, reviewer_id: UUI
     return user
 
 
+def _verify_terms_evidence_bytes(
+    db: Session, *, organization_id: UUID, evidence: Artifact,
+) -> None:
+    """Recheck the approved terms artifact bytes before relying on its approval."""
+    terms_case = db.get(Case, evidence.case_id)
+    if terms_case is None or terms_case.organization_id != organization_id:
+        raise PermissionError("Provider retention terms evidence belongs to another organization.")
+    store = artifact_store_for_uri(
+        db, organization_id=organization_id, storage_uri=evidence.storage_uri,
+    )
+    if callable(getattr(store, "download_to_file", None)):
+        with tempfile.NamedTemporaryFile(prefix="siraloom-terms-gate-", delete=False) as handle:
+            staged = Path(handle.name)
+        try:
+            store.download_to_file(
+                evidence.storage_uri, staged,
+                expected_sha256=evidence.sha256,
+                expected_size_bytes=evidence.size_bytes,
+            )
+            verify_artifact_file(staged, sha256=evidence.sha256, size_bytes=evidence.size_bytes)
+        finally:
+            staged.unlink(missing_ok=True)
+    else:
+        verify_artifact_file(
+            store.local_path(evidence.storage_uri),
+            sha256=evidence.sha256,
+            size_bytes=evidence.size_bytes,
+        )
+
+
 def _expire_approval_if_due(db: Session, approval: ProviderRetentionApproval) -> bool:
     """Persist automatic expiry as an append-only system decision."""
     if approval.status != "APPROVED" or approval.expires_at is None:
@@ -272,6 +302,12 @@ def _retention_permission(
     evidence = db.get(Artifact, approval.terms_evidence_artifact_id)
     if evidence is None or evidence.sha256.lower() != str(approval.terms_evidence_sha256 or "").lower():
         return "REVIEW_REQUIRED", "The terms evidence artifact is missing or its digest no longer matches.", discovery, approval
+    try:
+        _verify_terms_evidence_bytes(
+            db, organization_id=organization_id, evidence=evidence,
+        )
+    except Exception:
+        return "REVIEW_REQUIRED", "The approved provider terms evidence failed organization or byte-integrity verification.", discovery, approval
     return "RETAINED", "Exact release has a current organization approval with verified terms evidence.", discovery, approval
 
 
