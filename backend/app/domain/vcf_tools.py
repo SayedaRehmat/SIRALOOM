@@ -721,9 +721,11 @@ def _run_bcftools_command(
     timeout_seconds: int,
     execution_id_override: str | None = None,
 ):
-    """Run one BCFtools command through the durable common executor when configured."""
+    """Run one BCFtools command through the mandatory durable common executor."""
     if persistent_execution is None:
-        return subprocess.run(command, capture_output=True, text=True, timeout=timeout_seconds, check=False)
+        raise VCFToolError(
+            "A case-bound qualified execution environment is required for every BCFtools command."
+        )
 
     from backend.app.config import settings
     from backend.app.domain.tool_execution import (
@@ -835,6 +837,8 @@ def split_multiallelic_vcf(
     This deliberately does not use -f: bcftools requires a local FASTA for
     reference-aware normalization, while SIRALOOM currently uses Ensembl REST.
     """
+    if persistent_execution is None:
+        raise VCFToolError("A case-bound qualified execution environment is required for multiallelic splitting.")
     from backend.app.config import settings
     executable = settings.bcftools_executable
     if not bcftools_available(executable):
@@ -902,6 +906,9 @@ def _validate_vcf_index_record_counts(
     sequential BGZF scans. Query output is streamed to temporary files so
     WES/WGS-scale VCFs are not accumulated in process memory.
     """
+    if persistent_execution is None:
+        raise VCFToolError("A case-bound qualified execution environment is required for VCF index validation.")
+
     execution_workspace = workspace or vcf_path.parent
     try:
         stats = _run_bcftools_command(
@@ -1095,6 +1102,8 @@ def validate_vcf_index_concordance(
     compared with a sequential BGZF scan, so a valid magic header or a
     same-count stale index cannot be mistaken for a matching index.
     """
+    if persistent_execution is None:
+        raise VCFToolError("A case-bound qualified execution environment is required for VCF index validation.")
     path = Path(vcf_path)
     if not path.is_file() or not path.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         raise VCFToolError("Index concordance requires an existing BGZF-compressed VCF.")
@@ -1666,6 +1675,8 @@ def normalize_vcf_with_bcftools(
     filesystem. Existing output and index files remain untouched until
     normalization, sorting, and indexing have all succeeded.
     """
+    if persistent_execution is None:
+        raise VCFToolError("A case-bound qualified execution environment is required for VCF normalization.")
     from backend.app.config import settings
     bcftools_executable = bcftools_executable or settings.bcftools_executable
     expected_bcftools_version = expected_bcftools_version or settings.bcftools_version
