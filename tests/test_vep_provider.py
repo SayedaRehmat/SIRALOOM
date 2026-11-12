@@ -32,6 +32,8 @@ def _contract(*, access_method="LOCAL", toolchain=None, vep_binary="/opt/vep/vep
             "cache_manifest_sha256": "a" * 64,
             "cache_artifact_sha256": "b" * 64,
             "vep_binary_sha256": "c" * 64,
+            "vep_version": "115.2",
+            "execution_profile_id": "vep-115-linux-amd64",
         },
     )
 
@@ -159,6 +161,8 @@ def _manifested_toolchain(tmp_path, binary, *, vep_version=None):
         "cache_manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
         "cache_artifact_sha256": cache_artifact_sha256,
         "vep_binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+        "vep_version": vep_version or "115.2",
+        "execution_profile_id": "vep-115-linux-amd64",
     }
     if vep_version:
         toolchain["vep_version"] = vep_version
