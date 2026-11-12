@@ -44,6 +44,10 @@ Therefore:
 | Missing genotype values | Implemented | Explicit missing/partial-call handling | Present |
 | Phasing and phase sets | Implemented | GT phase separators and PS/PGT/PID retention | Present; specialized constructs remain scope-dependent |
 | Multiallelic handling | Implemented | BCFtools split policy and source allele/genotype lineage | Present |
+| VCFv4.5 local alleles (LA/LR/LG, LAA and projection/equivalence) | Implemented | Strict validator local-allele cardinality and projection/equivalence checks; tests in tests/test_vcf_validation.py | Present; retain for VCFv4.5 multiallelic small-variant inputs |
+| VCFv4.4/4.5 phase-set list semantics (PSL/PSO/PSQ) | Implemented | Strict validator phase-set and phase-observation handling; tests in tests/test_vcf_validation.py | Present; relevant to phased SNV/indel records |
+| VCFv4.5 Number=M base-modification cardinality | Partially implemented | Validator includes base-modification cardinality and allele-context checks | Additional assay/strandedness qualification is outside ordinary SNV/indel scope |
+| Breakend/PSO structural validation | Present at VCF semantic level | Validator checks BND/PSO relationships and record structure | Full derivative-chromosome reconstruction is not an SNV/indel completion gate |
 | Reference identity and REF checks | Implemented | Approved reference packages, contig/build checks and reference-aware validation | Present |
 | Normalization | Implemented | BCFtools 1.25, reference FASTA, strict REF check and multiallelic splitting | Present; original source artifact remains separate |
 | Caller identity | Missing at baseline; added by this branch | New caller profile inspection for GATK, DeepVariant and DRAGEN | Implemented as unverified header provenance |
@@ -101,7 +105,7 @@ Main recognizes VCFv4.0–4.5. For the VCF-to-report SNV/indel product, the requ
 5. Preservation of unknown fields without guessing their meaning.
 6. Explicit unsupported/routing results for constructs outside the supported SNV/indel workflow.
 
-It is not necessary to implement all PSO/BND derivative-chromosome reconstruction, every local-allele/base-modification extension, CNV, repeat expansion, mitochondrial interpretation, or all possible INFO annotations before the SNV/indel VCF stage can be qualified.
+Main already contains VCFv4.5 local-allele projection/equivalence checks, phase-set list semantics, and base-modification cardinality handling. Local-allele handling is retained because it can represent multiallelic small variants. Phase-set semantics are retained because they can affect phased SNV/indel interpretation. Full assay-specific base-modification/strandedness qualification, PSO/BND derivative-chromosome reconstruction, CNV, repeat expansion, mitochondrial interpretation, and every possible INFO annotation are not prerequisites for the declared small-variant caller intake scope.
 
 However, if a file uses a construct outside the supported capability, SIRALOOM must preserve it and return a durable unsupported/unresolved result rather than silently misinterpreting it.
 
@@ -119,7 +123,7 @@ The VCFv4.0 historical source provenance remains a separate standards-ledger iss
 | #292 | VCF feature registry refactor stacked on #282 | Not merged independently because it depends on the unmerged #282 architecture |
 | #276 | Version-conformance corpus tests | Not merged wholesale; some test assumptions conflict with SIRALOOM's BGZF/indexed intake contract and need adjudication |
 | #275 | Repository/standards audit material | Research/documentation, not a missing runtime capability |
-| #293 | VCFv4.5 source-to-requirement and cross-version research | Retain as standards research; do not treat candidate ledger completion as production validator execution |
+| #293 | VCFv4.5 source-to-requirement research plus code/tests for local alleles, Number=M, phase sets, BND semantics and GT behavior | Much of its semantic code overlaps functionality already present in audited main. Do not merge the draft wholesale: it has no successful CI evidence and includes out-of-scope policy changes. The VCFv4.0 GT-required behavior and focused GT ploidy tests were selectively carried into this branch. |
 | #317 | Semantic/profile reconciliation research | Retain as research; no standalone runtime capability to merge |
 | #321 | Broad integration including durable artifact work and unrelated clinical workflow changes | Not merged wholesale; #297's VCF-relevant work was extracted and merged separately |
 
