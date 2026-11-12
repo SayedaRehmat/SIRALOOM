@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -85,69 +84,11 @@ class LocalTabixSecondaryPopulationProvider:
         return observations
 
     def query_variant_with_provenance(self, variant):
-        region = f"{variant.chromosome}:{variant.position}-{variant.position}"
-        try:
-            proc = subprocess.run([self.executable, self.vcf_path, region], check=False,
-                                  capture_output=True, text=True, timeout=30)
-        except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
-            raise SecondaryPopulationProviderError(f"{self.provider_id} tabix execution unavailable or timed out.") from exc
-        if proc.returncode not in (0, 1):
-            raise SecondaryPopulationProviderError(proc.stderr.strip() or f"{self.provider_id} tabix failed.")
-        request_metadata = {
-            "provider_id": self.provider_id,
-            "region": region,
-            "reference": variant.reference,
-            "alternate": variant.alternate,
-            "info_fields": self.info_fields,
-            "contig_policy": self.contig_policy,
-        }
-        request_fingerprint = hashlib.sha256(
-            json.dumps(request_metadata, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        ).hexdigest()
-        response_sha256 = hashlib.sha256(proc.stdout.encode("utf-8")).hexdigest()
-        observed_at = datetime.now(UTC).isoformat()
-        for line in proc.stdout.splitlines():
-            fields = line.split("\t")
-            if len(fields) < 8:
-                continue
-            chrom, pos, record_id, ref, alt = fields[:5]
-            if not _contigs_match(chrom, variant.chromosome, self.contig_policy) or ref.upper() != variant.reference.upper():
-                continue
-            try:
-                if int(pos) != variant.position:
-                    continue
-            except ValueError:
-                continue
-            alts = alt.split(",")
-            if variant.alternate.upper() not in [x.upper() for x in alts]:
-                continue
-            index = [x.upper() for x in alts].index(variant.alternate.upper())
-            info = _parse_info(fields[7])
-            ac = _array_int(info.get(self.info_fields.get("AC", "")), index)
-            an = _scalar_int(info.get(self.info_fields.get("AN", "")))
-            af_text = _array_value(info.get(self.info_fields.get("AF", "")), index)
-            af = _parse_frequency(af_text)
-            hom = _array_int(info.get(self.info_fields.get("HOM_ALT", "")), index)
-            af = _validate_population_metrics(ac=ac, an=an, af=af, af_text=af_text)
-            return [SecondaryPopulationObservation(
-                "SECONDARY", self.population_code, self.population_label, ac, an, af, hom,
-                "AVAILABLE" if any(x is not None for x in (ac, an, af, hom)) else "NOT_AVAILABLE",
-                "PROVIDER_DERIVED", record_id or f"{chrom}:{pos}:{ref}:{alt}",
-                request_fingerprint, response_sha256, request_metadata, observed_at,
-            )], {
-                "request_fingerprint": request_fingerprint,
-                "response_sha256": response_sha256,
-                "request_metadata": request_metadata,
-                "observed_at": observed_at,
-                "query_outcome": "MATCHED",
-            }
-        return [], {
-            "request_fingerprint": request_fingerprint,
-            "response_sha256": response_sha256,
-            "request_metadata": request_metadata,
-            "observed_at": observed_at,
-            "query_outcome": "NO_MATCH",
-        }
+        raise SecondaryPopulationProviderError(
+            "LOCAL_POPULATION_GOVERNED_EXECUTION_UNAVAILABLE: direct host tabix execution is disabled. "
+            "The indexed population VCF and its CSI/TBI sidecar must be verified and mounted read-only "
+            "through a qualified case-bound OCI tool profile before this provider can be enabled."
+        )
 
 
 def _parse_info(value):
