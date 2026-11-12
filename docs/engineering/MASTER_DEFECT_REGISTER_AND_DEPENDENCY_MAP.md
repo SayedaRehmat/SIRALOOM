@@ -209,7 +209,69 @@ flowchart TD
 
 ---
 
-## 6. Strategic platform roadmap (not Phase 1 defects)
+## 6. Environment execution platform — dedicated workstream
+
+This is a first-class SIRALOOM platform pillar and must be tracked alongside the clinical Variant workflow. The initial commercial deployment target remains **customer-owned Linux/Docker infrastructure**. SIRALOOM-hosted cloud is deferred; Kubernetes, HPC/Slurm and remote-agent execution are architectural expansion paths, not capabilities to mark complete merely because contracts or attestation exist.
+
+### 6.1 Stacked PR chain and actual status
+
+The following PRs were inspected directly. Except #297, they remain open draft PRs and are not merged. Their stack order matters; they must be reconciled as a coherent series rather than cherry-picked or merged independently.
+
+| PR | Scope | Evidence/status | Remaining boundary |
+|---|---|---|---|
+| [#297](https://github.com/SayedaRehmat/SIRALOOM/pull/297) | Durable artifact validation in workers | **Merged to main**; parent dependency for #300. | Continue to verify its integration with the newer execution ledger and clinical intake lifecycle. |
+| [#300](https://github.com/SayedaRehmat/SIRALOOM/pull/300) | Tool-neutral API/scheduler image separated from scientific workers | Open draft; API image excludes scientific executables; Compose/image boundary and CI tests described. | AMD64 boundary only; depends on #297; not a remote execution agent, tool registry, scheduler adapter or clinical qualification. |
+| [#301](https://github.com/SayedaRehmat/SIRALOOM/pull/301) | Universal tool execution contract and local process executor | Open draft; immutable tool/request/resource/artifact/provenance contracts; executable digest/version checks; workspace, timeout, argv and environment protections. | Does not itself wire production tools, persist ledger records, sign images or provide remote agents/Kubernetes/Slurm. |
+| [#305](https://github.com/SayedaRehmat/SIRALOOM/pull/305) | Laboratory execution environment contracts | Open draft; immutable environment/capacity contracts, tenant ownership, runtime/scheduler/platform identity, image digest, workspace/storage profiles, tool allowlist, egress policy and heartbeat freshness validation. | Contract layer only; no persistence, agent enrollment/mTLS/signed heartbeat, scheduler adapters, leases/capacity enforcement, provisioning or secret delivery. |
+| [#306](https://github.com/SayedaRehmat/SIRALOOM/pull/306) | Persistent environment registrations and execution ledger | Open draft; append-only versioned snapshots, canonical fingerprints, tenant ownership, idempotency, fenced leases, provenance/output metadata and DB transition constraints. | No end-to-end dispatch integration at that stage; no unified ToolRun lifecycle; no object-store byte re-verification or atomic artifact publication/recovery; no admin CRUD, agent enrollment, scheduler/capacity enforcement. |
+| [#307](https://github.com/SayedaRehmat/SIRALOOM/pull/307) | Persistent executor bridge plus BCFtools and VEP adapters | Open draft; persistent bridge; BCFtools normalization and VEP annotation/preflight can use assigned qualified environments; real BCFtools 1.25 test reported green in run #42363829459. | Opt-in via analysis configuration; no automatic environment provisioning/qualification, remote agents, mTLS heartbeats, scheduler/capacity; legacy fallback exists unless mandatory persistent execution is set; intake validation still not routed through this lifecycle in this PR's description. |
+| [#308](https://github.com/SayedaRehmat/SIRALOOM/pull/308) | Broader BCFtools operation coverage | Open draft; split-multiallelic, version/HTSlib attestation and uploaded-index concordance paths added. | Its description explicitly identifies pre-analysis intake validation as needing a case-scoped execution record and organization-level environment assignment; PR #309 addresses persistence scope, not by itself all dispatch integration. |
+| [#309](https://github.com/SayedaRehmat/SIRALOOM/pull/309) | Case-scoped persistent execution before Analysis exists | Open draft; case required, analysis optional, tenant/case/analysis pair checks and immutable identity/triggers. | Persistence schema/lifecycle scope only; CI was not complete in its PR description; verify intake worker actually supplies this context end to end. |
+| [#310](https://github.com/SayedaRehmat/SIRALOOM/pull/310) | Fail-closed Linux OCI executor | Open draft; Docker and Podman adapters, pinned image RepoDigest, no pull at execution, read-only rootfs/input/resource mounts, offline network, non-root UID/GID, CPU/memory/PID limits, cgroup attestation, timeout cleanup and live runtime tests. | Qualification is Ubuntu 24.04 x86_64 runner with Docker and rootful Podman 4.9.3/cgroup v2; not every lab host, kernel, rootless mode, storage backend or resource policy. Kubernetes, cloud storage staging, remote agents, scheduler execution and worker-loss recovery are separate work. |
+| [#312](https://github.com/SayedaRehmat/SIRALOOM/pull/312) | Native ARM64 source-built BCFtools profiles | Open draft; three ARM64 candidate profiles and native ARM64 workflow reported successful. | Profiles remain CANDIDATE/non-production pending cross-version dispatch, isolation, retries/redelivery, reanalysis inheritance and recovery qualification. No VEP ARM64 qualification. |
+| [#313](https://github.com/SayedaRehmat/SIRALOOM/pull/313) | VEP cache mount correction in persistent container execution | Open draft; binds actual verified cache directory as read-only resource separately from cache manifest and optional FASTA. | No VEP version × architecture profile registry or VEP ARM64 qualification. |
+
+**Important distinction:** #300–#313 are a separate stacked execution-platform chain; they are not automatically part of PR #321 merely because #321 contains runtime-attestation work. The latest #321 branch includes Kubernetes and host-broker runtime trust work, but that does not close the environment control-plane gaps listed below. #299 is a separate open VCF-conformance PR and must be reconciled with the documented VCF-version policy, not confused with environment execution.
+
+### 6.2 Environment platform defect register
+
+| ID | Priority | Defect / required outcome | Current evidence state | Closure evidence |
+|---|---|---|---|---|
+| ENV-01 | P0 | Reconcile the stacked PR dependency chain (#300→#301→#305→#306→#307→#308→#309→#310→#312→#313) with #297 and #321 without losing migrations, files or safety controls. | All listed PRs except #297 are open draft; branch stack has shared files and migrations. | One integration plan, conflict resolution, migration-head validation and full CI at each integration boundary. |
+| ENV-02 | P0 | Ensure every scientific process runs through the governed executor when policy requires it; no silent legacy subprocess fallback for a clinical or qualified workflow. | BCFtools/VEP integration is configuration-gated; fallback remains for legacy callers unless mandatory flag is enabled. | Inventory every subprocess/process launch and map it to executor policy; fail-closed clinical configuration; tests proving no bypass. |
+| ENV-03 | P0 | Route pre-analysis VCF intake validation and uploaded-index validation through case-scoped persistent execution with explicit organization environment assignment. | #308 identified this gap; #309 added case-scoped ledger schema, but its scope says persistence only. | Worker-to-case environment resolution, durable execution record before Analysis, tool attestation, output publication, retries and cross-tenant tests. |
+| ENV-04 | P1 | Build environment control-plane lifecycle: create/register, version, qualify, activate, suspend, revoke, decommission and audit environments. | Immutable registration primitives exist in #305/#306; complete lifecycle/admin CRUD is not evidenced. | API/service lifecycle, RBAC, append-only history, state-transition policy, audit and UI/API tests. |
+| ENV-05 | P1 | Implement secure remote agent enrollment, identity, mTLS, signed heartbeat and revocation. | #305 explicitly excludes agent enrollment/mTLS/signed heartbeat; runtime host broker is not equivalent to remote-agent fleet management. | Enrollment ceremony, key rotation/revocation, tenant binding, replay protection, heartbeat freshness, agent compromise/recovery tests. |
+| ENV-06 | P1 | Implement scheduler adapters and execution dispatch for customer-owned Docker first, then Kubernetes and HPC/Slurm as qualified adapters. | Local process and Docker/Podman executor exist in stacked PRs; Kubernetes runtime attestation exists, but scheduler-backed execution is listed as separate work. | Adapter contracts, queue/lease semantics, job identity, cancellation, status reconciliation, scheduler failure and duplicate dispatch tests. |
+| ENV-07 | P1 | Enforce capacity/resource leases and quotas across CPU, memory, PID, disk, GPU (if supported), concurrency and tenant fairness. | Environment capacity contract and per-container limits exist; centralized allocation/lease enforcement is not evidenced. | Atomic capacity reservations, lease expiry/fencing, quota accounting, noisy-neighbor and exhaustion tests. |
+| ENV-08 | P1 | Complete secure input/resource staging and output publication across local and cloud/object storage, including atomicity and byte re-verification. | OCI read-only mounts and artifact checks exist; #306 explicitly leaves object-store byte verification and atomic publication/recovery separate; cloud storage staging remains separate in #310. | Generation/version-pinned reads, digest verification after materialization and before use, atomic publish/commit protocol, cleanup/recovery and symlink/path adversarial tests. |
+| ENV-09 | P1 | Complete secret delivery and runtime credential isolation. | #305 explicitly excludes secret delivery; no complete execution-scoped secret lifecycle is evidenced. | Short-lived scoped credentials, no argv/env/log leakage, workload identity, revocation and secret-rotation tests. |
+| ENV-10 | P1 | Verify environment qualification evidence and bind it to exact platform/runtime/tool/resource identities. | Immutable qualification status and executable allowlist digests exist in contracts; runtime attestation is implemented in #321 and #310, but lab-host qualification breadth remains limited. | Qualification protocol per OS/kernel/architecture/runtime/storage/profile; signed immutable evidence; expiry/change invalidation; negative tests. |
+| ENV-11 | P1 | Complete worker-loss recovery, lease fencing, cancellation and idempotent retry through real Docker/Podman and future scheduler paths. | Ledger has fenced lease primitives; #310 explicitly says worker-loss recovery remains separate. | Kill worker/container/host mid-run, reclaim lease, prove stale worker cannot publish, exactly-once logical output and no orphaned resources. |
+| ENV-12 | P1 | Complete VEP resource binding and tool-profile qualification beyond the cache mount fix. | #313 binds verified cache directory + manifest + optional FASTA; no VEP architecture/profile registry exists. | VEP version × assembly × cache × architecture profile, signed cache identity, offline tests and ARM64 only after qualification. |
+| ENV-13 | P1 | Promote ARM64 profiles only after operational and scientific qualification; keep candidate profiles non-production. | #312 native ARM64 builds and smoke tests reported successful; profiles explicitly remain CANDIDATE. | Cross-version dispatch, multi-tenant isolation, retry/redelivery, reanalysis, recovery, performance and scientific concordance. |
+| ENV-14 | P2 | Provide environment administration and observability: status, health, capacity, jobs, agent heartbeat, runtime drift, audit, logs and usage. | Contract/persistence primitives exist; full administration/observability surface is not evidenced. | Tenant-scoped UI/API, alerting, audit, operational dashboards and support runbooks. |
+| ENV-15 | P2 | Define environment portability and reproducible deployment bundles for customer-owned Docker installations. | Docker/Compose service boundaries and immutable runtime/tool identities exist; complete install/upgrade/rollback lifecycle is not evidenced. | Signed deployment bundle, preflight, migration/backup/rollback, offline install and upgrade compatibility tests. |
+| ENV-16 | P2 | Establish workload performance/capacity benchmarks and cost attribution for customer infrastructure. | Resource contracts and per-container limits exist; representative WGS/large workload benchmark is not claimed. | Reproducible benchmark suite, CPU/RAM/I/O/storage/network metrics, queue fairness and per-tenant usage accounting. |
+
+### 6.3 Environment execution dependency order
+
+1. **Integrate and verify the stack:** #297 baseline → #300 API/worker boundary → #301 execution contract → #305 environment contract → #306 persistence → #307/#308 adapters → #309 pre-analysis case scope → #310 OCI executor → #312 architecture candidates → #313 VEP resource binding. Reconcile #321 runtime trust and do not merge any child ahead of its parents.
+2. **Close the local customer-owned Docker path:** environment lifecycle/qualification, mandatory persistent execution, intake validation, resource staging/publication, secret handling, quotas, cancellation and recovery.
+3. **Qualify deployment variants:** Docker/Podman runtime matrix on supported customer OS/kernel/storage combinations; ARM64 candidate qualification; VEP profile qualification.
+4. **Add remote execution control plane:** agent enrollment, mTLS, signed heartbeat, revocation, scheduler adapter and job reconciliation.
+5. **Add Kubernetes and HPC/Slurm execution adapters:** runtime attestation alone is not a scheduler integration.
+6. **Add marketplace/compute integration:** only after environment identity, capacity, isolation, provenance, billing and trust boundaries are stable.
+
+### 6.4 What is already done versus not done
+
+**Implemented or substantially implemented in draft PRs:** tool-neutral API/worker split; shared execution contract; environment/capacity contract; immutable environment registration and execution ledger; local persistent executor; BCFtools/VEP adapters; expanded BCFtools operations; case-scoped ledger schema; Linux OCI Docker/Podman isolation; x86_64 live runtime qualification; ARM64 candidate build/qualification; VEP cache directory binding; Kubernetes and Docker/bare-metal runtime attestation in #321.
+
+**Not yet established as complete:** merged/integrated execution-platform release; mandatory end-to-end executor use across all scientific subprocesses; pre-analysis intake execution integration; full environment lifecycle/control plane; remote agent enrollment and mTLS; scheduler adapters; centralized resource leasing/quotas; secret delivery; object-store staging/atomic publication/reverification; worker-loss recovery across runtimes; broad lab-host qualification; VEP architecture profile registry; production ARM64 promotion; environment administration/observability; production customer installation/upgrade/rollback qualification.
+
+---
+
+## 7. Strategic platform roadmap (not Phase 1 defects)
 
 These are agreed SIRALOOM product goals and must not be confused with current clinical defects or falsely marked implemented:
 
@@ -226,7 +288,7 @@ These are agreed SIRALOOM product goals and must not be confused with current cl
 
 ---
 
-## 7. Immediate next actions
+## 8. Immediate next actions
 
 1. Refresh PR #321 mergeability and exact-head CI; determine why GitHub currently reports `mergeable: false` before any merge consideration.
 2. Reconcile the Stage 1 matrix's stale runtime-attestation statement and resolve the VCF version-policy discrepancy.
@@ -238,6 +300,6 @@ No merge, production deployment, or clinical-use authorization is implied by thi
 
 ---
 
-## 8. Change log
+## 9. Change log
 
-- **2026-11-12:** Initial baseline created from PR #321 head `0f375367293a5fa20739cedaf478b87a41cb1455`, PR description, Stage 1 matrix, scientific workflow specification, Phase 1 release status, durable artifact validation specification, runtime attestation document, architecture/security/authorization documents, migrations and integration-test inventory.
+- **2026-11-12:** Environment execution PR chain #300–#313 reconciled; PR #297 merged parent confirmed. Initial baseline created from PR #321 head `0f375367293a5fa20739cedaf478b87a41cb1455`, PR description, Stage 1 matrix, scientific workflow specification, Phase 1 release status, durable artifact validation specification, runtime attestation document, architecture/security/authorization documents, migrations and integration-test inventory.
