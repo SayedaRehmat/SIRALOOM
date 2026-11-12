@@ -384,6 +384,46 @@ def inspect_caller_provenance(
         else "NOT_DECLARED"
     )
 
+    field_declaration_checks: list[dict[str, str]] = []
+    field_declaration_mismatches: list[dict[str, str]] = []
+    if definition:
+        for namespace, expected_fields in definition["expected_header_definitions"].items():
+            observed_definitions = info_definitions if namespace == "INFO" else format_definitions
+            for field_id, (expected_number, expected_type) in expected_fields.items():
+                observed = observed_definitions.get(field_id)
+                if observed is None:
+                    continue
+                check = {
+                    "namespace": namespace,
+                    "field_id": field_id,
+                    "observed_number": str(observed.get("number") or ""),
+                    "observed_type": str(observed.get("type") or ""),
+                    "expected_number": expected_number,
+                    "expected_type": expected_type,
+                    "status": (
+                        "PASS"
+                        if observed.get("number") == expected_number
+                        and observed.get("type") == expected_type
+                        else "MISMATCH"
+                    ),
+                }
+                field_declaration_checks.append(check)
+                if check["status"] == "MISMATCH":
+                    field_declaration_mismatches.append(check)
+
+    if identity_status == "CONFLICTED":
+        semantic_status = "CONFLICTED_CALLER_METADATA"
+    elif not definition:
+        semantic_status = "NOT_ASSESSED"
+    elif field_declaration_mismatches:
+        semantic_status = "DECLARATION_MISMATCH"
+    elif not field_declaration_checks:
+        semantic_status = "NO_DOCUMENTED_CALLER_FIELDS_PRESENT"
+    elif version_status == "DECLARED":
+        semantic_status = "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED"
+    else:
+        semantic_status = "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_UNVERIFIED"
+
     return {
         "schema_version": 1,
         "identity_status": identity_status,
