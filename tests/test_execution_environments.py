@@ -253,3 +253,45 @@ def test_container_environment_snapshot_round_trips_immutable_image_identity():
     assert restored.runtime_image_digest == digest
     assert restored.runtime_image_reference == reference
     assert restored.snapshot() == original.snapshot()
+
+
+def test_container_environment_requires_explicit_per_job_limits():
+    digest = "sha256:" + "b" * 64
+    profile = _environment(
+        uuid4(),
+        runtime_kind="DOCKER",
+        executor_kind="CONTAINER",
+        image_digest=digest,
+        image_reference="registry.example.org/siraloom/bcftools@" + digest,
+    )
+    incomplete = ExecutionEnvironmentProfile(
+        **{**profile.__dict__, "job_limits": None}
+    )
+
+    with pytest.raises(ExecutionEnvironmentError, match="explicit qualified per-job"):
+        incomplete.validate()
+
+
+def test_container_job_limits_cannot_oversubscribe_concurrent_capacity():
+    digest = "sha256:" + "b" * 64
+    profile = _environment(
+        uuid4(),
+        runtime_kind="DOCKER",
+        executor_kind="CONTAINER",
+        image_digest=digest,
+        image_reference="registry.example.org/siraloom/bcftools@" + digest,
+    )
+    unsafe = ExecutionEnvironmentProfile(
+        **{
+            **profile.__dict__,
+            "job_limits": ExecutionJobLimits(
+                cpu_cores=3,
+                memory_bytes=8 * 1024**3,
+                pids_limit=1024,
+                container_user="10001:10001",
+            ),
+        }
+    )
+
+    with pytest.raises(ExecutionEnvironmentError, match="concurrency-adjusted capacity"):
+        unsafe.validate()
