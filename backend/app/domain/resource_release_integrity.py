@@ -87,11 +87,6 @@ def _verify_release_reference(
         if (
             resource is not None
             and str(resource.access_method or "").upper() in {"LOCAL", "FILE", "LOCAL_ONLY"}
-            and str(resource.resource_type or "").upper() in {
-                "EVIDENCE", "POPULATION", "PHENOTYPE", "CLINICAL_DATABASE",
-                "CLINICAL_VARIANT", "GENE_DISEASE", "DISEASE_PHENOTYPE",
-                "HPO", "HPOA", "ANNOTATION"
-            }
         ):
             raise ValueError("Local scientific evidence is missing its immutable source-release artifact.")
         if artifact_id is not None or digest is not None or size_bytes is not None:
