@@ -2,8 +2,8 @@
 """Exercise SIRALOOM's VCF stage with public, caller-produced HG002 callsets.
 
 The full source VCF is downloaded and strictly validated. A chr20 projection
-retains the original record text and caller header semantics while reducing
-the reference-aware routing/normalization exercise to one canonical contig.
+retains original record text and caller header semantics while reducing the
+reference-aware routing/normalization exercise to one canonical contig.
 No clinical classification or caller analytical qualification is attempted.
 """
 from __future__ import annotations
@@ -170,6 +170,27 @@ def build_chr20_reference(root: Path) -> tuple[Path, int]:
     return fasta, len(sequence)
 
 
+def reference_for_contig(reference: Path, contig: str, root: Path) -> Path:
+    if contig == "chr20":
+        return reference
+    if contig != "20":
+        raise RuntimeError(f"Unexpected chromosome-20 contig label: {contig}")
+    sequence = "".join(
+        line.strip()
+        for line in reference.read_text(encoding="ascii").splitlines()
+        if line and not line.startswith(">")
+    )
+    fasta = root / "chr20.20.reference.fa"
+    header = ">20\n"
+    fasta.write_text(header + sequence + "\n", encoding="ascii")
+    offset = len(header.encode("ascii"))
+    Path(str(fasta) + ".fai").write_text(
+        f"20\t{len(sequence)}\t{offset}\t{len(sequence)}\t{len(sequence) + 1}\n",
+        encoding="ascii",
+    )
+    return fasta
+
+
 def run(command: list[str], *, stdout_path: Path | None = None) -> str:
     if stdout_path is None:
         completed = subprocess.run(command, check=False, capture_output=True, text=True)
@@ -272,23 +293,22 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
         "strict_validation": "PASS",
     }
 
-    reference_result = validate_vcf_reference_alleles(subset, reference)
+    selected_reference = reference_for_contig(reference, contig, root)
+    reference_result = validate_vcf_reference_alleles(subset, selected_reference)
     result["reference_validation"] = reference_result
 
     routed_dir = root / f"{caller.lower()}_routed"
     routed = route_vcf_records(subset, routed_dir, reference_contig_lengths={contig: reference_length})
     result["routing"] = routed
+    sequence_path = routed.get("sequence_path")
+    if not sequence_path or routed.get("sequence_records", 0) == 0:
+        raise RuntimeError(f"No sequence-resolved SNV/indel records were routed for {caller}")
 
-    sequence_input = Path(routed["sequence"])
-    if not sequence_input.is_file() or routed.get("sequence", 0) == 0:
-        # The router returns a path; its count is reported separately in counts.
-        if not sequence_input.is_file():
-            raise RuntimeError(f"Router did not produce sequence input for {caller}")
     normalized = root / f"{caller.lower()}.normalized.vcf.gz"
     normalization = normalize_vcf_with_bcftools(
-        sequence_input,
+        sequence_path,
         normalized,
-        reference_fasta=reference,
+        reference_fasta=selected_reference,
         expected_bcftools_version="1.25",
         timeout_seconds=1800,
     )
@@ -301,7 +321,6 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
         "index_exists": Path(str(normalized) + ".csi").is_file(),
         "normalized_records": normalized_strict["records"],
         "source_child_reconciliation": normalization.get("source_child_reconciliation"),
-        "reference_identity": normalization.get("reference_identity"),
     }
     return result
 
@@ -340,7 +359,7 @@ def main() -> int:
     for callset in callsets:
         try:
             result = exercise_one(callset, reference, reference_length, args.work_dir)
-        except Exception as error:  # retain complete per-caller diagnostic in the report
+        except Exception as error:
             result = {
                 "caller": callset["caller"],
                 "source_file": callset["filename"],
