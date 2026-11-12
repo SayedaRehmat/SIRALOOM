@@ -203,7 +203,10 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
                                 "field_semantic_deviations", []
                             ),
                         }
-                    elif int(caller_provenance.get("sample_records_without_gt") or 0) > 0:
+                    elif (
+                        isinstance(caller_provenance, dict)
+                        and int(caller_provenance.get("sample_records_without_gt") or 0) > 0
+                    ):
                         metadata["workflow_eligibility"] = "INELIGIBLE"
                         metadata["workflow_eligibility_reason"] = {
                             "code": "SAMPLE_GENOTYPE_FIELD_MISSING_FOR_ANALYSIS",
