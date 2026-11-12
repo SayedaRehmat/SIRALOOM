@@ -5195,7 +5195,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 retention_status=population_observation.response_retention_status,
                             )
                         from backend.app.domain.resource_release_integrity import (
-                            verify_evidence_source_release_reference,
                             verify_population_source_release_reference,
                         )
                         for population_observation in population_rows_for_variant:
