@@ -110,6 +110,11 @@ def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
         "DP": ("1", "Integer"),
         "FT": ("1", "String"),
         "GL": ("3", "Float"),
+        # VCFv4.0 describes GQ/HQ as numeric (not an integer-only type).
+        # Float is the permissive implicit representation; explicit headers
+        # may declare either Integer or Float.
+        "GQ": ("1", "Float"),
+        "HQ": ("2", "Float"),
     }
     definition = reserved.get(field_id)
     if definition is None:
@@ -800,9 +805,20 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     reserved_vcf40_definition = None
     if fileformat == "VCFv4.0" and kind == "FORMAT":
         reserved_vcf40_definition = _reserved_vcf40_format_definition(identifier)
+    reserved_vcf40_type_matches = (
+        parsed["Type"] == reserved_vcf40_definition["Type"]
+        if reserved_vcf40_definition is not None
+        else True
+    )
+    if (
+        fileformat == "VCFv4.0"
+        and kind == "FORMAT"
+        and identifier in {"GQ", "HQ"}
+    ):
+        reserved_vcf40_type_matches = parsed["Type"] in {"Integer", "Float"}
     if reserved_vcf40_definition is not None and (
         number != reserved_vcf40_definition["Number"]
-        or parsed["Type"] != reserved_vcf40_definition["Type"]
+        or not reserved_vcf40_type_matches
     ):
         raise StrictVCFValidationError(
             f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
