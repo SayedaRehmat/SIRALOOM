@@ -977,39 +977,42 @@ def _validate_vcf_index_record_counts(
     for contig in sorted(sequential):
         digest = hashlib.sha256()
         count = 0
-        if persistent_execution is None:
-            # Preserve the original streaming stdout path for callers without a
-            # registered execution environment.
-            with tempfile.TemporaryFile(mode="w+b") as query_output, tempfile.TemporaryFile(mode="w+b") as query_error:
-                try:
-                    queried = subprocess.run(
-                        [
-                            bcftools_executable, "view", "--no-header",
-                            "--regions-overlap", "0", "--regions", contig, str(vcf_path),
-                        ],
-                        stdout=query_output,
-                        stderr=query_error,
-                        timeout=max(1, int(timeout_seconds)),
-                        check=False,
-                    )
-                except subprocess.TimeoutExpired as exc:
-                    raise VCFToolError(
-                        f"Timed out while querying index-backed records for contig {contig!r}."
-                    ) from exc
-                except OSError as exc:
-                    raise VCFToolUnavailable(
-                        f"Unable to execute index-backed query for contig {contig!r}: {exc}"
-                    ) from exc
-                if queried.returncode != 0:
-                    query_error.seek(0)
-                    detail = query_error.read().decode("utf-8", errors="replace").strip()
-                    raise VCFToolError(
-                        f"index-backed record query failed for contig {contig!r}: "
-                        f"{detail or 'unknown bcftools view error'}"
-                    )
-                query_output.seek(0)
-                query_lines = query_output
-                for raw_line in query_lines:
+        with tempfile.TemporaryDirectory(
+            prefix=f".siraloom-index-query-{contig}-",
+            dir=str(execution_workspace),
+        ) as query_dir:
+            query_path = Path(query_dir) / "indexed-query.vcf"
+            query_command = [
+                bcftools_executable, "view", "--no-header",
+                "--regions-overlap", "0", "--regions", contig,
+                "-o", str(query_path), str(vcf_path),
+            ]
+            try:
+                queried = _run_bcftools_command(
+                    query_command,
+                    persistent_execution=persistent_execution,
+                    workflow_id=workflow_id,
+                    operation="validate",
+                    workspace=Path(query_dir),
+                    input_paths=[vcf_path],
+                    output_paths=[query_path],
+                    timeout_seconds=max(1, int(timeout_seconds)),
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise VCFToolError(
+                    f"Timed out while querying index-backed records for contig {contig!r}."
+                ) from exc
+            except OSError as exc:
+                raise VCFToolUnavailable(
+                    f"Unable to execute index-backed query for contig {contig!r}: {exc}"
+                ) from exc
+            if queried.returncode != 0:
+                detail = (queried.stderr or queried.stdout or "unknown bcftools view error").strip()
+                raise VCFToolError(
+                    f"index-backed record query failed for contig {contig!r}: {detail}"
+                )
+            with query_path.open("rb") as query_output:
+                for raw_line in query_output:
                     if not raw_line or raw_line.startswith(b"#"):
                         continue
                     fields = raw_line.split(b"\t", 1)
@@ -1019,52 +1022,6 @@ def _validate_vcf_index_record_counts(
                         )
                     digest.update(raw_line)
                     count += 1
-        else:
-            with tempfile.TemporaryDirectory(
-                prefix=f".siraloom-index-query-{contig}-",
-                dir=str(execution_workspace),
-            ) as query_dir:
-                query_path = Path(query_dir) / "indexed-query.vcf"
-                query_command = [
-                    bcftools_executable, "view", "--no-header",
-                    "--regions-overlap", "0", "--regions", contig,
-                    "-o", str(query_path), str(vcf_path),
-                ]
-                try:
-                    queried = _run_bcftools_command(
-                        query_command,
-                        persistent_execution=persistent_execution,
-                        workflow_id=workflow_id,
-                        operation="validate",
-                        workspace=Path(query_dir),
-                        input_paths=[vcf_path],
-                        output_paths=[query_path],
-                        timeout_seconds=max(1, int(timeout_seconds)),
-                    )
-                except subprocess.TimeoutExpired as exc:
-                    raise VCFToolError(
-                        f"Timed out while querying index-backed records for contig {contig!r}."
-                    ) from exc
-                except OSError as exc:
-                    raise VCFToolUnavailable(
-                        f"Unable to execute index-backed query for contig {contig!r}: {exc}"
-                    ) from exc
-                if queried.returncode != 0:
-                    detail = (queried.stderr or queried.stdout or "unknown bcftools view error").strip()
-                    raise VCFToolError(
-                        f"index-backed record query failed for contig {contig!r}: {detail}"
-                    )
-                with query_path.open("rb") as query_output:
-                    for raw_line in query_output:
-                        if not raw_line or raw_line.startswith(b"#"):
-                            continue
-                        fields = raw_line.split(b"\t", 1)
-                        if not fields or fields[0].decode("utf-8", errors="replace") != contig:
-                            raise VCFToolError(
-                                f"index-backed query for contig {contig!r} returned a record from another contig."
-                            )
-                        digest.update(raw_line)
-                        count += 1
         if count != sequential_counts[contig]:
             raise VCFToolError(
                 f"index-backed query count mismatch for contig {contig!r}: "
@@ -1133,26 +1090,17 @@ def validate_vcf_index_concordance(
     if executable is None:
         raise VCFToolUnavailable("bcftools is required to verify an uploaded VCF index.")
     try:
-        if persistent_execution is None:
-            version_result = subprocess.run(
-                [executable, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                check=False,
-            )
-        else:
-            version_result = _run_bcftools_command(
-                [executable, "--version"],
-                persistent_execution=persistent_execution,
-                workflow_id=workflow_id,
-                operation="validate",
-                workspace=path.parent,
-                input_paths=[],
-                output_paths=[],
-                timeout_seconds=30,
-                execution_id_override=f"bcftools-index-version-{uuid4().hex}",
-            )
+        version_result = _run_bcftools_command(
+            [executable, "--version"],
+            persistent_execution=persistent_execution,
+            workflow_id=workflow_id,
+            operation="validate",
+            workspace=path.parent,
+            input_paths=[path],
+            output_paths=[],
+            timeout_seconds=30,
+            execution_id_override=f"bcftools-index-version-{uuid4().hex}",
+        )
     except subprocess.TimeoutExpired as exc:
         raise VCFToolUnavailable("Timed out while checking the bcftools version for index validation.") from exc
     except OSError as exc:
@@ -1703,26 +1651,17 @@ def normalize_vcf_with_bcftools(
     index_path = Path(str(output_path) + ".csi")
 
     try:
-        if persistent_execution is None:
-            version_result = subprocess.run(
-                [bcftools_executable, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                check=False,
-            )
-        else:
-            version_result = _run_bcftools_command(
-                [bcftools_executable, "--version"],
-                persistent_execution=persistent_execution,
-                workflow_id=workflow_id,
-                operation="validate",
-                workspace=output_path.parent,
-                input_paths=[],
-                output_paths=[],
-                timeout_seconds=30,
-                execution_id_override=f"bcftools-normalize-version-{uuid4().hex}",
-            )
+        version_result = _run_bcftools_command(
+            [bcftools_executable, "--version"],
+            persistent_execution=persistent_execution,
+            workflow_id=workflow_id,
+            operation="validate",
+            workspace=output_path.parent,
+            input_paths=[input_path],
+            output_paths=[],
+            timeout_seconds=30,
+            execution_id_override=f"bcftools-normalize-version-{uuid4().hex}",
+        )
     except subprocess.TimeoutExpired as exc:
         raise VCFToolError("Timed out while checking the bcftools version.") from exc
     except OSError as exc:
