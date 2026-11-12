@@ -3,19 +3,24 @@ ARG BCFTOOLS_PROFILE_ID
 ARG BCFTOOLS_VERSION
 ARG HTSLIB_VERSION
 ARG BCFTOOLS_WORKER_QUEUE
+ARG BCFTOOLS_PLATFORM=linux-64
+ARG BCFTOOLS_BUILDER_IMAGE=mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3
 ARG BCFTOOLS_BASE_IMAGE=python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30
 ARG DEBIAN_SNAPSHOT_TIMESTAMP=20261105T000000Z
 ARG UV_VERSION=0.10.0
-ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae
+ARG UV_ARCHIVE_SHA256_X86_64=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae
+ARG UV_ARCHIVE_SHA256_AARCH64=c300afd5f2d31df039fe6a26a2d68a76b62832098c272a43e1e74ab9efd4fbd7
 
-FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS bcftools-source-build
+FROM ${BCFTOOLS_BUILDER_IMAGE} AS bcftools-source-build
 ARG BCFTOOLS_BUILD_LOCK_FILE
 ARG BCFTOOLS_PROFILE_ID
 ARG BCFTOOLS_VERSION
 ARG HTSLIB_VERSION
+ARG BCFTOOLS_PLATFORM
 ENV MAMBA_ROOT_PREFIX=/tmp/build-env
 COPY --chown=$MAMBA_USER:$MAMBA_USER ${BCFTOOLS_BUILD_LOCK_FILE} /tmp/bcftools-build-explicit.lock
-RUN test "$(uname -m)" = "x86_64" || { echo "This source-build lock is qualified only for Linux AMD64 (x86_64)." >&2; exit 1; } \
+RUN case "$(uname -m):${BCFTOOLS_PLATFORM}" in x86_64:linux-64|aarch64:linux-aarch64) ;; *) echo "No BCFtools source-build lock for architecture $(uname -m) and platform ${BCFTOOLS_PLATFORM}." >&2; exit 1 ;; esac \
+    && grep -Fqx "# platform: ${BCFTOOLS_PLATFORM}" /tmp/bcftools-build-explicit.lock \
     && micromamba create --yes --name bcftools-build --file /tmp/bcftools-build-explicit.lock \
     && micromamba clean --all --yes
 COPY configs/bioinformatics/toolchain-profiles.v1.json /tmp/toolchain-profiles.v1.json
@@ -33,7 +38,9 @@ RUN micromamba run --name bcftools-build env \
 FROM ${BCFTOOLS_BASE_IMAGE}
 ARG DEBIAN_SNAPSHOT_TIMESTAMP
 ARG UV_VERSION
-ARG UV_ARCHIVE_SHA256
+ARG UV_ARCHIVE_SHA256_X86_64
+ARG UV_ARCHIVE_SHA256_AARCH64
+ARG BCFTOOLS_PLATFORM
 ARG BCFTOOLS_PROFILE_ID
 ARG BCFTOOLS_VERSION
 ARG HTSLIB_VERSION
@@ -50,7 +57,7 @@ ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs
 WORKDIR /app
 
-RUN test "$(uname -m)" = "x86_64" || { echo "This source-built runtime is qualified only for Linux AMD64 (x86_64)." >&2; exit 1; } \
+RUN case "$(uname -m):${BCFTOOLS_PLATFORM}" in x86_64:linux-64|aarch64:linux-aarch64) ;; *) echo "No BCFtools runtime profile for architecture $(uname -m) and platform ${BCFTOOLS_PLATFORM}." >&2; exit 1 ;; esac \
     && groupadd --system --gid 10001 siraloom \
     && useradd --system --uid 10001 --gid siraloom --create-home \
         --home-dir /home/siraloom --shell /usr/sbin/nologin siraloom \
@@ -81,10 +88,11 @@ RUN set -eux \
     && test -s /etc/ssl/certs/ca-certificates.crt \
     && python -c 'import os, ssl; p=ssl.get_default_verify_paths(); expected=os.environ["SSL_CERT_FILE"]; assert p.cafile == expected, f"Python TLS CA file is {p.cafile}, expected {expected}"; assert os.path.isdir(os.environ["SSL_CERT_DIR"])' \
     && rm -rf /var/lib/apt/lists/* \
-    && python -c 'import hashlib, os, urllib.request; version=os.environ["UV_VERSION"]; expected=os.environ["UV_ARCHIVE_SHA256"]; url=f"https://github.com/astral-sh/uv/releases/download/{version}/uv-x86_64-unknown-linux-gnu.tar.gz"; data=urllib.request.urlopen(url, timeout=60).read(); actual=hashlib.sha256(data).hexdigest(); print("uv archive SHA-256:", actual); assert actual == expected, f"uv archive SHA-256 mismatch: {actual}"; open("/tmp/uv.tar.gz","wb").write(data)' \
+    && case "$(uname -m)" in x86_64) uv_target=x86_64-unknown-linux-gnu; uv_sha="${UV_ARCHIVE_SHA256_X86_64}" ;; aarch64) uv_target=aarch64-unknown-linux-gnu; uv_sha="${UV_ARCHIVE_SHA256_AARCH64}" ;; *) echo "Unsupported uv architecture: $(uname -m)" >&2; exit 1 ;; esac \
+    && UV_TARGET="$uv_target" UV_ARCHIVE_SHA256="$uv_sha" python -c 'import hashlib, os, urllib.request; version=os.environ["UV_VERSION"]; target=os.environ["UV_TARGET"]; expected=os.environ["UV_ARCHIVE_SHA256"]; url=f"https://github.com/astral-sh/uv/releases/download/{version}/uv-{target}.tar.gz"; data=urllib.request.urlopen(url, timeout=60).read(); actual=hashlib.sha256(data).hexdigest(); print("uv archive SHA-256:", actual); assert actual == expected, f"uv archive SHA-256 mismatch: {actual}"; open("/tmp/uv.tar.gz","wb").write(data)' \
     && tar -xzf /tmp/uv.tar.gz -C /tmp \
-    && install -m 0755 /tmp/uv-x86_64-unknown-linux-gnu/uv /usr/local/bin/uv \
-    && rm -rf /tmp/uv.tar.gz /tmp/uv-x86_64-unknown-linux-gnu \
+    && install -m 0755 "/tmp/uv-${uv_target}/uv" /usr/local/bin/uv \
+    && rm -rf /tmp/uv.tar.gz "/tmp/uv-${uv_target}" \
     && test "$(uv --version)" = "uv ${UV_VERSION}" \
     && lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
     && uv lock --check \
