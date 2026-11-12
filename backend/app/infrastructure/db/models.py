@@ -163,7 +163,11 @@ class Case(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"))
     execution_environment_registration_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("execution_environment_registrations.id"), nullable=True
+        ForeignKey(
+            "execution_environment_registrations.id",
+            name="fk_cases_execution_environment_registration",
+        ),
+        nullable=True,
     )
     case_identifier: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
