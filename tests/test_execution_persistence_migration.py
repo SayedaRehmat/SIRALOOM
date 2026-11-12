@@ -140,7 +140,7 @@ def _migration_lab(session):
         "id": case_id,
         "organization_id": organization.id,
         "case_identifier": f"MIG-{uuid4().hex[:10]}",
-        "status": "DRAFT",
+        "status": "OPEN",
         "accession_reconciliation_status": "NEW_WORKFLOW",
         "clinical_context": {},
         "language": "en",
