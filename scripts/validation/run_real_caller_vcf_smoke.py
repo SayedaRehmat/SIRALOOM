@@ -84,7 +84,9 @@ def select_callset(files: list[dict[str, Any]], caller: str) -> dict[str, Any]:
 
 def file_url(item: dict[str, Any]) -> str:
     links = item.get("links") or {}
-    url = links.get("self") or links.get("download")
+    url = links.get("content") or links.get("download")
+    if not url and links.get("self"):
+        url = str(links["self"]).rstrip("/") + "/content"
     if not url:
         raise RuntimeError(f"Zenodo file has no downloadable URL: {item.get('key')}")
     return str(url)
