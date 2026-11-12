@@ -12,7 +12,7 @@ from backend.app.domain.enums import ArtifactType
 from backend.app.domain.ingestion import ValidationResult
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Artifact, AuditEvent, Case, Organization, User
+from backend.app.infrastructure.db.models import Artifact, AuditEvent, Case, Organization, Specimen, User
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def validation_runtime(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     )
     Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
-    organization_id, case_id, user_id = uuid4(), uuid4(), uuid4()
+    organization_id, case_id, user_id, specimen_id = uuid4(), uuid4(), uuid4(), uuid4()
     with factory() as db:
         organization = Organization(
             id=organization_id,
@@ -48,7 +48,14 @@ def validation_runtime(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             language="en",
             created_by=user_id,
         )
-        db.add_all([organization, user, case])
+        specimen = Specimen(
+            id=specimen_id,
+            case_id=case_id,
+            specimen_identifier=f"SPECIMEN-{specimen_id}",
+            specimen_type="BLOOD",
+            metadata_json={"vcf_sample_name": "SAMPLE1"},
+        )
+        db.add_all([organization, user, case, specimen])
         db.commit()
 
     storage_root = tmp_path / "artifacts"
@@ -73,6 +80,7 @@ def validation_runtime(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             metadata={"ingestion": {"file_kind": "VCF"}},
             validation_status="PENDING",
         )
+        artifact.specimen_id = specimen_id
         artifact_id = artifact.id
         db.commit()
 
@@ -153,3 +161,63 @@ def test_worker_tool_unavailability_does_not_classify_vcf_as_invalid(
                 ),
             )
         ) is None
+
+def test_worker_persists_caller_review_gate_without_marking_structural_vcf_invalid(
+    validation_runtime, monkeypatch
+):
+    caller_provenance = {
+        "caller_profile_id": "deepvariant_germline",
+        "caller_semantic_compatibility_status": "MISSING_REQUIRED_FORMAT_FIELD",
+        "caller_semantic_compatibility_review_required": True,
+        "required_format_field_violations": [{
+            "field_id": "GT",
+            "reason": "MISSING_FROM_SAMPLE_RECORD_FORMAT",
+            "record_count": 1,
+        }],
+        "field_declaration_mismatches": [],
+        "field_semantic_deviations": [],
+    }
+    monkeypatch.setattr(
+        validation,
+        "validate_vcf",
+        lambda _path: ValidationResult(
+            status="VALID",
+            file_kind="VCF",
+            record_count=1,
+            sample_names=["SAMPLE1"],
+            detected_build=None,
+            errors=[],
+            warnings=[
+                "Caller semantic compatibility requires review before genotype-based clinical analysis "
+                "(status=MISSING_REQUIRED_FORMAT_FIELD)."
+            ],
+            fileformat="VCFv4.3",
+            metadata={"caller_provenance": caller_provenance},
+        ),
+    )
+
+    result = validation.validate_persisted_artifact(validation_runtime["artifact_id"])
+
+    assert result["status"] == "VALID"
+    with validation_runtime["factory"]() as db:
+        artifact = db.get(Artifact, validation_runtime["artifact_id"])
+        case = db.get(Case, validation_runtime["case_id"])
+        audit = db.scalar(
+            select(AuditEvent).where(
+                AuditEvent.case_id == validation_runtime["case_id"],
+                AuditEvent.event_type == "ARTIFACT_VALIDATION_COMPLETED",
+            )
+        )
+        assert artifact.validation_status == "VALID"
+        assert artifact.metadata_json["validation"]["caller_provenance"] == caller_provenance
+        assert artifact.metadata_json["workflow_eligibility"] == "REVIEW_REQUIRED"
+        assert artifact.metadata_json["workflow_eligibility_reason"]["code"] == (
+            "CALLER_SEMANTIC_COMPATIBILITY_REVIEW_REQUIRED"
+        )
+        assert artifact.metadata_json["workflow_eligibility_reason"]["compatibility_status"] == (
+            "MISSING_REQUIRED_FORMAT_FIELD"
+        )
+        assert case.status == "ARTIFACT_UPLOADED"
+        assert audit is not None
+        assert audit.payload["validation"]["caller_provenance"] == caller_provenance
+\n
