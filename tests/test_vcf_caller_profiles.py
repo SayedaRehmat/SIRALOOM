@@ -8,6 +8,7 @@ from backend.app.config import settings
 from backend.app.domain import ingestion
 from backend.app.domain.artifact_validation import _validation_payload
 from backend.app.domain.vcf import parse_vcf
+from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
 FIXTURES = Path(__file__).parent / "fixtures" / "vcf" / "callers"
@@ -18,7 +19,6 @@ FIXTURES = Path(__file__).parent / "fixtures" / "vcf" / "callers"
     [
         ("gatk_haplotypecaller_v4_2_6_1_doc_example.vcf", "gatk_haplotypecaller", "4.2.6.1", "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED"),
         ("deepvariant_1_10_0_golden.vcf", "deepvariant_germline", "1.10.0", "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED"),
-        ("dragen_snv_v4_3_doc_example.vcf", "dragen_snv_germline", "4.3.0", "CALLER_SPEC_SEMANTIC_DEVIATION"),
     ],
 )
 def test_documented_caller_outputs_are_structurally_valid_and_profiled(
@@ -36,14 +36,6 @@ def test_documented_caller_outputs_are_structurally_valid_and_profiled(
     assert provenance["caller_profile_version"] == "1.0.0"
     assert provenance["field_declaration_mismatches"] == []
     assert provenance["caller_semantic_compatibility_status"] == semantic_status
-    if profile_id == "dragen_snv_germline":
-        assert provenance["field_semantic_deviations"] == [{
-            "namespace": "FORMAT",
-            "field_id": "GP",
-            "status": "CALLER_SPECIFIC_SCALE_DIFFERS_FROM_VCF_RESERVED_SEMANTICS",
-            "description": "DRAGEN documents FORMAT/GP in Phred scale; VCF reserves FORMAT/GP for posterior probabilities in [0, 1].",
-        }]
-        assert provenance["caller_semantic_compatibility_review_required"] is True
     assert provenance["identity_source"] == "VCF_HEADER_DECLARATION_UNVERIFIED"
     assert provenance["release_qualification_status"] == "NOT_ESTABLISHED"
     assert provenance["clinical_qualification_status"] == "NOT_ESTABLISHED"
@@ -331,18 +323,18 @@ def test_generic_vcf_gp_retains_vcf_probability_range_validation(tmp_path: Path)
 
 
 @pytest.mark.parametrize(
-    ("version_headers", "expected_override"),
+    "version_headers",
     [
-        ("##DRAGENVersion=4.3.0\n", True),
-        ("##DRAGENVersion=4.3.1\n", False),
-        ("", False),
-        ("##DRAGENVersion=4.3.0\n##DRAGENVersion=4.4.0\n", False),
+        "##DRAGENVersion=4.3.0\n",
+        "##DRAGENVersion=4.3.1\n",
+        "",
+        "##DRAGENVersion=4.3.0\n##DRAGENVersion=4.4.0\n",
     ],
 )
-def test_dragen_gp_phred_scale_override_requires_exact_unambiguous_release(
-    tmp_path: Path, version_headers: str, expected_override: bool
+def test_dragen_header_declarations_never_relax_reserved_gp_probability_validation(
+    tmp_path: Path, version_headers: str
 ) -> None:
-    path = tmp_path / "dragen-gp-release-gate.vcf"
+    path = tmp_path / "dragen-gp-header-only.vcf"
     path.write_text(
         "##fileformat=VCFv4.3\n"
         "##source=DRAGEN_SNV\n"
@@ -354,14 +346,28 @@ def test_dragen_gp_phred_scale_override_requires_exact_unambiguous_release(
         encoding="utf-8",
     )
 
-    if expected_override:
-        provenance = validate_vcf_strict(path)["caller_provenance"]
-        assert provenance["dragen_gp_phred_semantics_applicable"] is True
-        assert provenance["caller_semantic_compatibility_status"] == "CALLER_SPEC_SEMANTIC_DEVIATION"
-    else:
-        with pytest.raises(StrictVCFValidationError) as exc_info:
-            validate_vcf_strict(path)
-        assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
+    with pytest.raises(StrictVCFValidationError) as exc_info:
+        validate_vcf_strict(path)
+    assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_dragen_documented_gp_deviation_is_reported_without_authorizing_validation_override() -> None:
+    fixture = FIXTURES / "dragen_snv_v4_3_doc_example.vcf"
+    provenance = inspect_caller_provenance(fixture)
+
+    assert provenance["dragen_gp_phred_semantics_applicable"] is False
+    assert provenance["caller_semantic_compatibility_status"] == "CALLER_SPEC_SEMANTIC_DEVIATION"
+    assert provenance["caller_semantic_compatibility_review_required"] is True
+    assert provenance["field_semantic_deviations"] == [{
+        "namespace": "FORMAT",
+        "field_id": "GP",
+        "status": "CALLER_SPECIFIC_SCALE_DIFFERS_FROM_VCF_RESERVED_SEMANTICS",
+        "description": "DRAGEN documents FORMAT/GP in Phred scale; VCF reserves FORMAT/GP for posterior probabilities in [0, 1].",
+    }]
+
+    with pytest.raises(StrictVCFValidationError) as exc_info:
+        validate_vcf_strict(fixture)
+    assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
 
 
 def test_deepvariant_model_metadata_alone_identifies_partial_caller_provenance(
@@ -383,6 +389,30 @@ def test_deepvariant_model_metadata_alone_identifies_partial_caller_provenance(
     assert provenance["caller_version"] is None
     assert provenance["deepvariant_model_type"] == "WGS"
     assert provenance["deepvariant_model_type_status"] == "DECLARED"
+
+
+def test_conflicting_deepvariant_model_declarations_require_semantic_review(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "conflicting-deepvariant-models.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##DeepVariant_version=1.10.0\n"
+        "##DeepVariant_model_type=WGS\n"
+        "##DeepVariant_model_type=WES\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\t.\tA\tC\t50\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    provenance = validate_vcf_strict(path)["caller_provenance"]
+
+    assert provenance["identity_status"] == "DECLARED"
+    assert provenance["deepvariant_model_type"] is None
+    assert provenance["deepvariant_model_type_status"] == "CONFLICTED"
+    assert provenance["caller_semantic_compatibility_status"] == "CONFLICTED_CALLER_METADATA"
+    assert provenance["caller_semantic_compatibility_review_required"] is True
+    assert provenance["profile_match_status"] == "CONFLICTED_METADATA"
 
 
 def test_conflicting_dragen_pipeline_source_markers_do_not_enable_gp_override(
