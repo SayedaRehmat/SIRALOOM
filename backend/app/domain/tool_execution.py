@@ -237,10 +237,16 @@ class ScientificResourceBinding:
         rechecked on every execution so a large indexed VCF is not rehashed for
         every single-locus query.
         """
-        primary = Path(path).resolve(strict=True)
-        paths = (primary, *(Path(item).resolve(strict=True) for item in sidecar_paths))
+        raw_primary = Path(path)
+        raw_sidecars = tuple(Path(item) for item in sidecar_paths)
+        if any(_contains_symlink_component(item) for item in (raw_primary, *raw_sidecars)):
+            raise ToolExecutionContractError(
+                "Scientific resource files must not contain symlink components."
+            )
+        primary = raw_primary.resolve(strict=True)
+        paths = (primary, *(item.resolve(strict=True) for item in raw_sidecars))
         for item in paths:
-            if _contains_symlink_component(item) or not item.is_file():
+            if not item.is_file():
                 raise ToolExecutionContractError(
                     "Scientific resource files must be regular files without symlink components."
                 )
