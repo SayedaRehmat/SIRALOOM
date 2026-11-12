@@ -56,20 +56,20 @@ The execution migrations have been added as:
 
 The revision IDs and `down_revision` declarations were changed in the new files. The original `0063` and `0064` execution migration files were not copied into this branch, so the clinical revisions retain their existing IDs. The case-scoped migration body, data backfill, nullable-analysis change, foreign key, and database-specific execution-ledger triggers were carried forward from the execution stack.
 
-## 5. Explicitly unresolved overlaps
+## 5. Overlap reconciliation
 
-Four paths were changed by both source stacks:
+All four source-stack overlaps have now been reconciled without replacing the clinical branch wholesale:
 
-1. `backend/app/infrastructure/db/models.py` — reconciled by retaining clinical models and appending the two execution models.
-2. `backend/app/workflows/variant.py` — **not yet semantically merged**. Clinical authorization, runtime attestation, source-release and response-retention changes must be preserved while adding mandatory execution-plan resolution and execution routing.
-3. `backend/app/adapters/annotation/vep.py` — **not yet semantically merged**. Clinical raw-response byte retention must coexist with persistent VEP execution and execution-record provenance.
-4. `tests/test_vep_provider.py` — **not yet semantically merged**. Both clinical raw-byte-retention and persistent-execution test coverage must be retained.
+1. `backend/app/infrastructure/db/models.py` — retained the clinical models and appended `ExecutionEnvironmentRegistration` and `ToolExecutionRecord`.
+2. `backend/app/workflows/variant.py` — applied the persistent-execution integration hunks from #307 onto the clinical version. Clinical authorization, runtime attestation, response-retention and source-release logic were preserved by applying context-matched hunks rather than replacing the file. The persistent helper remains transitional/opt-in; this does not yet satisfy ENV-LS-02/03 mandatory routing.
+3. `backend/app/adapters/annotation/vep.py` — merged persistent VEP execution and execution-record provenance while retaining the clinical exact raw-response-byte capture and metadata required by the response-retention gate.
+4. `tests/test_vep_provider.py` — applied the persistent VEP test additions onto the clinical raw-response-retention tests.
 
-The three unresolved files remain at the PR #321 version on this branch. No older execution-stack copy overwrote them. Therefore BCFtools/VEP workflow integration is not claimed complete.
+The three runtime/provider/test overlaps are now present together in the integration branch. This is source-level reconciliation; it is not proof that the merged behaviors pass tests or that all VCF intake/scientific callsites are routed through the persistent executor.
 
 ## 6. Verification still required
 
-No tests have been run on this combined branch yet. Before ENV-LS-01 can be closed:
+No tests have been run on this combined branch yet. A migration test assertion was added for required `case_id` and nullable `analysis_id`; it still requires execution in CI. Before ENV-LS-01 can be closed:
 
 - Inspect the complete migration graph from the supported baseline and assert one head/no duplicate revisions.
 - Run Alembic upgrade on PostgreSQL and SQLite from empty and supported prior-release databases.
