@@ -210,6 +210,8 @@ def inspect_caller_provenance(
     *,
     fileformat: str | None = None,
     gvcf_marker_count: int = 0,
+    sample_record_count: int = 0,
+    sample_records_without_gt: int = 0,
 ) -> dict[str, Any]:
     """Identify declared caller metadata without treating it as authenticated.
 
@@ -417,15 +419,20 @@ def inspect_caller_provenance(
                     field_declaration_mismatches.append(check)
 
     required_format_fields = definition["required_format_fields"] if definition else []
-    required_format_field_violations = (
-        [
-            {"field_id": field_id, "reason": "REQUIRED_FOR_SAMPLE_CALLER_OUTPUT"}
-            for field_id in required_format_fields
-            if sample_count > 0 and field_id not in format_fields
-        ]
-        if definition
-        else []
-    )
+    required_format_field_violations: list[dict[str, str | int]] = []
+    if definition and sample_count > 0:
+        for field_id in required_format_fields:
+            if field_id not in format_fields:
+                required_format_field_violations.append({
+                    "field_id": field_id,
+                    "reason": "REQUIRED_FORMAT_HEADER_DEFINITION_MISSING",
+                })
+            if field_id == "GT" and sample_records_without_gt:
+                required_format_field_violations.append({
+                    "field_id": field_id,
+                    "reason": "MISSING_FROM_SAMPLE_RECORD_FORMAT",
+                    "record_count": sample_records_without_gt,
+                })
 
     if identity_status == "CONFLICTED":
         semantic_status = "CONFLICTED_CALLER_METADATA"
@@ -470,6 +477,8 @@ def inspect_caller_provenance(
         "declared_filter_ids": sorted(filter_ids),
         "declared_alt_ids": sorted(alt_ids),
         "sample_count": sample_count,
+        "sample_record_count": sample_record_count,
+        "sample_records_without_gt": sample_records_without_gt,
         "required_format_fields": required_format_fields,
         "required_format_field_violations": required_format_field_violations,
         "documented_format_semantics_for_present_fields": present_format_semantics,
@@ -477,7 +486,7 @@ def inspect_caller_provenance(
         "field_declaration_checks": field_declaration_checks,
         "field_declaration_mismatches": field_declaration_mismatches,
         "caller_semantic_compatibility_status": semantic_status,
-        "caller_semantic_review_required": semantic_status not in {
+        "caller_semantic_compatibility_review_required": semantic_status not in {
             "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED",
             "NO_DOCUMENTED_CALLER_FIELDS_PRESENT",
         },
