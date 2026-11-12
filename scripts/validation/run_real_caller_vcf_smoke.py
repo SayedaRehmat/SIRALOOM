@@ -66,7 +66,9 @@ def select_callset(files: list[dict[str, Any]], caller: str) -> dict[str, Any]:
             continue
         if caller == "GATK" and "GATK" in upper:
             candidates.append(item)
-        elif caller == "DEEPVARIANT" and "DEEPVARIANT" in upper:
+        elif caller == "DEEPVARIANT" and (
+            "DEEPVARIANT" in upper or re.search(r"(?:^|[_.-])DV(?:[_.-]|$)", upper)
+        ) and "GIRAFFE" not in upper:
             candidates.append(item)
 
     if caller == "DEEPVARIANT" and len(candidates) > 1:
@@ -75,9 +77,15 @@ def select_callset(files: list[dict[str, Any]], caller: str) -> dict[str, Any]:
             candidates = bwa
     if len(candidates) != 1:
         names = [str(item.get("key", "")) for item in candidates]
+        available = [
+            str(item.get("key", "")) for item in files
+            if "HG002" in str(item.get("key", "")).upper()
+            and ".VCF" in str(item.get("key", "")).upper()
+        ]
         raise RuntimeError(
             f"Could not uniquely select the published HG002 {caller} small-variant VCF "
-            f"from Zenodo record {CALLSET_RECORD}; candidates={names}"
+            f"from Zenodo record {CALLSET_RECORD}; candidates={names}; "
+            f"available_HG002_VCFs={available}"
         )
     return candidates[0]
 
