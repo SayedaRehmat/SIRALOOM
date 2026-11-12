@@ -6,6 +6,7 @@ import pytest
 
 from backend.app.config import settings
 from backend.app.domain import ingestion
+from backend.app.domain.vcf import parse_vcf
 from backend.app.domain.vcf_validation import validate_vcf_strict
 
 FIXTURES = Path(__file__).parent / "fixtures" / "vcf" / "callers"
@@ -197,3 +198,34 @@ def test_caller_provenance_is_persisted_in_ingestion_validation_metadata(
     assert result.metadata is not None
     assert result.metadata["caller_provenance"]["caller_profile_id"] == "gatk_haplotypecaller"
     assert result.metadata["caller_provenance"]["caller_version"] == "4.2.6.1"
+
+
+def test_deepvariant_vaf_and_likelihood_fields_are_preserved_verbatim() -> None:
+    record = next(
+        parse_vcf(
+            str(FIXTURES / "deepvariant_1_10_0_golden.vcf"),
+            allow_unselected_multisample=True,
+        )
+    )
+    values = record.sample_calls["NA12878"]["format_values"]
+
+    assert values["AD"] == "25,30"
+    assert values["VAF"] == "0.545455"
+    assert values["PL"] == "37,0,42"
+
+
+def test_dragen_caller_specific_evidence_fields_are_preserved_verbatim() -> None:
+    record = next(
+        parse_vcf(
+            str(FIXTURES / "dragen_snv_v4_3_doc_example.vcf"),
+            allow_unselected_multisample=True,
+        )
+    )
+    values = record.sample_calls["SAMPLE1"]["format_values"]
+
+    assert values["AD"] == "0,5,4"
+    assert values["AF"] == "0.556,0.444"
+    assert values["DP"] == "9"
+    assert values["PL"] == "177,144,46,122,0,72"
+    assert values["GL"] == "-17.704,-14.420,-4.626,-12.220,0.000,-7.244"
+    assert values["GP"] == "107.6,109.6,14.65,87.58,0.152,40.82"
