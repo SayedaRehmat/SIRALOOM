@@ -148,19 +148,24 @@ def test_postgres_upgrade_from_supported_0070_database_preserves_rows_and_guards
             )
 
         # Verify the PostgreSQL trigger guards on the populated upgraded DB.
-        with target_engine.begin() as connection:
-            with pytest.raises(DBAPIError):
-                connection.execute(
-                    update(ExecutionEnvironmentRegistration)
-                    .where(ExecutionEnvironmentRegistration.id == environment_id)
-                    .values(profile_version="2")
-                )
-        with target_engine.begin() as connection:
-            with pytest.raises(DBAPIError):
-                connection.execute(
-                    delete(ExecutionEnvironmentRegistration)
-                    .where(ExecutionEnvironmentRegistration.id == environment_id)
-                )
+        def assert_trigger_rejects(statement):
+            with target_engine.connect() as connection:
+                transaction = connection.begin()
+                try:
+                    with pytest.raises(DBAPIError):
+                        connection.execute(statement)
+                finally:
+                    transaction.rollback()
+
+        assert_trigger_rejects(
+            update(ExecutionEnvironmentRegistration)
+            .where(ExecutionEnvironmentRegistration.id == environment_id)
+            .values(profile_version="2")
+        )
+        assert_trigger_rejects(
+            delete(ExecutionEnvironmentRegistration)
+            .where(ExecutionEnvironmentRegistration.id == environment_id)
+        )
 
         with target_engine.begin() as connection:
             connection.execute(text(
@@ -169,20 +174,16 @@ def test_postgres_upgrade_from_supported_0070_database_preserves_rows_and_guards
                 "WHERE execution_id='legacy-postgres-execution'"
             ))
             connection.execute(text(
-                "UPDATE tool_execution_records SET status='SUCCEEDED', provenance='{\"exit_code\":0}'::jsonb, "
+                "UPDATE tool_execution_records SET status='SUCCEEDED', provenance='{\"exit_code\":0}'::json, "
                 "exit_code=0, completed_at=now() WHERE execution_id='legacy-postgres-execution'"
             ))
-        with target_engine.begin() as connection:
-            with pytest.raises(DBAPIError):
-                connection.execute(text(
-                    "UPDATE tool_execution_records SET output_manifest='[]'::jsonb "
-                    "WHERE execution_id='legacy-postgres-execution'"
-                ))
-        with target_engine.begin() as connection:
-            with pytest.raises(DBAPIError):
-                connection.execute(text(
-                    "DELETE FROM tool_execution_records WHERE execution_id='legacy-postgres-execution'"
-                ))
+        assert_trigger_rejects(text(
+            "UPDATE tool_execution_records SET output_manifest='[]'::json "
+            "WHERE execution_id='legacy-postgres-execution'"
+        ))
+        assert_trigger_rejects(text(
+            "DELETE FROM tool_execution_records WHERE execution_id='legacy-postgres-execution'"
+        ))
     finally:
         if target_engine is not None:
             target_engine.dispose()
