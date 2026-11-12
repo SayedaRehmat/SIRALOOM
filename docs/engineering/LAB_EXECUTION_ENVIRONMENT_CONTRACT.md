@@ -82,3 +82,29 @@ qualify a physical lab host, remote agent, container image, scheduler, storage
 system, or scientific tool. The environment must remain DISCOVERED,
 STAGED, or QUALIFICATION_PENDING until measured qualification evidence is
 available. Dispatch accepts only ENVIRONMENT_QUALIFIED environments.
+
+## Lab Server case-workflow execution policy
+
+The first commercial Lab Server workflow is stricter than the generic environment
+contract. A case may be assigned only to an immutable, environment-qualified
+profile whose snapshot and registration columns agree and whose tenant ownership
+matches the case. The case-bound execution resolver rejects:
+
+- host/local-process execution and remote agents;
+- non-Linux environments or runtimes other than Docker and Podman;
+- mutable/unpinned container images;
+- network-enabled profiles and unsupported schedulers;
+- missing per-job CPU, memory, PID and non-root UID:GID limits.
+
+Container profiles carry explicit `job_limits`. CPU and memory limits must fit
+the environment's concurrency-adjusted capacity; the OCI adapter applies the
+limits at container creation. These are configuration and adapter controls,
+not proof of a qualified host. The current implementation does **not** yet
+enforce a per-job scratch-disk quota, durable capacity reservations, or an
+end-to-end storage quota. Those remain release blockers for production
+qualification.
+
+The generic `LOCAL_PROCESS` executor remains available to non-clinical
+development/qualified contexts, but the case-bound Lab Server resolver will
+not select it. BCFtools and VEP scientific commands do not retain a local
+subprocess fallback when a persistent case execution service is absent.
