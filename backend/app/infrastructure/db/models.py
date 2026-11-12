@@ -162,6 +162,9 @@ class Case(Base):
     __tablename__ = "cases"
     id: Mapped[UUID] = mapped_column(primary_key=True)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"))
+    execution_environment_registration_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("execution_environment_registrations.id"), nullable=True
+    )
     case_identifier: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
     accession_reconciliation_status: Mapped[str] = mapped_column(
