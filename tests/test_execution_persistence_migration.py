@@ -86,6 +86,27 @@ def test_execution_environment_and_tool_ledger_migration_creates_tables_and_guar
     assert "trg_tool_execution_record_identity_immutable" in triggers
     assert "trg_tool_execution_record_state_guard" in triggers
     assert "trg_tool_execution_record_no_delete" in triggers
+
+    for model in (ExecutionEnvironmentRegistration, ToolExecutionRecord):
+        database_columns = {
+            column["name"]: column
+            for column in inspector.get_columns(model.__tablename__)
+        }
+        model_columns = {column.name: column for column in model.__table__.columns}
+        assert set(database_columns) == set(model_columns)
+        for name, model_column in model_columns.items():
+            assert database_columns[name]["nullable"] == model_column.nullable, (
+                model.__tablename__, name, database_columns[name]["nullable"], model_column.nullable
+            )
+
+    environment_indexes = {item["name"] for item in inspector.get_indexes("execution_environment_registrations")}
+    assert {"uq_execution_environment_lab_version", "uq_execution_environment_global_version"} <= environment_indexes
+    execution_indexes = {item["name"] for item in inspector.get_indexes("tool_execution_records")}
+    assert {
+        "ix_tool_execution_case_created",
+        "ix_tool_execution_analysis_created",
+        "ix_tool_execution_org_status_created",
+    } <= execution_indexes
     engine.dispose()
 
 
