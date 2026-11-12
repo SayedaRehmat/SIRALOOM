@@ -121,6 +121,23 @@ def digest(path: Path, algorithm: str = "sha256") -> str:
     return hasher.hexdigest()
 
 
+def dragen_gp_attestation(callset: dict[str, Any], artifact: Path) -> dict[str, Any] | None:
+    if callset["caller"] != "DRAGEN":
+        return None
+    return {
+        "schema_version": 1,
+        "caller_profile_id": "dragen_snv_germline",
+        "caller_release": "4.2",
+        "source_record_url": "https://zenodo.org/records/8350256",
+        "source_filename": DRAGEN_KEY,
+        "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
+        "semantic_deviation": "FORMAT/GP_PHRED_SCALE",
+        "source_sha256": callset["sha256"],
+        "source_artifact_path": callset["local_path"],
+        "artifact_sha256": digest(artifact),
+    }
+
+
 def download_callsets(root: Path) -> list[dict[str, Any]]:
     callset_files = record_files(CALLSET_RECORD)
     dragen_files = record_files(DRAGEN_RECORD)
@@ -258,6 +275,7 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
         "source_file": callset["filename"],
         "source_sha256": callset["sha256"],
         "source_bytes": callset["bytes"],
+        "caller_semantic_review_required": caller == "DRAGEN",
     }
 
     provenance = inspect_caller_provenance(source)
@@ -274,7 +292,8 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
     result["caller_profile_match"] = provenance.get("caller_profile_id") == expected_profile
 
     try:
-        strict = validate_vcf_strict(source)
+        source_attestation = dragen_gp_attestation(callset, source)
+        strict = validate_vcf_strict(source, caller_attestation=source_attestation)
         result["whole_file_strict_validation"] = {
             "status": "PASS",
             "vcf_version": strict["fileformat"],
@@ -285,6 +304,9 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
             "symbolic_records": strict["symbolic_records"],
             "gvcf_markers": strict["gvcf_markers"],
             "compression": strict["compression"],
+            "caller_semantic_attestation": strict["caller_semantic_attestation"],
+            "caller_semantic_compatibility_review_required": strict["caller_semantic_compatibility_review_required"],
+            "caller_provenance_semantic_status": strict["caller_provenance"]["caller_semantic_compatibility_status"],
         }
     except StrictVCFValidationError as error:
         result["whole_file_strict_validation"] = {
@@ -295,7 +317,8 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
         return result
 
     subset, contig = project_chr20(source, root, reference_length)
-    region_strict = validate_vcf_strict(subset)
+    subset_attestation = dragen_gp_attestation(callset, subset)
+    region_strict = validate_vcf_strict(subset, caller_attestation=subset_attestation)
     result["chr20_projection"] = {
         "contig": contig,
         "records": region_strict["records"],
@@ -322,7 +345,8 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
         expected_bcftools_version="1.25",
         timeout_seconds=1800,
     )
-    normalized_strict = validate_vcf_strict(normalized)
+    normalized_attestation = dragen_gp_attestation(callset, normalized)
+    normalized_strict = validate_vcf_strict(normalized, caller_attestation=normalized_attestation)
     result["normalization"] = {
         "status": "PASS",
         "output": str(normalized),
@@ -382,6 +406,8 @@ def main() -> int:
             failures.append(f"{callset['caller']}: caller profile identity did not match")
         if (result.get("whole_file_strict_validation") or {}).get("status") != "PASS":
             failures.append(f"{callset['caller']}: whole-file strict VCF validation did not pass")
+        if callset["caller"] == "DRAGEN" and not (result.get("whole_file_strict_validation") or {}).get("caller_semantic_compatibility_review_required"):
+            failures.append("DRAGEN: GP semantic deviation was not retained as review-required")
         if (result.get("reference_validation") or {}).get("result") not in {"PASS", "PARTIAL"}:
             failures.append(f"{callset['caller']}: selected-reference validation did not pass")
         if (result.get("normalization") or {}).get("status") != "PASS":
