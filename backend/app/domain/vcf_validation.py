@@ -1133,12 +1133,17 @@ def _validate_declared_value(
             )
             if valid:
                 numeric_value = float(item)
-                if (field_scope, key) in PROBABILITY_FLOAT_FIELDS and not (
-                    field_scope == "FORMAT"
-                    and key == "GP"
-                    and caller_profile_id == "dragen_snv_germline"
-                ):
-                    valid = 0.0 <= numeric_value <= 1.0
+                if (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
+                    if (
+                        field_scope == "FORMAT"
+                        and key == "GP"
+                        and caller_profile_id == "dragen_snv_germline"
+                    ):
+                        # DRAGEN v4.3.0 uses a Phred scale, not probabilities.
+                        # Preserve the scale but still reject negative/NaN values.
+                        valid = numeric_value >= 0.0
+                    else:
+                        valid = 0.0 <= numeric_value <= 1.0
                 if (field_scope, key) in NONNEGATIVE_FLOAT_FIELDS:
                     valid = numeric_value >= 0.0
                 if _base_modification_field_kind(key) == "fraction":
