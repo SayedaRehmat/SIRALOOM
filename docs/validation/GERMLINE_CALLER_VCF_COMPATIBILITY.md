@@ -54,12 +54,14 @@ The same FORMAT/INFO field name is not a promise of identical read counting, fil
 | FORMAT/AF or VAF | Not a universal mandatory HaplotypeCaller field | VAF is Number=A in the documented output | FORMAT/AF is based on informative depth, Number=A |
 | FORMAT/GQ | Genotype quality derived from likelihood evidence; GATK documents a cap of 99 | Conditional genotype quality in the documented header | Caller-specific GQ; germline GVCF hom-reference and variant-call behavior differ |
 | FORMAT/PL | Normalized Phred-scaled genotype likelihoods | Phred-scaled genotype likelihoods | Phred-scaled genotype likelihoods when emitted |
-| FORMAT/GL / GP | May be present according to annotations/configuration | Not required by the cited golden fixture | DRAGEN documents GL and GP in its small-variant output |
+| FORMAT/GL / GP | May be present according to annotations/configuration | Not required by the cited golden fixture | DRAGEN documents GL and GP; its FORMAT/GP values are Phred-scaled, unlike the VCF-reserved GP probability scale (0–1) |
 | FORMAT/PS | Phasing field when emitted | Phase set when emitted | Phase-set value identifies the first phased variant position |
 | QUAL | GATK site-level confidence; can be very large | Model/output-specific site confidence | DRAGEN documents a different QUAL formulation from GATK |
 | FILTER | Preserve actual declared filter IDs and per-record values | Documented IDs include PASS, RefCall, LowQual, NoCall | Preserve actual release/configuration-specific filter IDs |
 
 **Critical DRAGEN distinction:** its documentation distinguishes unfiltered site depth in INFO/DP from informative sample depth in FORMAT/DP. FORMAT/AD and FORMAT/AF are based on informative depth. Treating these values as interchangeable can produce incorrect allele-balance or depth calculations.
+
+**DRAGEN FORMAT/GP exception:** the DRAGEN v4.3 guide explicitly states that GP values are Phred-scaled and shows values above 1 (for example, 107.6). This conflicts with the VCF-reserved FORMAT/GP definition as posterior probabilities in the range 0–1. SIRALOOM therefore accepts syntactically valid Float values for GP only when an explicit DRAGEN caller profile is declared, preserves the original values, and reports `CALLER_SPEC_SEMANTIC_DEVIATION` with a field-level deviation. For files without a recognized DRAGEN declaration, the VCF GP probability-range validation remains in force. These values must not be consumed as normalized probabilities.
 
 **Critical cross-caller rule:** SIRALOOM must not apply one universal QUAL, GQ, DP, AD, AF, or filter threshold across these callers. A laboratory must establish thresholds using the exact caller release, model, assay, read technology, reference, and validated truth material. Unknown caller-specific annotations are preserved but not interpreted by guessing.
 
@@ -151,4 +153,4 @@ GATK and DeepVariant can be exercised in reproducible software environments. DRA
 - DeepVariant repository and germline caller description: https://github.com/google/deepvariant
 - DeepVariant r1.10 golden VCF test fixture: https://github.com/google/deepvariant/blob/r1.10/deepvariant/testdata/golden.postprocess_single_site_output.vcf
 - DRAGEN v4.3 Small Variant Calling guide: https://help.dragen.illumina.com/dragen-v4.3/product-guide/dragen-v4.3/dragen-dna-pipeline/small-variant-calling
-- DRAGEN v4.3 output and QUAL/GQ/depth semantics: same product guide, sections "Read filtering and reporting of vcf DP fields", "QUAL, QD, and GQ Formulation", "Phasing and Phased Variants", and "Variant Representation".
+- DRAGEN v4.3 FORMAT/GP Phred scale, QUAL/GQ/depth semantics: same product guide, sections "Read filtering and reporting of vcf DP fields", "QUAL, QD, and GQ Formulation", "Phasing and Phased Variants", and "Variant Representation".
