@@ -2976,8 +2976,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         )
                         if payloads is None:
                             if provider.provider_id == "VEP":
-                                provider.persistent_execution_required = True
-                                provider.persistent_execution_service = _persistent_tool_execution_service(
+                                                            provider.persistent_execution_service = _persistent_tool_execution_service(
                                     db,
                                     analysis=analysis,
                                     organization_id=case.organization_id,
