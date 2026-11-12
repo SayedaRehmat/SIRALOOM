@@ -520,9 +520,11 @@ def inspect_caller_provenance(
         "field_declaration_mismatches": field_declaration_mismatches,
         "field_semantic_deviations": field_semantic_deviations,
         "caller_semantic_compatibility_status": semantic_status,
-        "caller_semantic_compatibility_review_required": semantic_status not in {
-            "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED",
-            "NO_DOCUMENTED_CALLER_FIELDS_PRESENT",
+        "caller_semantic_compatibility_review_required": semantic_status in {
+            "CONFLICTED_CALLER_METADATA",
+            "MISSING_REQUIRED_FORMAT_FIELD",
+            "DECLARATION_MISMATCH",
+            "CALLER_SPEC_SEMANTIC_DEVIATION",
         },
         "documented_filter_ids": definition["documented_filter_ids"] if definition else [],
         "gvcf_reference_confidence_markers_present": bool(gvcf_marker_count),
