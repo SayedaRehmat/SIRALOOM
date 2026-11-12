@@ -9,6 +9,8 @@ from contextlib import contextmanager
 from math import comb, isnan
 from pathlib import Path
 
+from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
+
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
@@ -2195,6 +2197,9 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
 
     return {
         "fileformat": fileformat,
+        "caller_provenance": inspect_caller_provenance(
+            path, fileformat=fileformat, gvcf_marker_count=gvcf_markers
+        ),
         "records": records,
         "alternate_allele_count": alternate_allele_count,
         "reference_only_records": reference_only,
