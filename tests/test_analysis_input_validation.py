@@ -113,3 +113,20 @@ def test_analysis_rejects_structurally_valid_vcf_with_caller_review_required(com
     with pytest.raises(ValueError, match="requires caller semantic compatibility review"):
         validate_analysis_input_artifact(artifact, "GRCh38", "PROBAND")
 
+def test_analysis_rejects_sample_vcf_marked_ineligible_for_missing_gt():
+    artifact = SimpleNamespace(
+        artifact_type="VCF",
+        validation_status="VALID",
+        genome_build="GRCh38",
+        metadata_json={
+            "validation": {"sample_names": ["PROBAND"]},
+            "workflow_eligibility": "INELIGIBLE",
+            "workflow_eligibility_reason": {
+                "code": "SAMPLE_GENOTYPE_FIELD_MISSING_FOR_ANALYSIS",
+            },
+        },
+    )
+
+    with pytest.raises(ValueError, match="not eligible for genotype-based clinical analysis"):
+        validate_analysis_input_artifact(artifact, "GRCh38", "PROBAND")
+
