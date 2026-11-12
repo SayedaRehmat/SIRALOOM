@@ -16,6 +16,7 @@ import re
 import subprocess
 import sys
 import urllib.request
+from urllib.parse import quote
 from pathlib import Path
 from typing import Any
 
@@ -90,14 +91,11 @@ def select_callset(files: list[dict[str, Any]], caller: str) -> dict[str, Any]:
     return candidates[0]
 
 
-def file_url(item: dict[str, Any]) -> str:
-    links = item.get("links") or {}
-    url = links.get("content") or links.get("download")
-    if not url and links.get("self"):
-        url = str(links["self"]).rstrip("/") + "/content"
-    if not url:
-        raise RuntimeError(f"Zenodo file has no downloadable URL: {item.get('key')}")
-    return str(url)
+def file_url(item: dict[str, Any], record_id: str) -> str:
+    key = quote(str(item.get("key", "")), safe="/")
+    if not key:
+        raise RuntimeError("Zenodo file metadata has no key")
+    return f"https://zenodo.org/records/{record_id}/files/{key}?download=1"
 
 
 def download(url: str, destination: Path) -> None:
@@ -139,7 +137,9 @@ def download_callsets(root: Path) -> list[dict[str, Any]]:
     for caller, item in selected:
         key = str(item["key"])
         destination = root / f"{caller.lower()}_{Path(key).name}"
-        download(file_url(item), destination)
+        source_url = file_url(item, DRAGEN_RECORD if caller == "DRAGEN" else CALLSET_RECORD)
+        print(f"Downloading {caller} callset {key} from {source_url}", flush=True)
+        download(source_url, destination)
         expected = str(item.get("checksum") or "")
         algorithm, _, expected_value = expected.partition(":")
         observed = digest(destination, algorithm) if algorithm in {"md5", "sha1", "sha256"} else None
@@ -148,7 +148,7 @@ def download_callsets(root: Path) -> list[dict[str, Any]]:
         downloaded.append({
             "caller": caller,
             "filename": key,
-            "download_url": file_url(item),
+            "download_url": source_url,
             "bytes": destination.stat().st_size,
             "zenodo_checksum": expected or None,
             "verified_source_checksum": bool(expected_value and observed),
