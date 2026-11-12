@@ -5204,8 +5204,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             Evidence.analysis_id == analysis.id,
                             Evidence.variant_id == ann.variant_id,
                         )).all()
+                        from backend.app.domain.evidence_response_retention import verify_evidence_response_artifact
                         for evidence_row in persisted_evidence:
-                            verify_evidence_source_release_reference(db, evidence_row)
+                            verify_evidence_response_artifact(
+                                db, evidence_row, require_retained=False,
+                            )
                         population_resource_rows = _require_population_resource_rows(
                             db,
                             analysis_id=analysis.id,
