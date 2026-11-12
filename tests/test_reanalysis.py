@@ -703,8 +703,8 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
     )
 
     organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
-    variant_id, normalized_artifact_id, source_artifact_id, index_artifact_id = (
-        uuid4(), uuid4(), uuid4(), uuid4()
+    variant_id, normalized_artifact_id, source_artifact_id, index_artifact_id, response_artifact_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     )
 
     with Session(engine) as db:
@@ -758,10 +758,26 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
             reference="A", alternate="G", normalization_status="NORMALIZED",
             canonical_key="GRCh38:1-100-A-G", identifiers={},
         ))
+        db.add(Artifact(
+            id=response_artifact_id, analysis_id=analysis_id, case_id=case_id,
+            artifact_type="PROVIDER_RESPONSE_RAW", filename="provider-response.bin",
+            media_type="application/json", size_bytes=13, sha256="response-sha",
+            storage_uri="file:///immutable/provider-response.bin", genome_build="GRCh38",
+            validation_status="VALIDATED",
+            metadata_json={
+                "resource_id": None, "request_fingerprint": "annotation-request",
+                "raw_response_sha256": "response-sha", "raw_response_size_bytes": 13,
+            },
+        ))
         db.add(Annotation(
             id=uuid4(), variant_id=variant_id, analysis_id=analysis_id,
             provider_name="GeneBe", provider_version="api-public-v1",
-            resource_name="GeneBe", resource_version="api-public-v1", payload={"gene": "TEST"},
+            resource_name="GeneBe", resource_version="api-public-v1",
+            request_fingerprint="annotation-request", response_sha256="response-sha",
+            response_artifact_id=response_artifact_id,
+            response_artifact_sha256="response-sha", response_artifact_size_bytes=13,
+            response_retention_status="RETAINED", response_retention_reason="test",
+            payload={"gene": "TEST"},
         ))
         db.add(Artifact(
             id=normalized_artifact_id, analysis_id=analysis_id, case_id=case_id,
@@ -859,6 +875,10 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
         child_annotation = db.scalars(select(Annotation).where(
             Annotation.analysis_id == child.id,
         )).all()
+        child_response_artifact = db.scalar(select(Artifact).where(
+            Artifact.analysis_id == child.id,
+            Artifact.artifact_type == "PROVIDER_RESPONSE_RAW",
+        ))
         child_normalize_step = db.scalar(select(WorkflowStep).where(
             WorkflowStep.analysis_id == child.id,
             WorkflowStep.step_id == "normalize",
@@ -872,6 +892,12 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
             Artifact.artifact_type == "VCF_INDEX",
         ))
 
+        assert len(child_annotation) == 1
+        assert child_annotation[0].response_retention_status == "RETAINED"
+        assert child_annotation[0].response_artifact_id == child_response_artifact.id
+        assert child_response_artifact.analysis_id == child.id
+        assert child_response_artifact.sha256 == "response-sha"
+        assert child_response_artifact.storage_uri == "file:///immutable/provider-response.bin"
         assert child_validation.status == "SUCCEEDED"
         assert child_normalize.status == "SUCCEEDED"
         assert child_annotation and child_annotation[0].payload == {"gene": "TEST"}
