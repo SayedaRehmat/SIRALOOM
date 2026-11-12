@@ -370,6 +370,37 @@ def test_dragen_documented_gp_deviation_is_reported_without_authorizing_validati
     assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
 
 
+def test_validate_vcf_emits_warning_for_review_required_caller_semantics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "deepvariant-without-record-gt.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##DeepVariant_version=1.10.0\n"
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tC\t50\tPASS\t.\tDP\t20\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        ingestion,
+        "_bcftools_validate",
+        lambda _path: (None, settings.bcftools_version, settings.htslib_version),
+    )
+
+    result = ingestion.validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.metadata["caller_provenance"]["caller_semantic_compatibility_status"] == (
+        "MISSING_REQUIRED_FORMAT_FIELD"
+    )
+    assert result.metadata["caller_provenance"]["caller_semantic_compatibility_review_required"] is True
+    assert any(
+        "requires review before genotype-based clinical analysis" in warning
+        for warning in result.warnings
+    )
+
+
 def test_deepvariant_model_metadata_alone_identifies_partial_caller_provenance(
     tmp_path: Path,
 ) -> None:
