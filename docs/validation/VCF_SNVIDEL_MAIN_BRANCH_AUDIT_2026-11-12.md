@@ -161,3 +161,13 @@ The VCF SNV/indel intake stage must not be declared laboratory-qualified until t
 The correct implementation target is a production-grade, multi-caller-aware VCF intake and normalization boundary for supported germline SNV/indel records—not a universal implementation of every VCF feature and not an assertion that SIRALOOM has analytically qualified upstream callers.
 
 PR #297 closes the durable intake gap. The caller-compatibility branch closes the initial GATK/DeepVariant/DRAGEN provenance and documented-field compatibility gap, subject to CI. Actual caller-run manifests and analytical truth-set qualification remain separate, explicit gates.
+
+
+## 10. Standards references used for this audit
+
+- GA4GH HTS specifications (VCF versions and canonical specifications): https://github.com/samtools/hts-specs
+- IGSR / 1000 Genomes VCFv4.0 format guidance (sample genotype data use GT first and every sample has GT call information; unavailable alleles are represented explicitly as missing): https://www.internationalgenome.org/wiki/Analysis/vcf4.0/
+- GATK HaplotypeCaller algorithm and output: https://gatk.broadinstitute.org/hc/en-us/articles/360036359552-HaplotypeCaller
+- GATK VCF structure and FORMAT/AD, DP, GQ, PL semantics: https://gatk.broadinstitute.org/hc/en-us/articles/360035531692-VCF-Variant-Call-Format
+- DeepVariant upstream germline caller and r1.10 golden VCF fixture: https://github.com/google/deepvariant
+- DRAGEN v4.3 small-variant output, depth, QUAL/GQ and phasing semantics: https://help.dragen.illumina.com/dragen-v4.3/product-guide/dragen-v4.3/dragen-dna-pipeline/small-variant-calling
