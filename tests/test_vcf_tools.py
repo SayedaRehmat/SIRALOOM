@@ -1398,3 +1398,22 @@ def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path):
     assert request.operation == "normalize"
     assert request.inputs[0].sha256 == hashlib.sha256(input_path.read_bytes()).hexdigest()
     assert request.outputs[0].path == str(output_path)
+
+
+def test_normalization_refuses_to_run_without_case_bound_execution(tmp_path: Path):
+    input_vcf = tmp_path / "input.vcf"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t1\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    reference = make_reference(tmp_path)
+
+    with pytest.raises(VCFToolError, match="case-bound qualified execution environment"):
+        normalize_vcf_with_bcftools(
+            input_vcf,
+            tmp_path / "normalized.vcf.gz",
+            reference_fasta=reference,
+            persistent_execution=None,
+        )
