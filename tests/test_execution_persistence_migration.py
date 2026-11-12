@@ -4,6 +4,7 @@ import pytest
 
 from alembic import command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, inspect, text, Table, MetaData, insert, update, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -24,6 +25,9 @@ def test_execution_environment_and_tool_ledger_migration_creates_tables_and_guar
     monkeypatch.setenv("DATABASE_URL", url)
     cfg = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     cfg.set_main_option("sqlalchemy.url", url)
+    assert ScriptDirectory.from_config(cfg).get_heads() == [
+        "0073_case_execution_environment"
+    ]
 
     command.upgrade(cfg, "head")
 
