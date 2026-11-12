@@ -7,7 +7,7 @@ import pytest
 from backend.app.config import settings
 from backend.app.domain import ingestion
 from backend.app.domain.vcf import parse_vcf
-from backend.app.domain.vcf_validation import validate_vcf_strict
+from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
 FIXTURES = Path(__file__).parent / "fixtures" / "vcf" / "callers"
 
@@ -324,5 +324,6 @@ def test_generic_vcf_gp_retains_vcf_probability_range_validation(tmp_path: Path)
         encoding="utf-8",
     )
 
-    with pytest.raises(Exception, match="FORMAT sample 1/GP"):
+    with pytest.raises(StrictVCFValidationError, match="FORMAT sample 1/GP") as exc_info:
         validate_vcf_strict(path)
+    assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
