@@ -17,7 +17,7 @@ from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis, Artifact, Case, Evidence, Organization, OrganizationMembership, Resource,
-    ProviderRetentionApproval, ProviderRetentionApprovalAction,
+    ProviderRetentionApproval, ProviderRetentionApprovalAction, Report,
     ResourceDiscovery, User, Variant,
 )
 
@@ -687,4 +687,149 @@ def test_postgres_evidence_verification_racing_expiry_fails_closed(tmp_path, mon
         with Session(engine) as session:
             assert session.get(ProviderRetentionApproval, approval_id).status == "EXPIRED"
     finally:
+        engine.dispose()
+
+
+@pytest.mark.integration
+def test_postgres_report_signout_waits_for_source_retention_revocation(tmp_path, monkeypatch):
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    import backend.app.domain.evidence_response_retention as retention
+    from backend.app.domain import clinical_authorization
+    from backend.app.reporting import finalization
+
+    db, store, case, analysis, variant, resource = _seed(
+        tmp_path, monkeypatch, database_url=database_url
+    )
+    engine = db.get_bind()
+    response_artifact, digest, size = _persist_raw(
+        store, db, case, analysis, resource, tmp_path,
+        raw=b'{"report":"must-recheck-authorization"}',
+    )
+    evidence = _evidence(
+        analysis, variant, resource, response_artifact, digest, size
+    )
+    db.add(evidence)
+    db.flush()
+
+    draft_path = tmp_path / "draft-report.pdf"
+    draft_path.write_bytes(b"%PDF-1.4 test draft")
+    draft_artifact = Artifact(
+        id=uuid4(), case_id=case.id, analysis_id=analysis.id,
+        artifact_type="REPORT_PDF", filename="draft.pdf",
+        media_type="application/pdf", size_bytes=draft_path.stat().st_size,
+        sha256=__import__("hashlib").sha256(draft_path.read_bytes()).hexdigest(),
+        storage_uri="file:///draft-report.pdf", genome_build="GRCh38",
+        validation_status="VALID", metadata_json={},
+    )
+    db.add(draft_artifact)
+    report = Report(
+        id=uuid4(), case_id=case.id, analysis_id=analysis.id,
+        report_version=1, language="en", report_type="CLINICAL_INTERPRETATION",
+        status="DRAFT", artifact_id=draft_artifact.id,
+        content_json={"findings": []},
+    )
+    db.add(report)
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+        ProviderRetentionApproval.status == "APPROVED",
+    ))
+    approval_id, actor_id = approval.id, approval.reviewer_id
+    report_id, evidence_id = report.id, evidence.id
+    db.commit()
+    db.close()
+
+    revoker_has_lock = threading.Event()
+    allow_revocation = threading.Event()
+    signout_query_started = threading.Event()
+    original_authorized_reviewer = retention._authorized_reviewer
+
+    def pause_revoker(session, *, organization_id, reviewer_id):
+        if threading.current_thread().name == "report-approval-revoker":
+            revoker_has_lock.set()
+            if not allow_revocation.wait(timeout=10):
+                raise TimeoutError("report/revocation test gate was not released")
+        return original_authorized_reviewer(
+            session, organization_id=organization_id, reviewer_id=reviewer_id
+        )
+
+    monkeypatch.setattr(retention, "_authorized_reviewer", pause_revoker)
+    monkeypatch.setattr(
+        clinical_authorization, "assert_analysis_clinical_authorization",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(finalization, "final_report_eligibility", lambda *_args, **_kwargs: (True, []))
+    monkeypatch.setattr(
+        finalization, "_verify_report_snapshot",
+        lambda session, _report: verify_evidence_response_artifact(
+            session, session.get(Evidence, evidence_id)
+        ),
+    )
+    monkeypatch.setattr(
+        finalization, "_persist_pdf_artifact",
+        lambda _session, *, report, **_kwargs: _session.get(Artifact, report.artifact_id),
+    )
+
+    from sqlalchemy import event
+
+    def observe_signout_approval_lock(_conn, _cursor, statement, _parameters, _context, _many):
+        if (
+            threading.current_thread().name == "report-signout"
+            and "provider_retention_approvals" in statement.lower()
+        ):
+            signout_query_started.set()
+
+    event.listen(engine, "before_cursor_execute", observe_signout_approval_lock)
+    outcomes = []
+    errors = []
+
+    def revoke():
+        try:
+            with Session(engine) as session:
+                retention.revoke_provider_retention(
+                    session, approval_id=approval_id, actor_id=actor_id,
+                    reason="Revoke source authorization during report sign-out test",
+                )
+                session.commit()
+        except Exception as exc:  # surfaced in the main test thread  # noqa: BLE001
+            errors.append(exc)
+
+    def signout():
+        try:
+            with Session(engine) as session:
+                finalization.finalize_report(
+                    session, report_id=report_id, approver_id=actor_id,
+                    reason="Source authorization race integration test",
+                )
+                session.commit()
+                outcomes.append("FINALIZED")
+        except finalization.ReportFinalizationError:
+            outcomes.append("BLOCKED")
+        except Exception as exc:  # surfaced in the main test thread  # noqa: BLE001
+            errors.append(exc)
+
+    revoker = threading.Thread(target=revoke, name="report-approval-revoker")
+    signer = threading.Thread(target=signout, name="report-signout")
+    try:
+        revoker.start()
+        assert revoker_has_lock.wait(timeout=5)
+        signer.start()
+        assert signout_query_started.wait(timeout=5)
+        allow_revocation.set()
+        revoker.join(timeout=10)
+        signer.join(timeout=10)
+        assert not revoker.is_alive()
+        assert not signer.is_alive()
+        assert not errors
+        assert outcomes == ["BLOCKED"]
+        with Session(engine) as session:
+            assert session.get(ProviderRetentionApproval, approval_id).status == "REVOKED"
+            assert session.get(Report, report_id).status == "DRAFT"
+    finally:
+        allow_revocation.set()
+        event.remove(engine, "before_cursor_execute", observe_signout_approval_lock)
+        revoker.join(timeout=2)
+        signer.join(timeout=2)
         engine.dispose()
