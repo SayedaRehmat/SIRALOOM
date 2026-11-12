@@ -41,7 +41,10 @@ def _case_payload(db: Session, case: Case) -> dict:
     ).all()
     return {
         "case_id": str(case.id), "case_identifier": case.case_identifier, "organization_id": str(case.organization_id),
-        "execution_environment_registration_id": str(case.execution_environment_registration_id) if case.execution_environment_registration_id else None,
+        "execution_environment_registration_id": (
+            str(getattr(case, "execution_environment_registration_id", None))
+            if getattr(case, "execution_environment_registration_id", None) else None
+        ),
         "status": case.status, "accession_reconciliation_status": case.accession_reconciliation_status, "language": case.language, "clinical_context": case.clinical_context or {},
         "created_by": str(case.created_by), "created_at": case.created_at.isoformat(), "updated_at": case.updated_at.isoformat(),
         "assays": [{
