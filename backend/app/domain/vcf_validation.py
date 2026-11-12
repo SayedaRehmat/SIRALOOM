@@ -1361,7 +1361,6 @@ def _validate_record(
     reference_contigs: set[str] | None,
     fileformat: str | None = None,
     format_definitions: dict[str, dict[str, str]] | None = None,
-    caller_profile_id: str | None = None,
 ) -> tuple[str, int, list[str]]:
     if len(fields) < 8:
         raise StrictVCFValidationError(f"Expected at least 8 VCF columns at line {line_no}", code="VCF_RECORD_INVALID")
@@ -1760,7 +1759,6 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         base_modification_format_fields.add(format_key)
             _chrom, _pos, alts = _validate_record(
                 fields, line_no, reference_contigs, fileformat, format_definitions,
-                header_caller_profile_id,
             )
             if fileformat == "VCFv4.5" and _pos > 0:
                 _validate_vcf45_reference_block_coverage(
