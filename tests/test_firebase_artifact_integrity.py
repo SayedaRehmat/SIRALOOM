@@ -10,8 +10,14 @@ class FakeBlob:
     def __init__(self, payload: bytes, sha256: str | None):
         self.payload = payload
         self.metadata = {"sha256": sha256} if sha256 is not None else {}
+        self.generation = 41
+        self.download_kwargs = None
 
-    def download_to_filename(self, filename: str) -> None:
+    def reload(self) -> None:
+        pass
+
+    def download_to_filename(self, filename: str, **kwargs) -> None:
+        self.download_kwargs = kwargs
         Path(filename).write_bytes(self.payload)
 
 
@@ -67,5 +73,34 @@ def test_download_to_file_honors_explicit_expected_size(tmp_path):
             destination,
             expected_size_bytes=len(payload) + 1,
         )
+
+    assert not destination.exists()
+
+
+
+def test_download_is_pinned_to_inspected_object_generation(tmp_path):
+    payload = b"immutable generation\n"
+    digest = hashlib.sha256(payload).hexdigest()
+    store = _store(payload, digest)
+    blob = store.bucket._blob
+
+    destination = tmp_path / "input.vcf"
+    store.download_to_file(
+        "gs://test-bucket/case/artifact/input.vcf",
+        destination,
+        expected_sha256=digest,
+        expected_size_bytes=len(payload),
+    )
+
+    assert blob.download_kwargs == {"if_generation_match": 41}
+
+
+def test_download_fails_closed_when_generation_or_digest_is_missing(tmp_path):
+    store = _store(b"payload", None)
+    store.bucket._blob.generation = None
+    destination = tmp_path / "input.vcf"
+
+    with pytest.raises(RuntimeError, match="generation is unavailable"):
+        store.download_to_file("gs://test-bucket/case/artifact/input.vcf", destination)
 
     assert not destination.exists()

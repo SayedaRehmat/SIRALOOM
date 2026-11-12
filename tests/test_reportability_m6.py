@@ -235,7 +235,11 @@ def test_clinical_report_contains_only_final_report_findings():
     assert "Clinical use remains subject to laboratory-specific validation" not in draft_html
 
 
-def test_finalization_blocked_until_reportability_final():
+def test_finalization_blocked_until_reportability_final(monkeypatch):
+    # This test targets reportability ordering; authorization is covered separately.
+    from backend.app.domain import clinical_authorization, runtime_attestation
+    monkeypatch.setattr(clinical_authorization, "assert_analysis_clinical_authorization", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(runtime_attestation, "assert_analysis_runtime_attested", lambda *_args, **_kwargs: None)
     db, user, case, analysis, _, _ = seed("PATHOGENIC")
     evaluate_analysis(db, analysis); db.commit()
     report = Report(id=uuid4(), case_id=case.id, analysis_id=analysis.id, report_version=1, language="en", report_type="CLINICAL_INTERPRETATION", status="DRAFT", content_json={})

@@ -24,10 +24,28 @@ from backend.app.infrastructure.db.models import (
     Case,
     Organization,
     Resource,
+    ResourceDiscovery,
     ResourceExecutionRecord,
     ResourceQualification,
     User,
 )
+
+
+
+def _stub_checkpoint_retention_gate(monkeypatch, db, resource, reviewer_id):
+    """Checkpoint tests isolate retry semantics; approval policy has dedicated tests."""
+    import backend.app.domain.evidence_response_retention as retention
+    discovery = db.scalar(select(ResourceDiscovery).where(ResourceDiscovery.resource_id == resource.id))
+    monkeypatch.setattr(
+        retention, "_retention_permission",
+        lambda _db, _resource, *, organization_id: (
+            "RETAINED", "test-only approval stub", discovery,
+            SimpleNamespace(
+                id=uuid4(), version=1, reviewer_id=reviewer_id,
+                terms_evidence_artifact_id=uuid4(), terms_evidence_sha256="f" * 64,
+            ),
+        ),
+    )
 
 
 def test_annotation_batch_provenance_is_consistent_across_all_payloads():
@@ -93,6 +111,7 @@ def _db():
         tables=[
             Analysis.__table__,
             Resource.__table__,
+            ResourceDiscovery.__table__,
             ResourceQualification.__table__,
             Annotation.__table__,
         ],
@@ -118,6 +137,20 @@ def _resource(db, *, provider="GeneBe", access_method="API", endpoint="https://q
         metadata_json={},
     )
     db.add(resource)
+    db.flush()
+    db.add(ResourceDiscovery(
+        id=uuid4(), resource_id=resource.id, publisher="Test Publisher",
+        canonical_source_url="https://qualified.example/", artifact_url="https://qualified.example/release",
+        release_identity=resource.version, access_mode="PUBLIC", license_status="VERIFIED",
+        license_url="https://qualified.example/license", terms_url=None,
+        checksum_status="NOT_PUBLISHED", expected_sha256=None, expected_size_bytes=None,
+        authority_evidence_url="https://qualified.example/about", status="DISCOVERED",
+        metadata_json={
+            "raw_response_retention": "PERMITTED",
+            "raw_response_retention_reviewed_by": "test-reviewer",
+            "raw_response_retention_reviewed_at": "2026-11-11T00:00:00Z",
+        },
+    ))
     db.flush()
     qualification = ResourceQualification(
         id=uuid4(),
@@ -552,7 +585,7 @@ def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(
         engine,
         tables=[
             Organization.__table__, User.__table__, Case.__table__, Analysis.__table__,
-            Resource.__table__, ResourceQualification.__table__, Artifact.__table__,
+            Resource.__table__, ResourceDiscovery.__table__, ResourceQualification.__table__, Artifact.__table__,
             OrganizationStorageProfile.__table__,
             WorkflowStep.__table__,
         ],
@@ -588,6 +621,8 @@ def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(
         db.add(step)
         db.commit()
 
+        _stub_checkpoint_retention_gate(monkeypatch, db, resource, user_id)
+
         provider_calls = {"count": 0}
 
         def fake_provider_response():
@@ -600,6 +635,8 @@ def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(
                     "provider_version": "api-public-v1",
                     "request_fingerprint": "request-fingerprint-1",
                     "response_sha256": "a" * 64,
+                    "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                    "raw_response_media_type": "application/json",
                     "observed_at": "2026-10-10T00:00:00+00:00",
                     "retry_count": 0,
                 },
@@ -657,7 +694,7 @@ def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(m
         engine,
         tables=[
             Organization.__table__, User.__table__, Case.__table__, Analysis.__table__,
-            Resource.__table__, ResourceQualification.__table__, Artifact.__table__,
+            Resource.__table__, ResourceDiscovery.__table__, ResourceQualification.__table__, Artifact.__table__,
             OrganizationStorageProfile.__table__,
             WorkflowStep.__table__,
         ],
@@ -686,6 +723,7 @@ def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(m
         db.add(analysis)
         resource = _resource(db)
         other_resource = _resource(db)
+        _stub_checkpoint_retention_gate(monkeypatch, db, resource, user_id)
         step = WorkflowStep(
             id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
             status="RUNNING", attempt=1, input_artifacts=[], output_artifacts=[],
@@ -698,6 +736,8 @@ def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(m
             "_siraloom_annotation_provenance": {
                 "provider": "GeneBe", "provider_version": "api-public-v1",
                 "request_fingerprint": "request-fingerprint-1", "response_sha256": "a" * 64,
+                "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                "raw_response_media_type": "application/json",
             },
         }]
         _persist_annotation_response_checkpoint(
@@ -826,6 +866,7 @@ def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_line
             ))
             resource = _resource(db)
             resource_id = resource.id
+            _stub_checkpoint_retention_gate(monkeypatch, db, resource, user_id)
             step = WorkflowStep(
                 id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
                 status=StepStatus.RUNNING, attempt=1, input_artifacts=[], output_artifacts=[],
@@ -853,6 +894,8 @@ def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_line
                 "_siraloom_annotation_provenance": {
                     "provider": "GeneBe", "provider_version": "api-public-v1",
                     "request_fingerprint": "d" * 64, "response_sha256": "e" * 64,
+                    "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                    "raw_response_media_type": "application/json",
                     "observed_at": "2026-10-10T00:00:00+00:00", "retry_count": 0,
                 },
             }

@@ -164,12 +164,21 @@ class Case(Base):
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"))
     case_identifier: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
+    accession_reconciliation_status: Mapped[str] = mapped_column(
+        Text, nullable=False, default="NEW_WORKFLOW", server_default="NEW_WORKFLOW"
+    )
     clinical_context: Mapped[dict] = mapped_column(JSON, default=dict)
     language: Mapped[str] = mapped_column(Text, default="en")
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
-    __table_args__ = (UniqueConstraint("organization_id", "case_identifier"),)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "case_identifier"),
+        CheckConstraint(
+            "accession_reconciliation_status IN ('LEGACY_UNRECONCILED','NEW_WORKFLOW','RECONCILED')",
+            name="ck_case_accession_reconciliation_status",
+        ),
+    )
 
 
 class ClinicalIntakeRevision(Base):
@@ -294,6 +303,10 @@ class Assay(Base):
     configuration: Mapped[dict] = mapped_column(JSON, default=dict)
     status: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "name", "version", name="uq_assay_org_name_version"),
+        CheckConstraint("status IN ('ACTIVE','INACTIVE')", name="ck_assay_status"),
+    )
 
 class Analysis(Base):
     __tablename__ = "analyses"
@@ -371,6 +384,41 @@ class Artifact(Base):
     validation_status: Mapped[str] = mapped_column(Text, default="PENDING")
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class ArtifactValidationDispatch(Base):
+    """Durable outbox and execution fence for artifact intake validation."""
+    __tablename__ = "artifact_validation_dispatches"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    artifact_id: Mapped[UUID] = mapped_column(
+        ForeignKey("artifacts.id"), nullable=False, unique=True
+    )
+    organization_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organizations.id"), nullable=False
+    )
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    task_id: Mapped[str | None] = mapped_column(Text)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_error: Mapped[str | None] = mapped_column(Text)
+    toolchain_profile_id: Mapped[str] = mapped_column(Text, nullable=False)
+    toolchain_bcftools_version: Mapped[str] = mapped_column(Text, nullable=False)
+    toolchain_htslib_version: Mapped[str] = mapped_column(Text, nullable=False)
+    toolchain_queue: Mapped[str] = mapped_column(Text, nullable=False)
+    toolchain_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('PENDING', 'PUBLISHED', 'RUNNING', 'RETRYING', 'COMPLETED', 'FAILED')",
+            name="ck_artifact_validation_dispatch_status",
+        ),
+        Index("ix_artifact_validation_dispatch_status_created", "status", "created_at"),
+        Index("ix_artifact_validation_dispatch_case_status", "case_id", "status"),
+    )
+
 
 class TechnicalQCObservation(Base):
     __tablename__ = "technical_qc_observations"
@@ -497,6 +545,15 @@ class Annotation(Base):
     resource_version: Mapped[str | None] = mapped_column(Text)
     request_fingerprint: Mapped[str | None] = mapped_column(Text)
     response_sha256: Mapped[str | None] = mapped_column(Text)
+    response_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    response_artifact_sha256: Mapped[str | None] = mapped_column(Text)
+    response_artifact_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    response_retention_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE", server_default="NOT_AVAILABLE")
+    response_retention_reason: Mapped[str | None] = mapped_column(Text)
+    source_release_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("resource_release_artifacts.id"))
+    source_release_sha256: Mapped[str | None] = mapped_column(Text)
+    source_release_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    source_release_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE")
     request_metadata: Mapped[dict] = mapped_column("request_metadata", JSON, default=dict)
     observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -570,6 +627,52 @@ class ResourceDiscovery(Base):
     )
 
 
+class ProviderRetentionApproval(Base):
+    """Organization-scoped, release-specific authorization for raw provider response retention."""
+    __tablename__ = "provider_retention_approvals"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    resource_discovery_id: Mapped[UUID] = mapped_column(ForeignKey("resource_discoveries.id"), nullable=False)
+    release_identity: Mapped[str] = mapped_column(Text, nullable=False)
+    permission_scope: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    license_url: Mapped[str | None] = mapped_column(Text)
+    terms_url: Mapped[str | None] = mapped_column(Text)
+    terms_evidence_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    terms_evidence_sha256: Mapped[str | None] = mapped_column(Text)
+    reviewer_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="APPROVED")
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revocation_reason: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "resource_discovery_id", "version"),
+        CheckConstraint("status IN ('APPROVED', 'REVOKED', 'EXPIRED')", name="ck_provider_retention_approval_status"),
+        CheckConstraint("json_array_length(permission_scope) > 0", name="ck_provider_retention_scope_nonempty"),
+    )
+
+
+class ProviderRetentionApprovalAction(Base):
+    """Append-only decision history for provider retention authorization."""
+    __tablename__ = "provider_retention_approval_actions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    approval_id: Mapped[UUID] = mapped_column(ForeignKey("provider_retention_approvals.id"), nullable=False)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    actor_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    action: Mapped[str] = mapped_column(Text, nullable=False)
+    before_status: Mapped[str | None] = mapped_column(Text)
+    after_status: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    permission_scope: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        CheckConstraint("action IN ('APPROVE', 'REVOKE', 'EXPIRE')", name="ck_provider_retention_action"),
+    )
+
+
 class ResourceStaging(Base):
     """Durable staging/integrity state for a concrete resource release artifact."""
 
@@ -597,6 +700,28 @@ class ResourceStaging(Base):
 
     __table_args__ = (
         UniqueConstraint("resource_id", "resource_version", "staging_key"),
+    )
+
+
+class ResourceReleaseArtifact(Base):
+    """Immutable checksum-pinned bytes for one staged scientific resource release."""
+    __tablename__ = "resource_release_artifacts"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    resource_staging_id: Mapped[UUID] = mapped_column(ForeignKey("resource_stagings.id"), nullable=False, unique=True)
+    organization_id: Mapped[UUID | None] = mapped_column(ForeignKey("organizations.id"))
+    resource_version: Mapped[str] = mapped_column(Text, nullable=False)
+    storage_uri: Mapped[str] = mapped_column(Text, nullable=False)
+    storage_backend: Mapped[str] = mapped_column(Text, nullable=False)
+    sha256: Mapped[str] = mapped_column(Text, nullable=False)
+    size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    integrity_status: Mapped[str] = mapped_column(Text, nullable=False)
+    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        CheckConstraint("length(sha256) = 64", name="ck_resource_release_sha256_length"),
+        CheckConstraint("size_bytes >= 0", name="ck_resource_release_size_nonnegative"),
+        UniqueConstraint("resource_id", "resource_version", "sha256", name="uq_resource_release_identity"),
     )
 
 
@@ -723,6 +848,15 @@ class PopulationObservation(Base):
     source_record_id: Mapped[str | None] = mapped_column(Text)
     request_fingerprint: Mapped[str | None] = mapped_column(Text)
     response_sha256: Mapped[str | None] = mapped_column(Text)
+    response_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    response_artifact_sha256: Mapped[str | None] = mapped_column(Text)
+    response_artifact_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    response_retention_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE", server_default="NOT_AVAILABLE")
+    response_retention_reason: Mapped[str | None] = mapped_column(Text)
+    source_release_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("resource_release_artifacts.id"))
+    source_release_sha256: Mapped[str | None] = mapped_column(Text)
+    source_release_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    source_release_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE")
     request_metadata: Mapped[dict] = mapped_column("request_metadata", JSON, default=dict)
     observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -854,6 +988,15 @@ class Evidence(Base):
     source_record_id: Mapped[str | None] = mapped_column(Text)
     request_fingerprint: Mapped[str | None] = mapped_column(Text)
     response_sha256: Mapped[str | None] = mapped_column(Text)
+    response_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    response_artifact_sha256: Mapped[str | None] = mapped_column(Text)
+    response_artifact_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    response_retention_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE", server_default="NOT_AVAILABLE")
+    response_retention_reason: Mapped[str | None] = mapped_column(Text)
+    source_release_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("resource_release_artifacts.id"))
+    source_release_sha256: Mapped[str | None] = mapped_column(Text)
+    source_release_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    source_release_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE")
     request_metadata: Mapped[dict] = mapped_column("request_metadata", JSON, default=dict)
     observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     observation_ids: Mapped[list] = mapped_column(JSON, default=list)

@@ -20,6 +20,8 @@ from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
+    ResourceDiscovery,
+    OrganizationMembership,
     Analysis,
     AnalysisPartition,
     Annotation,
@@ -48,6 +50,11 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
     Base.metadata.create_all(engine)
     LocalSession = sessionmaker(bind=engine, expire_on_commit=False)
     store = ArtifactStore(tmp_path / "artifacts")
+    retention_module = importlib.import_module("backend.app.domain.evidence_response_retention")
+    monkeypatch.setattr(
+        retention_module, "artifact_store_for_uri",
+        lambda *_args, **_kwargs: store,
+    )
     organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
     parent_id, analysis_id = uuid4(), uuid4()
     resource_id = uuid4()
@@ -78,19 +85,19 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
             db.commit()
             db.add(Analysis(
                 id=parent_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.SUCCEEDED, queue_task_id=None,
-                reference_build="GRCh38", configuration={}, started_at=None,
+                reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
                 completed_at=None, created_by=user_id, analysis_version=1,
             ))
             db.commit()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=parent_id,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.QUEUED, queue_task_id=task_id,
-                reference_build="GRCh38", configuration={}, started_at=None,
+                reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
                 completed_at=None, created_by=user_id, analysis_version=2,
             ))
             db.commit()
@@ -109,6 +116,42 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
                 status="ACTIVE", population_definition=None, metadata_json={},
             )
             db.add(resource)
+            discovery = ResourceDiscovery(
+                id=uuid4(), resource_id=resource.id, publisher="Test Publisher",
+                canonical_source_url="https://fixture.invalid/", artifact_url="https://fixture.invalid/release",
+                release_identity=resource.version, access_mode="PUBLIC", license_status="VERIFIED",
+                license_url="https://fixture.invalid/license", terms_url=None,
+                checksum_status="NOT_PUBLISHED", expected_sha256=None, expected_size_bytes=None,
+                authority_evidence_url="https://fixture.invalid/about", status="DISCOVERED",
+                metadata_json={
+                    "raw_response_retention": "PERMITTED",
+                    "raw_response_retention_reviewed_by": "test-reviewer",
+                    "raw_response_retention_reviewed_at": "2026-11-11T00:00:00Z",
+                },
+            )
+            db.add(discovery)
+            db.add(OrganizationMembership(
+                id=uuid4(), organization_id=organization_id, user_id=user_id,
+                role="LAB_ADMIN", status="ACTIVE",
+            ))
+            terms_path = tmp_path / "provider-terms.txt"
+            terms_bytes = b"Reviewed exact provider terms for response retention."
+            terms_path.write_bytes(terms_bytes)
+            import hashlib
+            terms_artifact = store.put_file(
+                db=db, case_id=case_id, analysis_id=None, source_path=terms_path,
+                filename="provider-terms.txt", artifact_type="LICENSE_TERMS_EVIDENCE",
+                media_type="text/plain", genome_build=None, validation_status="VALIDATED",
+                metadata={"resource_id": str(resource.id), "release_identity": resource.version},
+            )
+            from backend.app.domain.evidence_response_retention import approve_provider_retention
+            approve_provider_retention(
+                db, organization_id=organization_id, resource_discovery_id=discovery.id,
+                reviewer_id=user_id, permission_scope=["RAW_PROVIDER_RESPONSE_RETENTION"],
+                reason="Test fixture authorizes retention for this exact provider release.",
+                terms_evidence_artifact_id=terms_artifact.id,
+                terms_evidence_sha256=hashlib.sha256(terms_bytes).hexdigest(),
+            )
             step = WorkflowStep(
                 id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
                 status=StepStatus.RUNNING, attempt=1, input_artifacts=[], output_artifacts=[],
@@ -155,6 +198,8 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
                         "provider_version": self.provider_version,
                         "request_fingerprint": "d" * 64,
                         "response_sha256": "e" * 64,
+                        "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                        "raw_response_media_type": "application/json",
                         "observed_at": "2026-10-10T00:00:00+00:00",
                         "retry_count": 0,
                     },
@@ -437,10 +482,10 @@ def test_run_variant_analysis_resolves_case_without_local_name_shadowing(
             db.commit()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.RUNNING, queue_task_id=None,
-                reference_build="GRCh38", configuration={}, started_at=None,
+                reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
                 completed_at=None, created_by=user_id, analysis_version=1,
             ))
             db.commit()
@@ -522,11 +567,11 @@ def test_worker_rejects_unbound_or_invalid_analysis_input_before_reading(
             db.flush()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.RUNNING, queue_task_id=None,
                 reference_build="GRCh38",
-                configuration={"input_artifact_id": str(artifact_id)},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "input_artifact_id": str(artifact_id)},
                 started_at=None, completed_at=None, created_by=user_id, analysis_version=1,
             ))
             db.flush()
@@ -607,10 +652,10 @@ def test_terminal_provenance_is_persisted_before_analysis_succeeds(tmp_path):
         db.flush()
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None,
-            assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+            assay_id=None, analysis_type="RESEARCH",
             workflow_id="variant-v1", workflow_version="test",
             status=AnalysisStatus.REQUIRES_REVIEW, queue_task_id=None,
-            reference_build="GRCh38", configuration={}, started_at=datetime.now(timezone.utc),
+            reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=datetime.now(timezone.utc),
             completed_at=None, created_by=user_id, analysis_version=1,
         ))
         db.flush()

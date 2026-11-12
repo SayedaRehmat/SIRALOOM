@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -8,10 +9,16 @@ class FakeBlob:
     def __init__(self, payload: bytes):
         self.payload = payload
         self.downloaded_to = None
-        self.metadata = None
+        self.metadata = {"sha256": hashlib.sha256(payload).hexdigest()}
+        self.generation = 73
+        self.download_kwargs = None
 
-    def download_to_filename(self, filename):
+    def reload(self):
+        pass
+
+    def download_to_filename(self, filename, **kwargs):
         self.downloaded_to = Path(filename)
+        self.download_kwargs = kwargs
         self.downloaded_to.write_bytes(self.payload)
 
     def open(self, mode):
@@ -32,6 +39,7 @@ def test_download_to_file_does_not_use_download_as_bytes(monkeypatch, tmp_path):
     assert result == target
     assert target.stat().st_size == 1024 * 1024
     assert blob.downloaded_to == target
+    assert blob.download_kwargs == {"if_generation_match": 73}
 
 
 def test_iter_bytes_yields_bounded_chunks(monkeypatch):

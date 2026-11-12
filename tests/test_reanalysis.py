@@ -73,9 +73,9 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit(
         ))
         db.add(Analysis(
             id=parent_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
-            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            analysis_type="RESEARCH", workflow_id="variant-v1",
             workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
-            reference_build="GRCh38", configuration={}, started_at=None,
+            reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
             completed_at=None, created_by=user_id, analysis_version=1,
             toolchain_profile_id=profile_id,
             toolchain_bcftools_version=bcftools_version,
@@ -236,9 +236,9 @@ def test_reanalysis_replays_evidence_when_parent_clinical_snapshot_is_missing_or
         for parent_id in parent_ids:
             parent = Analysis(
                 id=parent_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
-                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                analysis_type="RESEARCH", workflow_id="variant-v1",
                 workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
-                reference_build="GRCh38", configuration={}, started_at=None,
+                reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
                 completed_at=None, created_by=user_id, analysis_version=1,
             )
             db.add(parent)
@@ -352,9 +352,9 @@ def test_change_detector_creates_durable_candidate_and_notifications_idempotentl
         ))
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
-            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            analysis_type="RESEARCH", workflow_id="variant-v1",
             workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
-            reference_build="GRCh38", configuration={}, started_at=None,
+            reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
             completed_at=None, created_by=user_id, analysis_version=1,
         ))
         db.add(AnalysisResourceSnapshot(
@@ -428,9 +428,9 @@ def test_active_resource_scanner_detects_registered_resource_changes():
         ))
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
-            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            analysis_type="RESEARCH", workflow_id="variant-v1",
             workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
-            reference_build="GRCh38", configuration={}, started_at=None,
+            reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
             completed_at=None, created_by=user_id, analysis_version=1,
         ))
         db.add(AnalysisResourceSnapshot(
@@ -505,13 +505,13 @@ def test_tenant_resource_release_does_not_create_candidates_for_same_named_other
             case_id=case_id,
             parent_analysis_id=None,
             assay_id=None,
-            analysis_type="VARIANT_INTERPRETATION",
+            analysis_type="RESEARCH",
             workflow_id="variant-v1",
             workflow_version="2.1",
             status="SUCCEEDED",
             queue_task_id=None,
             reference_build="GRCh38",
-            configuration={},
+            configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, },
             started_at=None,
             completed_at=None,
             created_by=user_id,
@@ -602,10 +602,10 @@ def test_tenant_scoped_scan_of_shared_resource_creates_candidates_only_for_reque
             ))
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="2.1",
                 status="SUCCEEDED", queue_task_id=None, reference_build="GRCh38",
-                configuration={}, started_at=None, completed_at=None,
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None, completed_at=None,
                 created_by=user_id, analysis_version=1,
             ))
             db.add_all([
@@ -676,7 +676,7 @@ def test_celery_reanalysis_scan_is_registered_on_daily_utc_schedule():
     assert celery_app.conf.timezone == "UTC"
 
 
-def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
+def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent(monkeypatch):
     from unittest.mock import patch
 
     from backend.app.domain.reanalysis import create_reanalysis
@@ -690,6 +690,10 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
     )
     from backend.app.workflows.variant import _apply_reanalysis_reuse, ensure_steps
 
+    monkeypatch.setattr(
+        "backend.app.domain.evidence_response_retention.verify_provider_response_reference",
+        lambda *_args, **_kwargs: True,
+    )
     engine = _engine()
     Base.metadata.create_all(
         engine,
@@ -703,8 +707,8 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
     )
 
     organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
-    variant_id, normalized_artifact_id, source_artifact_id, index_artifact_id = (
-        uuid4(), uuid4(), uuid4(), uuid4()
+    variant_id, normalized_artifact_id, source_artifact_id, index_artifact_id, response_artifact_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     )
 
     with Session(engine) as db:
@@ -727,10 +731,10 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
         ))
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
-            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            analysis_type="RESEARCH", workflow_id="variant-v1",
             workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
             reference_build="GRCh38",
-            configuration={"input_artifact_id": str(uuid4()), "reference_resource_id": str(uuid4())},
+            configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "input_artifact_id": str(uuid4()), "reference_resource_id": str(uuid4())},
             started_at=None, completed_at=None, created_by=user_id, analysis_version=1,
         ))
 
@@ -758,10 +762,26 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
             reference="A", alternate="G", normalization_status="NORMALIZED",
             canonical_key="GRCh38:1-100-A-G", identifiers={},
         ))
+        db.add(Artifact(
+            id=response_artifact_id, analysis_id=analysis_id, case_id=case_id,
+            artifact_type="PROVIDER_RESPONSE_RAW", filename="provider-response.bin",
+            media_type="application/json", size_bytes=13, sha256="response-sha",
+            storage_uri="file:///immutable/provider-response.bin", genome_build="GRCh38",
+            validation_status="VALIDATED",
+            metadata_json={
+                "resource_id": None, "request_fingerprint": "annotation-request",
+                "raw_response_sha256": "response-sha", "raw_response_size_bytes": 13,
+            },
+        ))
         db.add(Annotation(
             id=uuid4(), variant_id=variant_id, analysis_id=analysis_id,
             provider_name="GeneBe", provider_version="api-public-v1",
-            resource_name="GeneBe", resource_version="api-public-v1", payload={"gene": "TEST"},
+            resource_name="GeneBe", resource_version="api-public-v1",
+            request_fingerprint="annotation-request", response_sha256="response-sha",
+            response_artifact_id=response_artifact_id,
+            response_artifact_sha256="response-sha", response_artifact_size_bytes=13,
+            response_retention_status="RETAINED", response_retention_reason="test",
+            payload={"gene": "TEST"},
         ))
         db.add(Artifact(
             id=normalized_artifact_id, analysis_id=analysis_id, case_id=case_id,
@@ -859,6 +879,10 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
         child_annotation = db.scalars(select(Annotation).where(
             Annotation.analysis_id == child.id,
         )).all()
+        child_response_artifact = db.scalar(select(Artifact).where(
+            Artifact.analysis_id == child.id,
+            Artifact.artifact_type == "PROVIDER_RESPONSE_RAW",
+        ))
         child_normalize_step = db.scalar(select(WorkflowStep).where(
             WorkflowStep.analysis_id == child.id,
             WorkflowStep.step_id == "normalize",
@@ -872,6 +896,12 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
             Artifact.artifact_type == "VCF_INDEX",
         ))
 
+        assert len(child_annotation) == 1
+        assert child_annotation[0].response_retention_status == "RETAINED"
+        assert child_annotation[0].response_artifact_id == child_response_artifact.id
+        assert child_response_artifact.analysis_id == child.id
+        assert child_response_artifact.sha256 == "response-sha"
+        assert child_response_artifact.storage_uri == "file:///immutable/provider-response.bin"
         assert child_validation.status == "SUCCEEDED"
         assert child_normalize.status == "SUCCEEDED"
         assert child_annotation and child_annotation[0].payload == {"gene": "TEST"}
@@ -1009,9 +1039,9 @@ def test_registered_resource_release_drives_change_aware_candidate():
 
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
-            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            analysis_type="RESEARCH", workflow_id="variant-v1",
             workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
-            reference_build="GRCh38", configuration={}, started_at=None,
+            reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
             completed_at=None, created_by=user_id, analysis_version=1,
         ))
         db.add(AnalysisResourceSnapshot(

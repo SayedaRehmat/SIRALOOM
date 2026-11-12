@@ -39,6 +39,7 @@ class PopulationObservationData:
     source_record_id: str | None = None
     request_fingerprint: str | None = None
     response_sha256: str | None = None
+    raw_response_bytes: bytes | None = None
     request_metadata: dict[str, Any] | None = None
     observed_at: str | None = None
 
@@ -138,6 +139,9 @@ class GnomADGraphQLProvider:
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(self.endpoint, json={"query": query, "variables": variables})
                 response.raise_for_status()
+                raw_response_bytes = getattr(response, "content", None)
+                if not isinstance(raw_response_bytes, bytes):
+                    raw_response_bytes = None
                 body = response.json()
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code
@@ -196,6 +200,7 @@ class GnomADGraphQLProvider:
                     quality_status="NO_MATCH",
                     request_fingerprint=request_fingerprint,
                     response_sha256=response_sha256,
+                    raw_response_bytes=raw_response_bytes,
                     request_metadata=request_metadata,
                     observed_at=observed_at,
                 )

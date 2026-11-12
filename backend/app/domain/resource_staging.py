@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.infrastructure.db.models import Resource, ResourceStaging
+from backend.app.infrastructure.db.models import Resource, ResourceReleaseArtifact, ResourceStaging
 from backend.app.domain.local_uri import local_path_from_uri
 
 
@@ -293,6 +293,49 @@ def transition_staging(
     if status in {"STAGED", "INTEGRITY_FAILED", "INVALID", "REMOVED", "PREFLIGHT_FAILED"}:
         row.completed_at = _now()
     db.add(row)
+    if status == "STAGED":
+        resource = db.get(Resource, row.resource_id)
+        if (
+            resource is None or resource.version != row.resource_version
+            or not row.observed_sha256 or len(row.observed_sha256) != 64
+            or row.observed_size_bytes is None or row.observed_size_bytes < 0
+        ):
+            raise ResourceStagingError(
+                "staged release is missing exact resource identity, SHA-256, or size",
+                code="SOURCE_RELEASE_IDENTITY_INCOMPLETE",
+                outcome="RESOURCE_INVALID",
+            )
+        existing_release = db.scalar(
+            select(ResourceReleaseArtifact).where(
+                ResourceReleaseArtifact.resource_staging_id == row.id
+            )
+        )
+        integrity_status = (
+            "PUBLISHER_CHECKSUM_VERIFIED"
+            if row.expected_sha256 and row.observed_sha256 == row.expected_sha256.lower()
+            else "LOCAL_SHA256_CAPTURED"
+        )
+        if existing_release is None:
+            db.add(ResourceReleaseArtifact(
+                id=uuid4(), resource_id=resource.id, resource_staging_id=row.id,
+                organization_id=resource.organization_id,
+                resource_version=resource.version, storage_uri=row.destination_uri,
+                storage_backend=row.storage_backend, sha256=row.observed_sha256.lower(),
+                size_bytes=row.observed_size_bytes, integrity_status=integrity_status,
+                verified_at=_now(), created_at=_now(),
+            ))
+        elif (
+            existing_release.resource_id != resource.id
+            or existing_release.resource_version != resource.version
+            or existing_release.storage_uri != row.destination_uri
+            or existing_release.sha256 != row.observed_sha256.lower()
+            or existing_release.size_bytes != row.observed_size_bytes
+        ):
+            raise ResourceStagingError(
+                "immutable source-release identity conflicts with the staged bytes",
+                code="SOURCE_RELEASE_IDENTITY_CONFLICT",
+                outcome="RESOURCE_INVALID",
+            )
     db.flush()
     return row
 

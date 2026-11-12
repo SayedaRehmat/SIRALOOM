@@ -420,6 +420,9 @@ export type TranslationKey =
   | "workspace.inputPersisted"
   | "workspace.registerInput"
   | "workspace.startAnalysis"
+  | "workspace.acceptedClinicalRequest"
+  | "workspace.selectAcceptedClinicalRequest"
+  | "workspace.noAcceptedClinicalRequest"
   | "workspace.durableWorkflow"
   | "workspace.checkpointPersisted"
   | "workspace.analyzedVariants"
@@ -1629,6 +1632,9 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.inputPersisted": "Input is persisted before analysis begins.",
     "workspace.registerInput": "Register input",
     "workspace.startAnalysis": "Start analysis",
+    "workspace.acceptedClinicalRequest": "Accepted clinical request",
+    "workspace.selectAcceptedClinicalRequest": "Select a currently accepted clinical request before starting variant interpretation.",
+    "workspace.noAcceptedClinicalRequest": "No clinical requests are recorded for this case. Create, verify and accept a request before clinical variant interpretation.",
     "workspace.durableWorkflow": "Durable workflow",
     "workspace.checkpointPersisted": "Checkpoint state is persisted server-side",
     "workspace.analyzedVariants": "Analyzed variants",
@@ -2585,6 +2591,9 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.inputPersisted": "يتم حفظ الإدخال قبل بدء التحليل.",
     "workspace.registerInput": "تسجيل الإدخال",
     "workspace.startAnalysis": "بدء التحليل",
+    "workspace.acceptedClinicalRequest": "الطلب السريري المقبول",
+    "workspace.selectAcceptedClinicalRequest": "اختر طلباً سريرياً مقبولاً حالياً قبل بدء تفسير المتغيرات.",
+    "workspace.noAcceptedClinicalRequest": "لا توجد طلبات سريرية مسجلة لهذه الحالة. أنشئ طلباً وتحقق من المُحيل واقبل الطلب قبل التفسير السريري للمتغيرات.",
     "workspace.durableWorkflow": "سير عمل مستمر",
     "workspace.checkpointPersisted": "تُحفظ حالة نقاط التحقق على الخادم.",
     "workspace.analyzedVariants": "المتغيرات التي تم تحليلها",

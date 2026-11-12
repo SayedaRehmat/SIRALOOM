@@ -257,6 +257,10 @@ def test_report_finalization_requires_reviewed_classifications():
     ok, errors=final_report_eligibility(d,analysis_id=a.id); assert not ok and errors
 
 def test_report_finalization_creates_approval_lineage(monkeypatch):
+    # Isolate report lineage behavior; authorization and runtime gates have dedicated tests.
+    from backend.app.domain import clinical_authorization, runtime_attestation
+    monkeypatch.setattr(clinical_authorization, "assert_analysis_clinical_authorization", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(runtime_attestation, "assert_analysis_runtime_attested", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("backend.app.reporting.finalization.render_pdf", lambda _content: b"%PDF-test%")
     d,_,u,c,a,_=seed(True)
     content = build_report_content(d, a, "en", report_type="CLINICAL_INTERPRETATION")

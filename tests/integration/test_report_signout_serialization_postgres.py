@@ -58,6 +58,10 @@ def test_signout_holds_analysis_lock_through_eligibility_and_snapshot(monkeypatc
         return True, []
 
     analysis_id_outer = analysis_id
+    # Isolate PostgreSQL lock serialization; authorization/attestation are tested independently.
+    from backend.app.domain import clinical_authorization, runtime_attestation
+    monkeypatch.setattr(clinical_authorization, "assert_analysis_clinical_authorization", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(runtime_attestation, "assert_analysis_runtime_attested", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(finalization, "final_report_eligibility", paused_eligibility)
     monkeypatch.setattr(finalization, "_verify_report_snapshot", lambda *_args: None)
     monkeypatch.setattr(finalization, "_persist_pdf_artifact", lambda _db, *, report, **_kwargs: _db.get(Artifact, report.artifact_id))

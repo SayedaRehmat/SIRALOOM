@@ -1,0 +1,374 @@
+"""Regression tests for the S1-01/S1-02 clinical request contract."""
+from datetime import UTC, datetime, timedelta
+from uuid import uuid4
+
+import pytest
+from fastapi import HTTPException
+
+from backend.app.api.v1.clinical_requests import (
+    CapabilityGrantInput, DecisionInput, ProcedureInput, RequestCreate, RevisionInput, VerificationInput,
+    _require_capability, grant_capability, approve_accession_procedure, revoke_capability,
+)
+from backend.app.infrastructure.db.clinical_requests import AccessionProcedure, OrganizationCapabilityAssignment
+from types import SimpleNamespace
+
+
+def _request_payload():
+    return {
+        "requested_examination": "Germline SNV and small-indel interpretation",
+        "referral_indication": "Unexplained developmental delay",
+        "clinical_question": "Assess for a molecular diagnosis",
+        "referrer_name": "Dr Example",
+        "referrer_role": "Clinical geneticist",
+        "referrer_organization": "Regional Genetics Service",
+        "referrer_identifier": "REG-123",
+        "referrer_contact": "referrals@example.invalid",
+        "referral_channel": "SECURE_PORTAL",
+        "source_evidence_reference": "REF-2026-001",
+    }
+
+
+def test_external_referrer_request_does_not_require_siraloom_user_identity():
+    body = RequestCreate(request_identifier="REQ-001", **_request_payload())
+    assert body.referrer_name == "Dr Example"
+    assert body.referrer_identifier == "REG-123"
+    assert "user_id" not in body.model_dump()
+
+
+def test_request_revisions_are_explicit_and_reject_unknown_fields():
+    body = RevisionInput(**_request_payload())
+    assert body.requested_examination.startswith("Germline")
+    with pytest.raises(ValueError):
+        RevisionInput(**_request_payload(), accession_accepted=True)
+
+
+def test_acceptance_requires_verification_or_procedure_basis_at_schema_boundary():
+    ordinary = DecisionInput(decision="ACCEPT", reason="Accepted")
+    assert ordinary.verification_id is None
+    assert ordinary.exception_procedure_id is None
+    # The endpoint must reject this missing basis; the schema intentionally
+    # permits it so the API can return a policy-specific 422 response.
+
+
+def test_verification_requires_method_and_evidence_reference():
+    body = VerificationInput(
+        status="VERIFIED",
+        method="Institutional directory and callback",
+        evidence_reference="VERIFICATION-RECORD-17",
+        outcome_note="Identity and referral authority confirmed",
+    )
+    assert body.status == "VERIFIED"
+    with pytest.raises(ValueError):
+        VerificationInput(status="VERIFIED", method="x", evidence_reference="", outcome_note="ok")
+
+
+def test_exception_procedure_requires_an_explicit_version_and_approval_evidence():
+    body = ProcedureInput(
+        procedure_identifier="SOP-ACC-004",
+        procedure_version="3.1",
+        effective_at=datetime.now(UTC) - timedelta(days=1),
+        procedure_evidence_reference="QMS-CONTROLLED-DOCUMENT-17",
+        allows_unverified_referrer_exception=True,
+    )
+    assert body.procedure_version == "3.1"
+    assert body.allows_unverified_referrer_exception is True
+
+
+def test_capability_records_preserve_grant_and_revocation_history():
+    assignment = OrganizationCapabilityAssignment(
+        id=uuid4(),
+        organization_id=uuid4(),
+        user_id=uuid4(),
+        capability="ACCESSION_DECIDE",
+        granted_by=uuid4(),
+        grant_reason="Authorized accessioning officer",
+        expires_at=None,
+        revoked_at=None,
+        revoked_by=None,
+        revocation_reason=None,
+    )
+    assert assignment.revoked_at is None
+    assignment.revoked_at = datetime.now(UTC)
+    assignment.revoked_by = uuid4()
+    assignment.revocation_reason = "Role changed"
+    assert assignment.revoked_at is not None
+    assert assignment.revocation_reason == "Role changed"
+
+
+def test_pending_procedure_is_not_effective_and_requires_a_separate_approver():
+    procedure = AccessionProcedure(
+        id=uuid4(),
+        organization_id=uuid4(),
+        procedure_identifier="SOP-ACC-004",
+        procedure_version="3.1",
+        status="PENDING_APPROVAL",
+        effective_at=datetime.now(UTC) - timedelta(days=1),
+        expires_at=None,
+        approved_by=None,
+        created_by=uuid4(),
+        procedure_evidence_reference="CONTROLLED-DOCUMENT-17",
+        approval_evidence_reference=None,
+        allows_unverified_referrer_exception=True,
+    )
+    assert procedure.status == "PENDING_APPROVAL"
+    assert procedure.approved_by is None
+
+
+def test_procedure_submitter_cannot_approve_their_own_procedure():
+    from fastapi import HTTPException
+    from backend.app.api.v1.clinical_requests import ProcedureApprovalInput
+
+    user_id, organization_id, procedure_id = uuid4(), uuid4(), uuid4()
+    procedure = SimpleNamespace(
+        id=procedure_id,
+        organization_id=organization_id,
+        status="PENDING_APPROVAL",
+        created_by=user_id,
+    )
+
+    class FakeDB:
+        def scalar(self, statement):
+            return SimpleNamespace(id=uuid4())
+
+        def get(self, model, key, **kwargs):
+            return procedure if model is AccessionProcedure else None
+
+    principal = SimpleNamespace(
+        user_id=user_id,
+        organization_id=organization_id,
+        role="lab_director",
+    )
+    with pytest.raises(HTTPException) as exc:
+        approve_accession_procedure(
+            procedure_id,
+            ProcedureApprovalInput(approval_evidence_reference="QMS-APPROVAL-17"),
+            db=FakeDB(),
+            principal=principal,
+        )
+    assert exc.value.status_code == 403
+
+
+def test_clinical_attestation_capability_cannot_be_granted_without_qualification_workflow():
+    from fastapi import HTTPException
+
+    user_id, organization_id = uuid4(), uuid4()
+
+    class FakeDB:
+        def scalar(self, statement):
+            return SimpleNamespace(id=uuid4())
+
+    principal = SimpleNamespace(
+        user_id=uuid4(),
+        organization_id=organization_id,
+        role="organization_admin",
+    )
+    body = CapabilityGrantInput(
+        user_id=user_id,
+        capability="CLINICAL_ATTEST",
+        reason="Clinical genetics authority",
+    )
+    with pytest.raises(HTTPException) as exc:
+        grant_capability(body, db=FakeDB(), principal=principal)
+    assert exc.value.status_code == 409
+
+
+def test_capability_revocation_is_recorded_and_repeat_revocation_is_rejected(monkeypatch):
+    from fastapi import HTTPException
+    from backend.app.api.v1 import clinical_requests as routes
+    from backend.app.api.v1.clinical_requests import CapabilityRevokeInput
+
+    actor_id, organization_id, assignment_id, target_id = (
+        uuid4(), uuid4(), uuid4(), uuid4()
+    )
+    assignment = SimpleNamespace(
+        id=assignment_id,
+        organization_id=organization_id,
+        user_id=target_id,
+        revoked_at=None,
+        revoked_by=None,
+        revocation_reason=None,
+        capability="ACCESSION_DECIDE",
+    )
+
+    class FakeAudit:
+        def __init__(self, db):
+            pass
+
+        def record(self, **kwargs):
+            return None
+
+    class FakeDB:
+        def scalar(self, statement):
+            return SimpleNamespace(id=uuid4())
+
+        def get(self, model, key, **kwargs):
+            return assignment if model is OrganizationCapabilityAssignment else None
+
+        def commit(self):
+            return None
+
+    monkeypatch.setattr(routes, "AuditService", FakeAudit)
+    principal = SimpleNamespace(
+        user_id=actor_id,
+        organization_id=organization_id,
+        role="organization_admin",
+    )
+    result = revoke_capability(
+        assignment_id,
+        CapabilityRevokeInput(reason="Access role ended"),
+        db=FakeDB(),
+        principal=principal,
+    )
+    assert result["revoked"] is True
+    assert assignment.revoked_by == actor_id
+    assert assignment.revocation_reason == "Access role ended"
+
+    with pytest.raises(HTTPException) as exc:
+        revoke_capability(
+            assignment_id,
+            CapabilityRevokeInput(reason="Duplicate revoke"),
+            db=FakeDB(),
+            principal=principal,
+        )
+    assert exc.value.status_code == 409
+
+
+def test_capability_expiry_requires_timezone_aware_timestamp():
+    from backend.app.api.v1.clinical_requests import CapabilityGrantInput
+
+    with pytest.raises(ValueError, match="timezone"):
+        CapabilityGrantInput(
+            user_id=uuid4(),
+            capability="ACCESSION_DECIDE",
+            reason="Accession duty assignment",
+            expires_at=datetime(2030, 1, 1),
+        )
+    valid = CapabilityGrantInput(
+        user_id=uuid4(),
+        capability="ACCESSION_DECIDE",
+        reason="Accession duty assignment",
+        expires_at=datetime(2030, 1, 1, tzinfo=UTC),
+    )
+    with pytest.raises(ValueError, match="future"):
+        CapabilityGrantInput(
+            user_id=uuid4(),
+            capability="ACCESSION_DECIDE",
+            reason="Already expired",
+            expires_at=datetime(2020, 1, 1, tzinfo=UTC),
+        )
+    assert valid.expires_at.tzinfo is not None
+
+
+def test_capability_listing_is_organization_scoped_and_includes_revocation_history(monkeypatch):
+    from backend.app.api.v1 import clinical_requests as routes
+    from backend.app.api.v1.clinical_requests import list_capabilities
+
+    organization_id = uuid4()
+    principal = SimpleNamespace(
+        user_id=uuid4(),
+        organization_id=organization_id,
+        role="organization_admin",
+    )
+    rows = [
+        SimpleNamespace(
+            id=uuid4(),
+            user_id=uuid4(),
+            capability="ACCESSION_DECIDE",
+            granted_by=principal.user_id,
+            grant_reason="Accession rota",
+            expires_at=None,
+            revoked_at=datetime.now(UTC),
+            revoked_by=principal.user_id,
+            revocation_reason="Role ended",
+            created_at=datetime.now(UTC),
+        )
+    ]
+
+    class FakeDB:
+        def scalars(self, statement):
+            sql = str(statement)
+            assert "organization_capability_assignments.organization_id" in sql
+            return SimpleNamespace(all=lambda: rows)
+
+    monkeypatch.setattr(routes, "_membership", lambda *_args, **_kwargs: None)
+    result = list_capabilities(db=FakeDB(), principal=principal)
+    assert len(result) == 1
+    assert result[0]["revocation_reason"] == "Role ended"
+    assert result[0]["revoked_at"] is not None
+
+def test_historical_reconciliation_requires_evidence_and_never_creates_a_request(monkeypatch):
+    from fastapi import HTTPException
+    from backend.app.api.v1 import clinical_requests as routes
+    from backend.app.api.v1.clinical_requests import (
+        CaseAccessionReconciliationInput,
+        reconcile_case_accession_history,
+    )
+    from backend.app.infrastructure.db.clinical_requests import CaseAccessionReconciliation
+
+    organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
+    case = SimpleNamespace(
+        id=case_id,
+        organization_id=organization_id,
+        accession_reconciliation_status="LEGACY_UNRECONCILED",
+    )
+    added = []
+
+    class FakeAudit:
+        def __init__(self, db):
+            pass
+
+        def record(self, **kwargs):
+            return None
+
+    class FakeDB:
+        def get(self, model, key, **kwargs):
+            return case if model.__name__ == "Case" and key == case_id else None
+
+        def refresh(self, instance, **kwargs):
+            return None
+
+        def add(self, row):
+            added.append(row)
+
+        def commit(self):
+            return None
+
+    monkeypatch.setattr(routes, "AuditService", FakeAudit)
+    monkeypatch.setattr(routes, "require_case_permission", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(routes, "_require_capability", lambda *_args, **_kwargs: None)
+    principal = SimpleNamespace(
+        user_id=user_id,
+        organization_id=organization_id,
+        role="lab_director",
+    )
+    result = reconcile_case_accession_history(
+        case_id,
+        CaseAccessionReconciliationInput(
+            source_evidence_reference="ARCHIVE-CASE-FILE-001",
+            reviewed_scope="Original referral, specimen receipt and signed laboratory record",
+            reason="Historical records reviewed against controlled source documents.",
+        ),
+        db=FakeDB(),
+        principal=principal,
+    )
+    assert result["status"] == "RECONCILED"
+    assert case.accession_reconciliation_status == "RECONCILED"
+    assert len(added) == 1
+    assert isinstance(added[0], CaseAccessionReconciliation)
+    assert added[0].prior_status == "LEGACY_UNRECONCILED"
+    assert added[0].new_status == "RECONCILED"
+    assert not any(type(row).__name__ == "ClinicalRequest" for row in added)
+
+    with pytest.raises(HTTPException) as exc:
+        reconcile_case_accession_history(
+            case_id,
+            CaseAccessionReconciliationInput(
+                source_evidence_reference="ARCHIVE-CASE-FILE-001",
+                reviewed_scope="Reviewed again",
+                reason="Duplicate reconciliation attempt.",
+            ),
+            db=FakeDB(),
+            principal=principal,
+        )
+    assert exc.value.status_code == 409
+

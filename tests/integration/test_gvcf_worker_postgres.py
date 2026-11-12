@@ -122,13 +122,13 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
                 case_id=case_id,
                 parent_analysis_id=None,
                 assay_id=None,
-                analysis_type="VARIANT_INTERPRETATION",
+                analysis_type="RESEARCH",
                 workflow_id="variant-v1",
                 workflow_version="integration",
                 status=AnalysisStatus.QUEUED,
                 queue_task_id=f"gvcf-worker-{analysis_id}",
                 reference_build="GRCh38",
-                configuration={},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "GVCF worker routing integration test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}},
                 started_at=None,
                 completed_at=None,
                 created_by=user_id,
@@ -153,6 +153,9 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
             analysis.configuration = {
                 "input_artifact_id": str(source_artifact_id),
                 "reference_resource_id": str(resource_id),
+                "workflow_purpose": "RESEARCH",
+                "research_justification": "GVCF worker routing integration test",
+                "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"},
             }
             db.add(Resource(
                 id=resource_id,

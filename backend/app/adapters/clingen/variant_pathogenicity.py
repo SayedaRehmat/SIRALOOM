@@ -57,6 +57,8 @@ class ClinGenVariantAssertion:
     source_record_id: str
     payload: dict[str, Any]
     record_sha256: str
+    raw_response_bytes: bytes | None = None
+    response_request_fingerprint: str | None = None
 
 
 class ClinGenVariantPathogenicityProvider:
@@ -108,9 +110,10 @@ class ClinGenVariantPathogenicityProvider:
         hgvs: Iterable[str] = (),
         caid: str | None = None,
         clinvar_id: str | None = None,
+        request_fingerprint: str | None = None,
     ) -> list[ClinGenVariantAssertion]:
         if self.api_base_url:
-            return self._query_api(gene=gene, hgvs=hgvs, caid=caid, clinvar_id=clinvar_id)
+            return self._query_api(gene=gene, hgvs=hgvs, caid=caid, clinvar_id=clinvar_id, request_fingerprint=request_fingerprint)
         if self.path is None or not self.path.is_file():
             raise ClinGenVariantPathogenicityError(
                 f"ClinGen Variant Pathogenicity file not found: {self.path}"
@@ -142,7 +145,7 @@ class ClinGenVariantPathogenicityProvider:
 
         return out
 
-    def _query_api(self, *, gene: str | None, hgvs: Iterable[str], caid: str | None, clinvar_id: str | None) -> list[ClinGenVariantAssertion]:
+    def _query_api(self, *, gene: str | None, hgvs: Iterable[str], caid: str | None, clinvar_id: str | None, request_fingerprint: str | None = None) -> list[ClinGenVariantAssertion]:
         """Use the documented ERepo summary-search API followed by full classification retrieval."""
         if caid:
             columns, values = "caId", caid
@@ -173,8 +176,15 @@ class ClinGenVariantPathogenicityProvider:
             if not uuid or uuid in seen:
                 continue
             seen.add(uuid)
-            document = self._api_get_json(f"/evrepo/api/classification/{quote(uuid, safe='')}", [])
+            endpoint = f"/evrepo/api/classification/{quote(uuid, safe='')}"
+            document, raw_response_bytes = self._api_get_json_with_bytes(endpoint, [])
             normalized = self._normalize_api_document(document)
+            base_fingerprint = request_fingerprint or hashlib.sha256(
+                f"{self.api_base_url}/evrepo/api/summary/classifications".encode()
+            ).hexdigest()
+            response_request_fingerprint = hashlib.sha256(
+                f"{base_fingerprint}\nCLINGEN_EREPO_CLASSIFICATION\n{uuid}".encode()
+            ).hexdigest()
             row_caid = self._norm_id(normalized.get("caid"))
             row_cv = self._norm_id(normalized.get("clinvar_id"))
             row_gene = (normalized.get("gene") or "").upper()
@@ -183,10 +193,15 @@ class ClinGenVariantPathogenicityProvider:
             gene_match = bool(wanted_gene and row_gene == wanted_gene)
             hgvs_match = bool(wanted_hgvs.intersection(row_hgvs))
             if identifier_match or (gene_match and (not wanted_hgvs or hgvs_match)):
-                out.append(self._to_assertion(normalized, normalized["raw"]))
+                out.append(self._to_assertion(
+                    normalized, normalized["raw"], raw_response_bytes=raw_response_bytes,
+                    response_request_fingerprint=response_request_fingerprint,
+                ))
         return out
 
-    def _api_get_json(self, path: str, params: list[tuple[str, str]]) -> Any:
+    def _api_get_json_with_bytes(
+        self, path: str, params: list[tuple[str, str]]
+    ) -> tuple[Any, bytes]:
         url = f"{self.api_base_url}{path}"
         if params:
             url = f"{url}?{urlencode(params)}"
@@ -197,9 +212,13 @@ class ClinGenVariantPathogenicityProvider:
         except Exception as exc:
             raise ClinGenVariantPathogenicityError(f"ClinGen ERepo API request failed: {url}: {exc}") from exc
         try:
-            return json.loads(body.decode("utf-8"))
+            return json.loads(body.decode("utf-8")), body
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise ClinGenVariantPathogenicityError(f"ClinGen ERepo API returned non-JSON content: {url}") from exc
+
+    def _api_get_json(self, path: str, params: list[tuple[str, str]]) -> Any:
+        document, _body = self._api_get_json_with_bytes(path, params)
+        return document
 
     @classmethod
     def _collect_records(cls, value: Any) -> list[dict[str, Any]]:
@@ -520,7 +539,9 @@ class ClinGenVariantPathogenicityProvider:
 
     @classmethod
     def _to_assertion(
-        cls, normalized: dict[str, Any], raw: dict[str, Any]
+        cls, normalized: dict[str, Any], raw: dict[str, Any], *,
+        raw_response_bytes: bytes | None = None,
+        response_request_fingerprint: str | None = None,
     ) -> ClinGenVariantAssertion:
         canonical = json.dumps(
             raw, sort_keys=True, separators=(",", ":"), ensure_ascii=True
@@ -587,6 +608,8 @@ class ClinGenVariantPathogenicityProvider:
             ),
             payload=payload,
             record_sha256=digest,
+            raw_response_bytes=raw_response_bytes,
+            response_request_fingerprint=response_request_fingerprint,
         )
 
     @staticmethod

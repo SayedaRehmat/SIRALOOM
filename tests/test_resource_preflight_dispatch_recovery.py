@@ -32,7 +32,7 @@ def test_analysis_start_rejects_nonstartable_states_before_preflight(monkeypatch
     from backend.app.api.v1 import analyses as analyses_api
 
     analysis = SimpleNamespace(
-        id=uuid4(), status=status, configuration={}, queue_task_id=None,
+        id=uuid4(), status=status, configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, queue_task_id=None,
     )
     monkeypatch.setattr(
         analyses_api, "get_accessible_analysis",
@@ -65,7 +65,7 @@ def test_analysis_start_does_not_restart_unclassified_blocked_state(monkeypatch)
     from backend.app.api.v1 import analyses as analyses_api
 
     analysis = SimpleNamespace(
-        id=uuid4(), status="BLOCKED", configuration={
+        id=uuid4(), status="BLOCKED", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, 
             "resource_plan": {"status": "READY"},
         }, queue_task_id=None,
     )
@@ -105,7 +105,7 @@ def test_analysis_start_returns_existing_execution_without_rechecking_capacity(
 
     analysis = SimpleNamespace(
         id=uuid4(), status=status, queue_task_id="existing-dispatch",
-        configuration={
+        configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, 
             "resource_plan": {"status": "READY_WITH_LIMITATIONS", "issues": []},
             "capacity_preflight": {"status": "READY"},
         },
@@ -206,9 +206,9 @@ def test_capacity_blocked_analysis_recovers_and_dispatches_once(monkeypatch):
         ))
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
-            analysis_type="GERMLINE", workflow_id="variant", workflow_version="1",
+            analysis_type="RESEARCH", workflow_id="variant", workflow_version="1",
             status="BLOCKED", queue_task_id=None, reference_build="GRCh38",
-            configuration={
+            configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, 
                 "resource_plan": {"status": "READY", "issues": []},
                 "capacity_preflight": {"status": "BLOCKED"},
             },
@@ -358,13 +358,13 @@ def test_resource_blocked_analysis_recovers_and_dispatches_once(monkeypatch):
                 case_id=case_id,
                 parent_analysis_id=None,
                 assay_id=None,
-                analysis_type="GERMLINE",
+                analysis_type="RESEARCH",
                 workflow_id="variant",
                 workflow_version="1",
                 status="CREATED",
                 queue_task_id=None,
                 reference_build="GRCh38",
-                configuration={"resource_profile_id": "WES_GRCh38_STANDARD"},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "resource_profile_id": "WES_GRCh38_STANDARD"},
                 started_at=None,
                 completed_at=None,
                 created_by=user_id,
@@ -519,13 +519,13 @@ def test_optional_resource_gap_does_not_block_preflight_or_dispatch(monkeypatch)
                 case_id=case_id,
                 parent_analysis_id=None,
                 assay_id=None,
-                analysis_type="GERMLINE",
+                analysis_type="RESEARCH",
                 workflow_id="variant",
                 workflow_version="1",
                 status="CREATED",
                 queue_task_id=None,
                 reference_build="GRCh38",
-                configuration={"resource_profile_id": "WES_GRCh38_STANDARD"},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "resource_profile_id": "WES_GRCh38_STANDARD"},
                 started_at=None,
                 completed_at=None,
                 created_by=user_id,

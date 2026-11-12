@@ -1,4 +1,6 @@
 from datetime import UTC, datetime
+import hashlib
+from pathlib import Path
 from uuid import uuid4, uuid5
 
 import pytest
@@ -32,6 +34,24 @@ from backend.app.reporting.finalization import (
 from backend.app.reporting.service import build_report_content, final_report_eligibility
 
 
+@pytest.fixture(autouse=True)
+def _isolate_report_finalization_unit_tests_from_runtime_authorization(monkeypatch, tmp_path):
+    """Exercise report snapshot/sign-out mechanics independently of clinical gates.
+
+    Clinical authorization and worker-runtime attestation have dedicated gate tests;
+    those production checks remain mandatory and are isolated only in this test module.
+    """
+    from backend.app.domain import clinical_authorization, runtime_attestation
+    from backend.app.config import settings
+
+    monkeypatch.setattr(settings, "artifact_root", str(tmp_path))
+    monkeypatch.setattr(settings, "artifact_storage_targets_json", "{}")
+    monkeypatch.setattr(settings, "organization_require_storage_profile", False)
+
+    monkeypatch.setattr(clinical_authorization, "assert_analysis_clinical_authorization", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(runtime_attestation, "assert_analysis_runtime_attested", lambda *_args, **_kwargs: None)
+
+
 def make_db():
     engine=create_engine('sqlite+pysqlite:///:memory:'); Base.metadata.create_all(engine); return Session(engine)
 
@@ -51,7 +71,10 @@ def seed(approved=True):
     from backend.app.domain.quality_provenance import qc_observation_snapshot
     qc.observation_snapshot=qc_observation_snapshot(db,a,[qc_observation]); db.flush()
     rd=ReportabilityDecision(id=uuid4(),analysis_id=a.id,variant_id=v.id,classification_id=cl.id,version=1,policy_name="SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY",policy_version="1.0.0",disposition="REPORT",priority_score=100,priority_band="HIGH",reasons=["Test fixture"],status="FINAL",review_version=1,reviewed_by=u.id)
-    art=Artifact(id=uuid4(),case_id=c.id,analysis_id=a.id,artifact_type="REPORT_PDF",filename="fixture.pdf",media_type="application/pdf",size_bytes=100,sha256="a"*64,storage_uri="file:///tmp/fixture.pdf",genome_build="GRCh38",validation_status="VALID")
+    artifact_bytes = b"fixture source artifact bytes"
+    artifact_path = Path(__import__("backend.app.config", fromlist=["settings"]).settings.artifact_root) / "fixture.pdf"
+    artifact_path.write_bytes(artifact_bytes)
+    art=Artifact(id=uuid4(),case_id=c.id,analysis_id=a.id,artifact_type="REPORT_PDF",filename="fixture.pdf",media_type="application/pdf",size_bytes=len(artifact_bytes),sha256=hashlib.sha256(artifact_bytes).hexdigest(),storage_uri=artifact_path.as_uri(),genome_build="GRCh38",validation_status="VALID")
     db.add_all([rd,art]); db.commit(); return db, u, c, a, v
 
 def test_final_report_requires_approved_classification():
@@ -62,10 +85,13 @@ def test_finalize_report_sets_final_and_supersedes(monkeypatch):
     db,u,c,a,_v=seed(True)
     draft_artifact = db.query(Artifact).first()
     prior_report_id = uuid4()
+    prior_signed_bytes = b"%PDF-prior-signed-fixture%"
+    prior_signed_path = Path(__import__("backend.app.config", fromlist=["settings"]).settings.artifact_root) / "report_v1_signed.pdf"
+    prior_signed_path.write_bytes(prior_signed_bytes)
     prior_signed_artifact = Artifact(
         id=uuid4(), case_id=c.id, analysis_id=a.id, artifact_type="REPORT_PDF",
-        filename="report_v1_signed.pdf", media_type="application/pdf", size_bytes=100,
-        sha256="b" * 64, storage_uri="file:///tmp/report_v1_signed.pdf",
+        filename="report_v1_signed.pdf", media_type="application/pdf", size_bytes=len(prior_signed_bytes),
+        sha256=hashlib.sha256(prior_signed_bytes).hexdigest(), storage_uri=prior_signed_path.as_uri(),
         genome_build="GRCh38", validation_status="VALID",
         metadata_json={
             "report_id": str(prior_report_id), "report_version": 1,

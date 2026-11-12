@@ -134,6 +134,7 @@ def create(
             reference_build=payload.reference_build,
             configuration=payload.configuration,
             created_by=principal.user_id,
+            clinical_request_id=payload.clinical_request_id,
             resource_profile_id=payload.resource_profile_id,
             toolchain_profile_id=payload.toolchain_profile_id,
             commit=False,
@@ -361,7 +362,11 @@ def start(
     # Persist preflight recovery inside this transaction before enqueue_analysis
     # refreshes the locked row to fence concurrent starts.
     db.flush()
-    task_id = enqueue_analysis(db, analysis)
+    try:
+        task_id = enqueue_analysis(db, analysis)
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     return {
         "analysis_id": str(analysis_id),

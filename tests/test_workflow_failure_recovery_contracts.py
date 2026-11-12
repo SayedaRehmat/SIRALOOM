@@ -82,13 +82,13 @@ def test_stage_persistence_failure_is_durable_and_retryable(
                 case_id=case_id,
                 parent_analysis_id=None,
                 assay_id=None,
-                analysis_type="VARIANT_INTERPRETATION",
+                analysis_type="RESEARCH",
                 workflow_id="variant-v1",
                 workflow_version="test",
                 status=AnalysisStatus.RUNNING,
                 queue_task_id="dispatch-stage-retry",
                 reference_build="GRCh38",
-                configuration={},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, },
                 started_at=datetime.now(timezone.utc),
                 completed_at=None,
                 created_by=user_id,
@@ -174,10 +174,10 @@ def test_missing_clingen_resource_routes_acmg_to_resumable_human_review(tmp_path
             db.flush()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.RUNNING, queue_task_id="missing-clingen-test",
-                reference_build="GRCh38", configuration={},
+                reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, },
                 started_at=datetime.now(timezone.utc), completed_at=None,
                 created_by=user_id, analysis_version=1,
             ))

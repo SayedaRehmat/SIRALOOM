@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+import hashlib
+import json
 from uuid import UUID, uuid4
 
 # Backward-compatible patch seam for existing application tests and callers.
@@ -11,6 +13,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus, ArtifactType
+from backend.app.domain.clinical_authorization import (
+    assert_analysis_clinical_authorization,
+    authorize_analysis_request,
+)
 from backend.app.domain.ingestion import normalize_build
 from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile
@@ -22,6 +28,7 @@ from backend.app.domain.resource_profile_resolver import (
 from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisDispatch,
+    Assay,
     Artifact,
     Case,
     Specimen,
@@ -88,6 +95,7 @@ def create_analysis(
     reference_build: str,
     configuration: dict,
     created_by: UUID | None,
+    clinical_request_id: UUID | None = None,
     resource_profile_id: str | None = None,
     toolchain_profile_id: str | None = None,
     commit: bool = True,
@@ -111,6 +119,89 @@ def create_analysis(
     validate_analysis_input_artifact(artifact, reference_build, expected_sample_name)
 
     analysis_configuration = dict(configuration or {})
+    case = db.get(Case, case_id)
+    if case is None:
+        raise ValueError("Analysis case not found")
+    try:
+        clinical_authorization = authorize_analysis_request(
+            db,
+            case=case,
+            analysis_type=analysis_type,
+            configuration=analysis_configuration,
+            clinical_request_id=clinical_request_id,
+        )
+    except ValueError as exc:
+        raise ValueError(str(exc)) from exc
+    analysis_configuration["clinical_authorization"] = clinical_authorization
+    if clinical_authorization.get("mode") == "CLINICAL":
+        if assay_id is None:
+            raise ValueError("Clinical analysis requires a versioned active assay with QC rules")
+        assay = db.get(Assay, assay_id)
+        if (
+            assay is None
+            or assay.organization_id != case.organization_id
+            or assay.status != "ACTIVE"
+            or not assay.name.strip()
+            or not assay.version.strip()
+            or not assay.assay_type.strip()
+        ):
+            raise ValueError("Clinical analysis assay is missing, inactive, or outside this organization")
+        from backend.app.quality import normalize_rules
+
+        try:
+            qc_rules = normalize_rules(assay.configuration or {})
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"Clinical assay QC configuration is invalid: {exc}") from exc
+        if not qc_rules:
+            raise ValueError("Clinical analysis requires an active assay with at least one QC rule")
+        assay_configuration = assay.configuration or {}
+        assay_configuration_sha256 = hashlib.sha256(
+            json.dumps(assay_configuration, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        assay_snapshot = {
+            "assay_id": str(assay.id),
+            "name": assay.name,
+            "version": assay.version,
+            "assay_type": assay.assay_type,
+            "configuration": assay_configuration,
+            "configuration_sha256": assay_configuration_sha256,
+        }
+        assay_snapshot_sha256 = hashlib.sha256(
+            json.dumps(assay_snapshot, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        analysis_configuration["assay_id"] = str(assay.id)
+        analysis_configuration["assay_snapshot"] = assay_snapshot
+        analysis_configuration["assay_snapshot_sha256"] = assay_snapshot_sha256
+        from backend.app.domain.assay_validation import authorize_assay_validation
+
+        try:
+            analysis_configuration["assay_validation_snapshot"] = authorize_assay_validation(
+                db,
+                assay_id=assay.id,
+                organization_id=case.organization_id,
+                workflow_id=workflow_id,
+                workflow_version=workflow_version,
+                reference_build=reference_build,
+                specimen_type=specimen.specimen_type,
+            )
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
+    if clinical_authorization.get("mode") == "CLINICAL":
+        from backend.app.domain.variant_eligibility import evaluate_small_variant_eligibility
+
+        eligibility = evaluate_small_variant_eligibility(
+            (artifact.metadata_json or {}).get("validation")
+        )
+        if eligibility["status"] != "ELIGIBLE":
+            detail = "; ".join(eligibility["reasons"])
+            raise ValueError(
+                "VCF is not eligible for the initial SNV/small-indel clinical workflow: "
+                + detail
+            )
+        analysis_configuration["workflow_eligibility"] = {
+            **eligibility,
+            "validation_artifact_sha256": artifact.sha256,
+        }
     configured_toolchain_id = analysis_configuration.get("toolchain_profile_id")
     if toolchain_profile_id and configured_toolchain_id and str(toolchain_profile_id) != str(configured_toolchain_id):
         raise ValueError("toolchain_profile_id conflicts with configuration.toolchain_profile_id")
@@ -357,6 +448,19 @@ def enqueue_analysis(
     if case_id is not None:
         case = db.get(Case, case_id)
         if case is not None:
+            try:
+                assert_analysis_clinical_authorization(
+                    db,
+                    case=case,
+                    analysis_configuration=analysis.configuration,
+                    analysis_type=getattr(analysis, "analysis_type", None),
+                    analysis_assay_id=getattr(analysis, "assay_id", None),
+                    analysis_workflow_id=getattr(analysis, "workflow_id", None),
+                    analysis_workflow_version=getattr(analysis, "workflow_version", None),
+                    analysis_reference_build=getattr(analysis, "reference_build", None),
+                )
+            except ValueError as exc:
+                raise ValueError(str(exc)) from exc
             policy = resolve_resource_deployment_policy(
                 db,
                 organization_id=case.organization_id,
@@ -417,6 +521,20 @@ def resume_analysis(
         raise ValueError(
             f"Analysis cannot be resumed from status {locked.status}"
         )
+
+    case = db.get(Case, locked.case_id)
+    if case is None:
+        raise ValueError("Analysis case not found")
+    assert_analysis_clinical_authorization(
+        db,
+        case=case,
+        analysis_configuration=locked.configuration,
+        analysis_type=getattr(locked, "analysis_type", None),
+        analysis_assay_id=getattr(locked, "assay_id", None),
+        analysis_workflow_id=getattr(locked, "workflow_id", None),
+        analysis_workflow_version=getattr(locked, "workflow_version", None),
+        analysis_reference_build=getattr(locked, "reference_build", None),
+    )
 
     dispatch = _create_dispatch_locked(db, locked)
     return _publish_dispatch_after_commit(db, dispatch)

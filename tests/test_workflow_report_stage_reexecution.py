@@ -111,11 +111,11 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
             db.flush()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.RUNNING, queue_task_id="report-retry-test",
                 reference_build="GRCh38",
-                configuration={"input_artifact_id": str(input_artifact.id)},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "input_artifact_id": str(input_artifact.id)},
                 started_at=datetime.now(timezone.utc), completed_at=None,
                 created_by=user_id, analysis_version=1,
             ))

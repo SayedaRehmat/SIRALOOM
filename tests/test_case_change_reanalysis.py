@@ -20,6 +20,7 @@ from backend.app.infrastructure.db.models import (
     PopulationObservation,
     ReanalysisCandidate,
     ReanalysisChangeEvent,
+    Resource,
     SegregationObservation,
     User,
     Variant,
@@ -152,7 +153,7 @@ def test_reanalysis_copy_preserves_annotation_population_and_evidence_provenance
         engine,
         tables=[
             Organization.__table__, Case.__table__, Analysis.__table__, Variant.__table__,
-            Annotation.__table__, Evidence.__table__, PopulationObservation.__table__,
+            Resource.__table__, Annotation.__table__, Evidence.__table__, PopulationObservation.__table__,
             PedigreeMember.__table__, SegregationObservation.__table__,
             InheritanceAssessment.__table__,
         ],

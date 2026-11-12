@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
@@ -11,17 +12,24 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
+from backend.app.domain.evidence import evidence_fingerprint
+from backend.app.domain.artifact_integrity import validate_integrity_expectations, verify_artifact_file
 from backend.app.domain.report_integrity import (
     has_valid_draft_artifact,
     has_valid_signed_artifact,
 )
-from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
+from backend.app.domain.storage_profiles import (
+    StorageProfileError,
+    artifact_store_for_organization,
+    artifact_store_for_uri,
+)
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis,
     Artifact,
     Case,
     ConfirmationRecord,
+    Evidence,
     Report,
     User,
 )
@@ -87,9 +95,70 @@ def _verify_report_source_snapshot(db: Session, report: Report, content: dict) -
         )
 
 
+def _verify_report_artifact_bytes(db: Session, report: Report) -> None:
+    """Re-verify every source artifact in the report manifest immediately before sign-out."""
+    content = report.content_json or {}
+    manifest = content.get("artifact_manifest")
+    if not isinstance(manifest, list):
+        raise ReportFinalizationError("Report snapshot is missing its evidence artifact manifest.")
+    case = db.get(Case, report.case_id)
+    if case is None or case.organization_id is None:
+        raise ReportFinalizationError("Report case organization is unavailable for artifact verification.")
+    seen: set[str] = set()
+    for item in manifest:
+        if not isinstance(item, dict):
+            raise ReportFinalizationError("Report artifact manifest contains a malformed entry.")
+        artifact_id = item.get("artifact_id")
+        try:
+            artifact_uuid = UUID(str(artifact_id))
+        except (TypeError, ValueError) as exc:
+            raise ReportFinalizationError("Report artifact manifest contains an invalid artifact ID.") from exc
+        if str(artifact_uuid) in seen:
+            raise ReportFinalizationError("Report artifact manifest contains duplicate artifact identities.")
+        seen.add(str(artifact_uuid))
+        if report.artifact_id and artifact_uuid == report.artifact_id:
+            continue
+        artifact = db.get(Artifact, artifact_uuid)
+        if artifact is None or artifact.case_id != report.case_id:
+            raise ReportFinalizationError(f"Report source artifact {artifact_id} is missing or belongs to another case.")
+        if (
+            item.get("sha256") != artifact.sha256
+            or item.get("size_bytes") != artifact.size_bytes
+            or item.get("type") != artifact.artifact_type
+            or item.get("filename") != artifact.filename
+        ):
+            raise ReportFinalizationError(f"Report source artifact {artifact_id} no longer matches its manifest identity.")
+        try:
+            validate_integrity_expectations(artifact.sha256, artifact.size_bytes)
+            store = artifact_store_for_uri(
+                db, organization_id=case.organization_id, storage_uri=artifact.storage_uri
+            )
+            if callable(getattr(store, "download_to_file", None)):
+                with tempfile.NamedTemporaryFile(prefix="siraloom-report-evidence-", delete=False) as handle:
+                    staged = Path(handle.name)
+                try:
+                    store.download_to_file(
+                        artifact.storage_uri,
+                        staged,
+                        expected_sha256=artifact.sha256,
+                        expected_size_bytes=artifact.size_bytes,
+                    )
+                    verify_artifact_file(staged, sha256=artifact.sha256, size_bytes=artifact.size_bytes)
+                finally:
+                    staged.unlink(missing_ok=True)
+            else:
+                source = store.local_path(artifact.storage_uri)
+                verify_artifact_file(source, sha256=artifact.sha256, size_bytes=artifact.size_bytes)
+        except Exception as exc:
+            raise ReportFinalizationError(
+                f"Report source artifact {artifact_id} is unavailable or failed byte-integrity verification."
+            ) from exc
+
+
 def _verify_report_snapshot(db: Session, report: Report) -> None:
     """Reject sign-out when the draft no longer matches current approved decisions."""
     content = report.content_json or {}
+    _verify_report_artifact_bytes(db, report)
     if not has_valid_draft_artifact(db, report):
         raise ReportFinalizationError(
             "Report draft artifact is missing, has invalid lineage, or no longer matches its content"
@@ -265,6 +334,44 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                     raise ReportFinalizationError(
                         f"Report snapshot evidence {evidence_id_raw} is missing"
                     )
+                from backend.app.domain.evidence_response_retention import verify_evidence_response_artifact
+                try:
+                    verify_evidence_response_artifact(db, evidence, require_retained=False)
+                except Exception as exc:
+                    raise ReportFinalizationError(
+                        f"Report source evidence {evidence_id_raw} has an invalid provider response artifact reference."
+                    ) from exc
+                if evidence.response_sha256 is not None and re.fullmatch(r"[0-9a-fA-F]{64}", evidence.response_sha256) is None:
+                    raise ReportFinalizationError(
+                        f"Report source evidence {evidence_id_raw} has an invalid response SHA-256."
+                    )
+                calculated_evidence_fingerprint = evidence_fingerprint(
+                    variant_id=evidence.variant_id,
+                    analysis_id=evidence.analysis_id,
+                    evidence_type=evidence.evidence_type,
+                    statement=evidence.statement,
+                    direction=evidence.direction,
+                    source_name=evidence.source_name,
+                    source_version=evidence.source_version,
+                    observation_ids=tuple(evidence.observation_ids or []),
+                    payload=evidence.payload or {},
+                    resource_id=evidence.resource_id,
+                    source_record_id=evidence.source_record_id,
+                    request_fingerprint=evidence.request_fingerprint,
+                    response_sha256=evidence.response_sha256,
+                    response_artifact_id=evidence.response_artifact_id,
+                    response_artifact_sha256=evidence.response_artifact_sha256,
+                    response_artifact_size_bytes=evidence.response_artifact_size_bytes,
+                    response_retention_status=evidence.response_retention_status,
+                    source_release_artifact_id=evidence.source_release_artifact_id,
+                    source_release_sha256=evidence.source_release_sha256,
+                    source_release_size_bytes=evidence.source_release_size_bytes,
+                    source_release_status=evidence.source_release_status,
+                )
+                if calculated_evidence_fingerprint != evidence.evidence_fingerprint:
+                    raise ReportFinalizationError(
+                        f"Report source evidence {evidence_id_raw} failed its persisted evidence fingerprint."
+                    )
                 current_evidence = {
                     "evidence_id": str(evidence.id),
                     "evidence_fingerprint": evidence.evidence_fingerprint,
@@ -277,6 +384,14 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                     "source_record_id": evidence.source_record_id,
                     "request_fingerprint": evidence.request_fingerprint,
                     "response_sha256": evidence.response_sha256,
+                    "response_artifact_id": str(evidence.response_artifact_id) if evidence.response_artifact_id else None,
+                    "response_artifact_sha256": evidence.response_artifact_sha256,
+                    "response_artifact_size_bytes": evidence.response_artifact_size_bytes,
+                    "response_retention_status": evidence.response_retention_status,
+                    "source_release_artifact_id": str(evidence.source_release_artifact_id) if evidence.source_release_artifact_id else None,
+                    "source_release_sha256": evidence.source_release_sha256,
+                    "source_release_size_bytes": evidence.source_release_size_bytes,
+                    "source_release_status": evidence.source_release_status,
                     "observation_ids": [str(x) for x in (evidence.observation_ids or [])],
                     "payload": phenotype_evidence_display_payload(evidence.evidence_type, evidence.payload),
                 }
@@ -586,6 +701,35 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
         return report
     if report.status != "DRAFT":
         raise ReportFinalizationError(f"Report cannot be finalized from status {report.status}")
+
+    # Recheck clinical authorization under the same Analysis and Case locks used
+    # by sign-out. A long-running analysis cannot be signed out after its request,
+    # assay approval, or intended-use scope has changed.
+    try:
+        from backend.app.domain.clinical_authorization import (
+            assert_analysis_clinical_authorization,
+        )
+        from backend.app.domain.runtime_attestation import (
+            RuntimeAttestationError,
+            assert_analysis_runtime_attested,
+        )
+
+        assert_analysis_clinical_authorization(
+            db,
+            case=case_lock,
+            analysis_configuration=analysis.configuration,
+            analysis_type=analysis.analysis_type,
+            analysis_assay_id=analysis.assay_id,
+            analysis_workflow_id=analysis.workflow_id,
+            analysis_workflow_version=analysis.workflow_version,
+            analysis_reference_build=analysis.reference_build,
+        )
+        if analysis.analysis_type != "RESEARCH":
+            assert_analysis_runtime_attested(db, analysis)
+    except (ValueError, RuntimeAttestationError) as exc:
+        raise ReportFinalizationError(
+            f"Clinical authorization is no longer valid: {exc}"
+        ) from exc
 
     prior = db.scalars(
         select(Report)

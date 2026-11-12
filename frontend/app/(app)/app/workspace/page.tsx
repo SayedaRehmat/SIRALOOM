@@ -10,6 +10,7 @@ import { clearUploadIdempotencyAttempt, getOrCreateUploadIdempotencyAttempt } fr
 import { canFinalizeClinicalReports, canSubmitReportSignout } from "../../../../lib/report-permissions.mjs";
 import PhenotypeIntake from "../../../../components/PhenotypeIntake";
 import ClinicalContextIntake from "../../../../components/ClinicalContextIntake";
+import PedigreeIntake from "../../../../components/PedigreeIntake";
 
 type Step = {
   step_id: string;
@@ -67,6 +68,7 @@ type CaseWorkspace = {
   case_id: string;
   case_identifier: string;
   status: string;
+  accession_reconciliation_status?: string;
   language: string;
   clinical_context: Record<string, unknown>;
   specimens: Array<Record<string, unknown> & { metadata?: Record<string, unknown> }>;
@@ -75,7 +77,9 @@ type CaseWorkspace = {
 };
 
 type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };
-type CaseArtifact = { artifact_id: string; filename: string; artifact_type: string; size_bytes: number; sha256: string; genome_build?: string | null; validation_status?: string | null; metadata?: Record<string, unknown>; created_at?: string; specimen_id?: string | null; paired_artifact_id?: string | null; };
+type ClinicalRequestSummary = { request_id: string; request_identifier: string; status: string; current_revision_id?: string | null };
+
+type CaseArtifact = { artifact_id: string; filename: string; artifact_type: string; size_bytes: number; sha256: string; genome_build?: string | null; validation_status?: string | null; validation_dispatch_status?: string | null; validation_dispatch_error?: string | null; metadata?: Record<string, unknown>; created_at?: string; specimen_id?: string | null; paired_artifact_id?: string | null; };
 
 type AuditEvent = {
   event_id: string;
@@ -221,6 +225,9 @@ export default function Home() {
   const [caseWorkspace, setCaseWorkspace] = useState<CaseWorkspace | null>(null);
   const [caseLoadError, setCaseLoadError] = useState("");
   const [caseLoadAttempt, setCaseLoadAttempt] = useState(0);
+  const [legacyEvidenceReference, setLegacyEvidenceReference] = useState("");
+  const [legacyReviewedScope, setLegacyReviewedScope] = useState("");
+  const [legacyReconciliationReason, setLegacyReconciliationReason] = useState("");
   const caseIdRef = useRef("");
   const [specimenIdentifier, setSpecimenIdentifier] = useState("");
   const [specimenType, setSpecimenType] = useState("Blood");
@@ -234,6 +241,41 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [artifactId, setArtifactId] = useState("");
   const [caseArtifacts, setCaseArtifacts] = useState<CaseArtifact[]>([]);
+  const [clinicalRequests, setClinicalRequests] = useState<ClinicalRequestSummary[]>([]);
+  const [clinicalRequestId, setClinicalRequestId] = useState("");
+  const [accessionRequestId, setAccessionRequestId] = useState("");
+  const [selectedRequestDetail, setSelectedRequestDetail] = useState<Record<string, any> | null>(null);
+  const [requestForm, setRequestForm] = useState({
+    request_identifier: "",
+    requested_examination: "Germline SNV and small-indel interpretation",
+    referral_indication: "",
+    clinical_question: "",
+    referrer_name: "",
+    referrer_role: "",
+    referrer_organization: "",
+    referrer_identifier: "",
+    referrer_contact: "",
+    referral_channel: "SECURE_PORTAL",
+    source_evidence_reference: "",
+  });
+  const [verificationEvidence, setVerificationEvidence] = useState("");
+  const [decisionReason, setDecisionReason] = useState("");
+  const [capabilityAssignments, setCapabilityAssignments] = useState<Array<Record<string, any>>>([]);
+  const [capabilityUserId, setCapabilityUserId] = useState("");
+  const [capabilityName, setCapabilityName] = useState("REFERRER_VERIFY");
+  const [capabilityReason, setCapabilityReason] = useState("");
+  const [capabilityExpiry, setCapabilityExpiry] = useState("");
+  const [accessionProcedures, setAccessionProcedures] = useState<Array<Record<string, any>>>([]);
+  const [procedureIdentifier, setProcedureIdentifier] = useState("");
+  const [procedureVersion, setProcedureVersion] = useState("");
+  const [procedureEffectiveAt, setProcedureEffectiveAt] = useState("");
+  const [procedureExpiryAt, setProcedureExpiryAt] = useState("");
+  const [procedureEvidence, setProcedureEvidence] = useState("");
+  const [procedureAllowsException, setProcedureAllowsException] = useState(false);
+  const [exceptionProcedureId, setExceptionProcedureId] = useState("");
+
+
+
   const [analysisId, setAnalysisId] = useState("");
   const [analysis, setAnalysis] = useState<any>(null);
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -372,6 +414,46 @@ export default function Home() {
   }, [caseId, t]);
 
   useEffect(() => { void refreshCaseArtifacts(); }, [refreshCaseArtifacts, stepStatusSignature]);
+
+  useEffect(() => {
+    let active = true;
+    setClinicalRequests([]);
+    setClinicalRequestId("");
+    setAccessionRequestId("");
+    setSelectedRequestDetail(null);
+    if (!caseId) return () => { active = false; };
+    apiFetch(`/cases/${caseId}/clinical-requests`)
+      .then((rows) => {
+        if (!active) return;
+        const requests = Array.isArray(rows) ? rows as ClinicalRequestSummary[] : [];
+        setClinicalRequests(requests);
+        const accepted = requests.filter((request) => request.status === "ACCEPTED" && request.current_revision_id);
+        if (accepted.length === 1) setClinicalRequestId(accepted[0].request_id);
+      })
+      .catch((error) => {
+        if (active) setMessage(error instanceof Error ? error.message : "Unable to load clinical requests.");
+      });
+    return () => { active = false; };
+  }, [caseId]);
+
+  const hasPendingArtifactValidation = caseArtifacts.some(
+    (artifact) => artifact.validation_status === "PENDING" && artifact.validation_dispatch_status !== "FAILED",
+  );
+
+  useEffect(() => {
+    if (!hasPendingArtifactValidation) return;
+    const timer = setInterval(() => { void refreshCaseArtifacts(); }, 2000);
+    return () => clearInterval(timer);
+  }, [hasPendingArtifactValidation, refreshCaseArtifacts]);
+
+  useEffect(() => {
+    if (artifactId) return;
+    const validatedPrimary = caseArtifacts.find(
+      (artifact) => artifact.artifact_type === "VCF" && artifact.validation_status === "VALID",
+    );
+    if (validatedPrimary) setArtifactId(validatedPrimary.artifact_id);
+  }, [artifactId, caseArtifacts]);
+
 
   useEffect(() => {
     if (!caseId) return;
@@ -710,7 +792,9 @@ export default function Home() {
       await refreshCaseArtifacts();
       clearUploadIdempotencyAttempt(window.sessionStorage, uploadAttempt);
       const warnings = Array.isArray(result.validation?.warnings) ? result.validation.warnings.join(" ") : "";
-      if (siteLevelOnly) {
+      if (result.validation_status === "PENDING") {
+        setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256} · ${t("workspace.validationStatus")}: ${t("workspace.queued")}`);
+      } else if (siteLevelOnly) {
         setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}${warnings ? ` · ${warnings}` : ""}`);
       } else if (!validatedId) {
         const validationErrors = Array.isArray(result.validation?.errors) ? result.validation.errors.join(" ") : "";
@@ -760,9 +844,327 @@ export default function Home() {
     }
   };
 
+  const loadClinicalRequestDetail = async (requestId: string) => {
+    if (!requestId) { setSelectedRequestDetail(null); return; }
+    const detail = await apiFetch("/clinical-requests/" + requestId);
+    setSelectedRequestDetail(detail);
+  };
+
+  const selectAccessionRequest = async (requestId: string) => {
+    setAccessionRequestId(requestId);
+    setSelectedRequestDetail(null);
+    if (!requestId) return;
+    try { await loadClinicalRequestDetail(requestId); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Unable to load request history."); }
+  };
+  const refreshClinicalRequests = async () => {
+    if (!caseId) return;
+    const rows = await apiFetch(`/cases/${caseId}/clinical-requests`);
+    const requests = Array.isArray(rows) ? rows as ClinicalRequestSummary[] : [];
+    setClinicalRequests(requests);
+    if (accessionRequestId && !requests.some((request) => request.request_id === accessionRequestId)) {
+      setAccessionRequestId("");
+    }
+    const accepted = requests.filter((request) => request.status === "ACCEPTED" && request.current_revision_id);
+    if (!clinicalRequestId && accepted.length === 1) setClinicalRequestId(accepted[0].request_id);
+  };
+
+  const reconcileLegacyCase = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!caseId || !legacyEvidenceReference.trim() || !legacyReviewedScope.trim() || !legacyReconciliationReason.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch("/cases/" + caseId + "/accession-reconciliation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_evidence_reference: legacyEvidenceReference.trim(),
+          reviewed_scope: legacyReviewedScope.trim(),
+          reason: legacyReconciliationReason.trim(),
+        }),
+      });
+      const refreshed = await apiFetch("/cases/" + caseId);
+      setCaseWorkspace(refreshed);
+      setMessage("Historical accession review recorded. No clinical request or acceptance was created.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to reconcile historical case records.");
+    } finally { setBusy(false); }
+  };
+  const createClinicalRequest = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!caseId) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const created = await apiFetch(`/cases/${caseId}/clinical-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestForm),
+      });
+      setAccessionRequestId(created.request_id);
+      await refreshClinicalRequests();
+      await loadClinicalRequestDetail(created.request_id);
+      setMessage("Clinical request created as DRAFT. Submit it for accession review.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to create clinical request.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reviseClinicalRequest = async () => {
+    if (!accessionRequestId) return;
+    setBusy(true);
+    try {
+      const { request_identifier: _ignored, ...revision } = requestForm;
+      await apiFetch(`/clinical-requests/${accessionRequestId}/revisions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(revision),
+      });
+      await refreshClinicalRequests();
+      await loadClinicalRequestDetail(accessionRequestId);
+      setMessage("A new immutable request revision was created. Submit it for reassessment.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to revise clinical request.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitClinicalRequest = async () => {
+    if (!accessionRequestId) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/clinical-requests/${accessionRequestId}/submit`, { method: "POST" });
+      await refreshClinicalRequests();
+      await loadClinicalRequestDetail(accessionRequestId);
+      setMessage("Clinical request submitted for accession review.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to submit clinical request.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const verifyAndAcceptClinicalRequest = async () => {
+    if (!accessionRequestId || !verificationEvidence.trim() || !decisionReason.trim()) {
+      setMessage("Provide referrer-verification evidence and an accession decision reason.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const verification = await apiFetch(`/clinical-requests/${accessionRequestId}/verify-referrer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "VERIFIED",
+          method: "Institutional directory and documented callback",
+          evidence_reference: verificationEvidence.trim(),
+          outcome_note: "Referrer identity and referral authority verified.",
+        }),
+      });
+      await apiFetch(`/clinical-requests/${accessionRequestId}/decisions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          decision: "ACCEPT",
+          reason: decisionReason.trim(),
+          verification_id: verification.verification_id,
+        }),
+      });
+      await refreshClinicalRequests();
+      await loadClinicalRequestDetail(accessionRequestId);
+      setClinicalRequestId(accessionRequestId);
+      setMessage("Request accepted. It is now eligible for clinical analysis, subject to the other readiness gates.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to verify and accept clinical request.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const decideClinicalRequest = async (decision: "REJECT" | "NEEDS_INFORMATION") => {
+    if (!accessionRequestId || !decisionReason.trim()) {
+      setMessage("Provide a reason for the accession decision.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await apiFetch(`/clinical-requests/${accessionRequestId}/decisions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, reason: decisionReason.trim() }),
+      });
+      await refreshClinicalRequests();
+      setMessage(`Accession decision recorded: ${decision.replaceAll("_", " ")}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to record accession decision.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const refreshCapabilities = async () => {
+    try {
+      const rows = await apiFetch("/organizations/capabilities");
+      setCapabilityAssignments(Array.isArray(rows) ? rows : []);
+      setMessage("Organization capability assignments loaded.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to load capability assignments.");
+    }
+  };
+
+  const grantOrganizationCapability = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!capabilityUserId.trim() || !capabilityReason.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch("/organizations/capabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: capabilityUserId.trim(),
+          capability: capabilityName,
+          reason: capabilityReason.trim(),
+          expires_at: capabilityExpiry ? new Date(capabilityExpiry).toISOString() : null,
+        }),
+      });
+      await refreshCapabilities();
+      setMessage("Organization capability granted and audited.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to grant capability.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const revokeOrganizationCapability = async (assignmentId: string) => {
+    const reason = window.prompt("Reason for revoking this capability:");
+    if (!reason?.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/organizations/capabilities/${assignmentId}/revoke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      await refreshCapabilities();
+      setMessage("Organization capability revoked and audited.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to revoke capability.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const refreshAccessionProcedures = async () => {
+    try {
+      const rows = await apiFetch("/organizations/accession-procedures");
+      setAccessionProcedures(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to load accession procedures.");
+    }
+  };
+
+  const registerAccessionProcedure = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!procedureEffectiveAt || !procedureEvidence.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch("/organizations/accession-procedures", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          procedure_identifier: procedureIdentifier,
+          procedure_version: procedureVersion,
+          effective_at: new Date(procedureEffectiveAt).toISOString(),
+          expires_at: procedureExpiryAt ? new Date(procedureExpiryAt).toISOString() : null,
+          procedure_evidence_reference: procedureEvidence.trim(),
+          allows_unverified_referrer_exception: procedureAllowsException,
+        }),
+      });
+      await refreshAccessionProcedures();
+      setMessage("Procedure submitted as PENDING_APPROVAL. A different authorized person must approve it.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to register accession procedure.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const approveAccessionProcedure = async (procedureId: string) => {
+    const evidence = window.prompt("Controlled approval evidence reference:");
+    if (!evidence?.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/organizations/accession-procedures/${procedureId}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approval_evidence_reference: evidence.trim() }),
+      });
+      await refreshAccessionProcedures();
+      setMessage("Accession procedure independently approved.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to approve accession procedure.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const withdrawAccessionProcedure = async (procedureId: string) => {
+    const reason = window.prompt("Reason for withdrawing this procedure:");
+    if (!reason?.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/organizations/accession-procedures/${procedureId}/withdraw`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      await refreshAccessionProcedures();
+      setMessage("Accession procedure withdrawn and audited.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to withdraw accession procedure.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const acceptUsingApprovedProcedure = async () => {
+    if (!accessionRequestId || !exceptionProcedureId || !decisionReason.trim()) {
+      setMessage("Select an approved exception procedure and provide the decision reason.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await apiFetch(`/clinical-requests/${accessionRequestId}/decisions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          decision: "ACCEPT",
+          reason: decisionReason.trim(),
+          exception_procedure_id: exceptionProcedureId,
+        }),
+      });
+      await refreshClinicalRequests();
+      await loadClinicalRequestDetail(accessionRequestId);
+      setClinicalRequestId(accessionRequestId);
+      setMessage("Request accepted under the recorded approved-procedure exception.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to accept request under exception procedure.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const createAndStart = async () => {
     if (!caseId || !artifactId) {
       setMessage(t("workspace.caseVcfRequired"));
+      return;
+    }
+    if (!clinicalRequestId) {
+      setMessage(t("workspace.selectAcceptedClinicalRequest"));
       return;
     }
     setBusy(true);
@@ -775,6 +1177,7 @@ export default function Home() {
           input_artifact_id: artifactId,
           assay_id: assayId || null,
           analysis_type: "VARIANT_INTERPRETATION",
+          clinical_request_id: clinicalRequestId,
           workflow_id: "variant-v1",
           workflow_version: "2.1",
           reference_build: genomeBuild,
@@ -1067,6 +1470,7 @@ export default function Home() {
       <nav className="workspace-section-nav" aria-label={t("workspace.title")}>
         <a href="#case-intake">{t("workspace.caseSection")}</a>
         <a href="#clinical-context-intake">Clinical context</a>
+        <a href="#clinical-family-pedigree">Family pedigree</a>
         <a href="#clinical-phenotype-intake">Clinical phenotypes</a>
         <a href="#analysis-workflow">{t("workspace.executionSection")}</a>
         <a href="#artifacts">{t("workspace.files")}</a>
@@ -1127,6 +1531,7 @@ export default function Home() {
         </section>
       )}
 
+      {caseId && <PedigreeIntake caseId={caseId} apiFetch={apiFetch} />}
       {caseId && <ClinicalContextIntake caseId={caseId} apiFetch={apiFetch} />}
       {caseId && <PhenotypeIntake caseId={caseId} apiFetch={apiFetch} />}
 
@@ -1196,6 +1601,15 @@ export default function Home() {
             </select>
             {!assayId && <small>{t("workspace.assayQcGateNotice")}</small>}
           </label>
+          <label>{t("workspace.acceptedClinicalRequest")}
+            <select value={clinicalRequestId} onChange={(event) => setClinicalRequestId(event.target.value)}>
+              <option value="">{t("workspace.selectAcceptedClinicalRequest")}</option>
+              {clinicalRequests.filter((request) => request.status === "ACCEPTED" && request.current_revision_id).map((request) => (
+                <option key={request.request_id} value={request.request_id}>{request.request_identifier} · {request.status}</option>
+              ))}
+            </select>
+            {clinicalRequests.length === 0 && <small>{t("workspace.noAcceptedClinicalRequest")}</small>}
+          </label>
           <div className="dropzone">
             <div className="drop-icon">VCF</div>
             <div><strong>{file?.name ?? "Choose a VCF / .vcf.gz / .vcf.bgz"}</strong><p>{t("workspace.inputPersisted")}</p></div>
@@ -1206,6 +1620,127 @@ export default function Home() {
             <button className="primary" onClick={createAndStart} disabled={busy || !caseId || !artifactId}>{t("workspace.startAnalysis")}</button>
           </div>
           {artifactId && <div className="keyline"><span>{t("workspace.artifactId")}</span><code>{artifactId}</code></div>}
+        </section>
+
+        {caseWorkspace?.accession_reconciliation_status === "LEGACY_UNRECONCILED" && <section className="panel workflow-panel">
+          <div className="section-kicker">Historical case controls</div>
+          <h3>Reconcile legacy accession history</h3>
+          <p className="muted">This records review of existing source evidence only. It does not create a historical clinical request, referrer verification or accession acceptance. New clinical analysis still requires a valid accepted request.</p>
+          <form onSubmit={reconcileLegacyCase} className="form-grid">
+            <label>Controlled historical source evidence reference<input required value={legacyEvidenceReference} onChange={(event) => setLegacyEvidenceReference(event.target.value)} /></label>
+            <label>Records and scope reviewed<textarea required value={legacyReviewedScope} onChange={(event) => setLegacyReviewedScope(event.target.value)} /></label>
+            <label>Reconciliation rationale<textarea required value={legacyReconciliationReason} onChange={(event) => setLegacyReconciliationReason(event.target.value)} /></label>
+            <div className="actions-row"><button className="primary" type="submit" disabled={busy}>Record historical reconciliation</button></div>
+          </form>
+        </section>}
+        <section className="panel workflow-panel">
+          <div className="panel-head">
+            <div><div className="section-kicker">S1-01 / S1-02</div><h3>Clinical request and accession</h3></div>
+          </div>
+          <p className="muted">Create an external-referrer request, preserve revisions, submit it, and record verification before acceptance. Acceptance is a separate accession decision.</p>
+          <form onSubmit={createClinicalRequest} className="form-grid">
+            <label>Request identifier<input required value={requestForm.request_identifier} onChange={(event) => setRequestForm((current) => ({ ...current, request_identifier: event.target.value }))} /></label>
+            <label>Requested examination<input required value={requestForm.requested_examination} onChange={(event) => setRequestForm((current) => ({ ...current, requested_examination: event.target.value }))} /></label>
+            <label>Referral indication<textarea required value={requestForm.referral_indication} onChange={(event) => setRequestForm((current) => ({ ...current, referral_indication: event.target.value }))} /></label>
+            <label>Clinical question<textarea required value={requestForm.clinical_question} onChange={(event) => setRequestForm((current) => ({ ...current, clinical_question: event.target.value }))} /></label>
+            <label>External referrer name<input required value={requestForm.referrer_name} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_name: event.target.value }))} /></label>
+            <label>Referrer role<input value={requestForm.referrer_role} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_role: event.target.value }))} /></label>
+            <label>Referrer organization<input value={requestForm.referrer_organization} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_organization: event.target.value }))} /></label>
+            <label>Professional identifier<input value={requestForm.referrer_identifier} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_identifier: event.target.value }))} /></label>
+            <label>Referrer contact<input value={requestForm.referrer_contact} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_contact: event.target.value }))} /></label>
+            <label>Referral channel<select value={requestForm.referral_channel} onChange={(event) => setRequestForm((current) => ({ ...current, referral_channel: event.target.value }))}><option value="SECURE_PORTAL">Secure portal</option><option value="SECURE_EMAIL">Secure email</option><option value="PAPER">Paper referral</option><option value="INTERNAL">Internal referral</option><option value="OTHER">Other</option></select></label>
+            <label>Referral source evidence reference<input value={requestForm.source_evidence_reference} onChange={(event) => setRequestForm((current) => ({ ...current, source_evidence_reference: event.target.value }))} /></label>
+            <div className="actions-row"><button className="primary" type="submit" disabled={busy || !caseId}>Create request</button></div>
+          </form>
+          <div className="keyline"><strong>Recorded requests</strong></div>
+          <div className="form-grid">
+            <label>Request to manage
+              <select value={accessionRequestId} onChange={(event) => { void selectAccessionRequest(event.target.value); }}>
+                <option value="">Select a request</option>
+                {clinicalRequests.map((request) => <option key={request.request_id} value={request.request_id}>{request.request_identifier} · {request.status}</option>)}
+              </select>
+            </label>
+            <label>Referrer verification evidence reference<input value={verificationEvidence} onChange={(event) => setVerificationEvidence(event.target.value)} placeholder="Controlled directory / callback record" /></label>
+            <label>Accession decision reason<textarea value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} placeholder="Document the basis for the decision" /></label>
+          </div>
+          <div className="actions-row">
+            <button className="secondary" type="button" disabled={busy || !accessionRequestId} onClick={reviseClinicalRequest}>Create new revision</button>
+            <button className="secondary" type="button" disabled={busy || !accessionRequestId} onClick={submitClinicalRequest}>Submit / resubmit</button>
+            <button className="primary" type="button" disabled={busy || !accessionRequestId} onClick={verifyAndAcceptClinicalRequest}>Verify referrer and accept</button>
+            <button className="secondary" type="button" disabled={busy || !accessionRequestId} onClick={() => decideClinicalRequest("NEEDS_INFORMATION")}>Request information</button>
+            <button className="secondary" type="button" disabled={busy || !accessionRequestId} onClick={() => decideClinicalRequest("REJECT")}>Reject request</button>
+          </div>
+          <ul className="compact-list">
+            {clinicalRequests.map((request) => <li key={request.request_id}><strong>{request.request_identifier}</strong> — {request.status}{request.current_revision_id ? " · revision recorded" : " · no revision"}</li>)}
+          </ul>
+          {selectedRequestDetail && <div className="request-history">
+            <h4>Immutable request history</h4>
+            <p><strong>Request:</strong> {selectedRequestDetail.request_identifier} · {selectedRequestDetail.status}</p>
+            <h5>Revisions</h5>
+            <ul className="compact-list">{(selectedRequestDetail.revisions ?? []).map((revision: any) => <li key={revision.revision_id}><strong>Revision {revision.version}</strong> · {revision.fingerprint}<small>{revision.created_at}</small></li>)}</ul>
+            <h5>Referrer verifications</h5>
+            <ul className="compact-list">{(selectedRequestDetail.verifications ?? []).map((verification: any) => <li key={verification.verification_id}><strong>{verification.status}</strong> · {verification.method}<small>{verification.evidence_reference} · {verification.verified_at}</small></li>)}</ul>
+            <h5>Accession decisions</h5>
+            <ul className="compact-list">{(selectedRequestDetail.decisions ?? []).map((decision: any) => <li key={decision.decision_id}><strong>{decision.decision}</strong> · {decision.reason}<small>Revision {decision.revision_id} · verification {decision.verification_id ?? "none"} · exception procedure {decision.exception_procedure_id ?? "none"} · {decision.created_at}</small></li>)}</ul>
+          </div>}
+        </section>
+
+        <section className="panel workflow-panel">
+          <div className="panel-head"><div><div className="section-kicker">Organization governance</div><h3>Capability administration</h3></div>
+            <button className="secondary" type="button" onClick={refreshCapabilities} disabled={busy}>Load assignments</button>
+          </div>
+          <p className="muted">Grant and revoke organization-scoped operational capabilities. Clinical-attestation grants remain disabled until professional qualification verification is governed and implemented.</p>
+          <form onSubmit={grantOrganizationCapability} className="form-grid">
+            <label>Organization member user ID<input required value={capabilityUserId} onChange={(event) => setCapabilityUserId(event.target.value)} placeholder="UUID of an existing organization member" /></label>
+            <label>Capability<select value={capabilityName} onChange={(event) => setCapabilityName(event.target.value)}>
+              <option value="REFERRER_VERIFY">Verify external referrers</option>
+              <option value="ACCESSION_DECIDE">Make accession decisions</option>
+              <option value="CAPABILITY_ADMIN">Administer capabilities</option>
+              <option value="HISTORY_RECONCILE">Reconcile historical cases</option>
+            </select></label>
+            <label>Grant reason<input required value={capabilityReason} onChange={(event) => setCapabilityReason(event.target.value)} /></label>
+            <label>Optional expiry (local time)<input type="datetime-local" value={capabilityExpiry} onChange={(event) => setCapabilityExpiry(event.target.value)} /></label>
+            <div className="actions-row"><button className="primary" type="submit" disabled={busy}>Grant capability</button></div>
+          </form>
+          <ul className="compact-list">
+            {capabilityAssignments.map((assignment) => <li key={assignment.assignment_id}>
+              <strong>{assignment.capability}</strong> — {assignment.user_id}
+              <span> · {assignment.revoked_at ? "REVOKED" : assignment.expires_at && Date.parse(assignment.expires_at) <= Date.now() ? "EXPIRED" : "ACTIVE"}</span>
+              {assignment.revocation_reason && <small>Revocation reason: {assignment.revocation_reason}</small>}
+              {!assignment.revoked_at && <button className="secondary" type="button" disabled={busy} onClick={() => revokeOrganizationCapability(assignment.assignment_id)}>Revoke</button>}
+            </li>)}
+          </ul>
+        </section>
+
+        <section className="panel workflow-panel">
+          <div className="panel-head"><div><div className="section-kicker">Controlled laboratory procedures</div><h3>Accession exception procedures</h3></div>
+            <button className="secondary" type="button" onClick={refreshAccessionProcedures} disabled={busy}>Load procedures</button>
+          </div>
+          <p className="muted">An exception is usable only when the laboratory procedure is approved by a different authorized person, currently effective, and explicitly permits an unverified-referrer exception.</p>
+          <form onSubmit={registerAccessionProcedure} className="form-grid">
+            <label>Procedure identifier<input required value={procedureIdentifier} onChange={(event) => setProcedureIdentifier(event.target.value)} /></label>
+            <label>Procedure version<input required value={procedureVersion} onChange={(event) => setProcedureVersion(event.target.value)} /></label>
+            <label>Effective from<input required type="datetime-local" value={procedureEffectiveAt} onChange={(event) => setProcedureEffectiveAt(event.target.value)} /></label>
+            <label>Expires at (optional)<input type="datetime-local" value={procedureExpiryAt} onChange={(event) => setProcedureExpiryAt(event.target.value)} /></label>
+            <label>Controlled document / evidence reference<input required value={procedureEvidence} onChange={(event) => setProcedureEvidence(event.target.value)} /></label>
+            <label><input type="checkbox" checked={procedureAllowsException} onChange={(event) => setProcedureAllowsException(event.target.checked)} /> Procedure explicitly permits exception to referrer verification</label>
+            <div className="actions-row"><button className="primary" type="submit" disabled={busy}>Submit procedure for approval</button></div>
+          </form>
+          <ul className="compact-list">
+            {accessionProcedures.map((procedure) => <li key={procedure.procedure_id}>
+              <strong>{procedure.procedure_identifier} v{procedure.procedure_version}</strong> — {procedure.status}
+              <small>{procedure.allows_unverified_referrer_exception ? "Allows unverified-referrer exception" : "No unverified-referrer exception"} · {procedure.procedure_evidence_reference} · approval evidence: {procedure.approval_evidence_reference ?? "not approved"}</small>
+              {procedure.status === "PENDING_APPROVAL" && <button className="secondary" type="button" disabled={busy} onClick={() => approveAccessionProcedure(procedure.procedure_id)}>Approve (independent reviewer)</button>}
+              {procedure.status !== "WITHDRAWN" && <button className="secondary" type="button" disabled={busy} onClick={() => withdrawAccessionProcedure(procedure.procedure_id)}>Withdraw</button>}
+            </li>)}
+          </ul>
+          <label>Approved exception procedure for selected request
+            <select value={exceptionProcedureId} onChange={(event) => setExceptionProcedureId(event.target.value)}>
+              <option value="">Select an approved exception procedure</option>
+              {accessionProcedures.filter((procedure) => procedure.status === "APPROVED" && procedure.allows_unverified_referrer_exception).map((procedure) => <option key={procedure.procedure_id} value={procedure.procedure_id}>{procedure.procedure_identifier} v{procedure.procedure_version}</option>)}
+            </select>
+          </label>
+          <button className="secondary" type="button" disabled={busy || !accessionRequestId || !exceptionProcedureId} onClick={acceptUsingApprovedProcedure}>Accept using approved exception procedure</button>
         </section>
 
         <section id="analysis-workflow" className="panel workflow-panel">
@@ -1268,7 +1803,7 @@ export default function Home() {
       <section id="artifacts" className="panel artifacts-panel">
         <div className="panel-head"><div><div className="section-kicker">{t("workspace.files")}</div><h3>{caseArtifacts.length} {t("workspace.files")}</h3><p className="muted">{t("workspace.filesLead")}</p></div><button type="button" className="secondary" onClick={() => void refreshCaseArtifacts()}>{t("workspace.refreshFiles")}</button></div>
         {!caseArtifacts.length ? <div className="empty small"><strong>{t("workspace.noFiles")}</strong></div> : <div className="artifacts-list">{caseArtifacts.map(artifact => <article className="artifact-row" key={artifact.artifact_id}>
-          <div className="artifact-main"><strong>{artifact.filename}</strong><span>{prettyStatus(artifact.artifact_type)} · {formatBytes(artifact.size_bytes)} · {artifact.genome_build ?? "—"}</span><small>{t("workspace.validationStatus")}: {prettyStatus(artifact.validation_status ?? "UNKNOWN")} · {t("workspace.createdAt")}: {formatDate(artifact.created_at)}</small><details><summary>{t("workspace.sha256")}</summary><code>{artifact.sha256}</code>{artifact.metadata && <pre>{JSON.stringify(artifact.metadata, null, 2)}</pre>}</details></div>
+          <div className="artifact-main"><strong>{artifact.filename}</strong><span>{prettyStatus(artifact.artifact_type)} · {formatBytes(artifact.size_bytes)} · {artifact.genome_build ?? "—"}</span><small>{t("workspace.validationStatus")}: {prettyStatus(artifact.validation_status ?? "UNKNOWN")} · {artifact.validation_dispatch_status ? prettyStatus(artifact.validation_dispatch_status) : ""} · {t("workspace.createdAt")}: {formatDate(artifact.created_at)}</small>{artifact.validation_dispatch_status === "FAILED" && artifact.validation_dispatch_error && <small className="notice error-notice">{artifact.validation_dispatch_error}</small>}<details><summary>{t("workspace.sha256")}</summary><code>{artifact.sha256}</code>{artifact.metadata && <pre>{JSON.stringify(artifact.metadata, null, 2)}</pre>}</details></div>
           <div className="artifact-actions"><code>{artifact.artifact_id.slice(0, 12)}…</code><button type="button" className="secondary small" onClick={() => void downloadAuthenticated(`/artifacts/${artifact.artifact_id}/download`, artifact.filename)}>{t("workspace.downloadArtifact")}</button></div>
         </article>)}</div>}
       </section>

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import base64
 import shutil
 import tempfile
 from dataclasses import asdict, dataclass
@@ -520,6 +521,74 @@ def _persist_annotation_response_checkpoint(
         raise ValueError("Annotation response records have inconsistent provider provenance.")
     if not request_fingerprint or not response_sha256:
         raise ValueError("Annotation response is missing its request/response fingerprint.")
+    # Preserve the exact HTTP entity bytes separately from the parsed/replay
+    # checkpoint. The release-specific license gate runs before those bytes
+    # are written to durable storage; unknown/restricted terms never fall back
+    # to raw-response persistence.
+    raw_response_b64 = provenance.pop("raw_response_base64", None)
+    raw_response_media_type = provenance.pop("raw_response_media_type", None)
+    retention = None
+    if raw_response_b64:
+        try:
+            raw_response_bytes = base64.b64decode(raw_response_b64, validate=True)
+        except (ValueError, TypeError) as exc:
+            raise ValueError("Annotation provider raw response encoding is invalid.") from exc
+        from backend.app.domain.evidence_response_retention import retain_provider_response_bytes
+        retention = retain_provider_response_bytes(
+            db,
+            analysis=analysis,
+            resource=resource,
+            provider_id=provider_id,
+            provider_version=provider_version,
+            request_fingerprint=request_fingerprint,
+            raw_response_bytes=raw_response_bytes,
+            media_type=raw_response_media_type,
+            store=artifacts,
+        )
+    else:
+        from backend.app.domain.evidence_response_retention import ProviderResponseRetention
+        retention = ProviderResponseRetention(
+            "NOT_AVAILABLE", "Provider adapter did not expose exact raw response bytes."
+        )
+    for payload in payloads:
+        item_provenance = payload.get("_siraloom_annotation_provenance")
+        if isinstance(item_provenance, dict):
+            item_provenance.pop("raw_response_base64", None)
+            item_provenance.pop("raw_response_media_type", None)
+            item_provenance["response_artifact_id"] = (
+                str(retention.artifact_id) if retention.artifact_id else None
+            )
+            item_provenance["response_artifact_sha256"] = retention.sha256
+            item_provenance["response_artifact_size_bytes"] = retention.size_bytes
+            item_provenance["response_retention_status"] = retention.status
+            item_provenance["response_retention_reason"] = retention.reason
+            item_provenance["response_license_status"] = retention.license_status
+    if retention.status == "NOT_PERMITTED":
+        raise ResourceConsumptionError(
+            "PROVIDER_RESPONSE_RETENTION_PROHIBITED",
+            retention.reason,
+        )
+    if retention.status != "RETAINED":
+        # Do not persist a replay artifact containing provider response records
+        # when exact raw retention is not approved. The workflow will re-query
+        # on recovery and persist only normalized fields for downstream use.
+        _save_batch_checkpoint(
+            db, step, start, end, status="RESPONSE_NOT_RETAINED",
+            attempt=int(_batch_checkpoint(step, start, end).get("attempt", 0)),
+            metadata={
+                "provider": provider_id,
+                "provider_version": provider_version,
+                "resource_id": str(resource.id),
+                "resource_version": resource.version,
+                "request_fingerprint": request_fingerprint,
+                "response_sha256": provenance["response_sha256"],
+                "response_retention_status": retention.status,
+                "response_retention_reason": retention.reason,
+            },
+            commit=False,
+        )
+        db.commit()
+        return None
     response_material = {
         "schema_version": 1,
         "analysis_id": str(analysis.id),
@@ -1242,6 +1311,11 @@ def _persist_annotation_batch_rows(
         )
 
     existing_by_variant = {str(row.variant_id): row for row in existing_rows}
+    from backend.app.domain.resource_release_integrity import find_verified_resource_release
+    source_release, source_release_status = find_verified_resource_release(
+        db, resource_id=annotation_resource.id,
+        resource_version=annotation_resource.version,
+    )
     new_count = 0
     for canonical, row_id in variant_ids.items():
         if str(row_id) in existing_by_variant:
@@ -1260,6 +1334,15 @@ def _persist_annotation_batch_rows(
             resource_version=annotation_resource.version,
             request_fingerprint=provenance.get("request_fingerprint"),
             response_sha256=provenance.get("response_sha256"),
+            response_artifact_id=(UUID(str(provenance["response_artifact_id"])) if provenance.get("response_artifact_id") else None),
+            response_artifact_sha256=provenance.get("response_artifact_sha256"),
+            response_artifact_size_bytes=provenance.get("response_artifact_size_bytes"),
+            response_retention_status=provenance.get("response_retention_status", "NOT_AVAILABLE"),
+            response_retention_reason=provenance.get("response_retention_reason"),
+            source_release_artifact_id=source_release.id if source_release else None,
+            source_release_sha256=source_release.sha256 if source_release else None,
+            source_release_size_bytes=source_release.size_bytes if source_release else None,
+            source_release_status=source_release_status,
             request_metadata={
                 "endpoint": provenance.get("endpoint"),
                 "genome": provenance.get("genome"),
@@ -1273,7 +1356,11 @@ def _persist_annotation_batch_rows(
                 if provenance.get("observed_at") else None
             ),
             retry_count=int(provenance.get("retry_count", 0) or 0),
-            payload={"raw": payload, "normalized": normalized},
+            payload=(
+                {"raw": payload, "normalized": normalized}
+                if provenance.get("response_retention_status") == "RETAINED"
+                else {"normalized": normalized}
+            ),
         ))
         new_count += 1
     db.commit()
@@ -1406,6 +1493,46 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         case = db.get(Case, analysis.case_id)
         if case is None:
             raise RuntimeError(f"Analysis case not found: {analysis.case_id}")
+        from backend.app.domain.clinical_authorization import (
+            assert_analysis_clinical_authorization,
+        )
+        from backend.app.domain.runtime_attestation import (
+            RuntimeAttestationError,
+            assert_analysis_runtime_attested,
+        )
+        try:
+            assert_analysis_clinical_authorization(
+                db,
+                case=case,
+                analysis_configuration=analysis.configuration,
+                analysis_type=getattr(analysis, "analysis_type", None),
+                analysis_assay_id=getattr(analysis, "assay_id", None),
+                analysis_workflow_id=getattr(analysis, "workflow_id", None),
+                analysis_workflow_version=getattr(analysis, "workflow_version", None),
+                analysis_reference_build=getattr(analysis, "reference_build", None),
+            )
+            if analysis.analysis_type != "RESEARCH":
+                assert_analysis_runtime_attested(db, analysis)
+        except (ValueError, RuntimeAttestationError) as exc:
+            analysis.status = AnalysisStatus.BLOCKED
+            analysis.completed_at = datetime.now(timezone.utc)
+            blocked_configuration = dict(analysis.configuration or {})
+            blocked_configuration["clinical_authorization_block"] = str(exc)
+            analysis.configuration = blocked_configuration
+            db.add(analysis)
+            AuditService(db).record(
+                event_type="CLINICAL_ANALYSIS_AUTHORIZATION_BLOCKED",
+                case_id=analysis.case_id,
+                analysis_id=analysis.id,
+                actor_type="SYSTEM",
+                actor_id="clinical-authorization-gate",
+                subject_type="ANALYSIS",
+                subject_id=str(analysis.id),
+                operation="BLOCK",
+                reason=str(exc),
+            )
+            db.commit()
+            return
         try:
             artifacts = artifact_store_for_organization(
                 db, organization_id=case.organization_id
@@ -3153,6 +3280,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 )
                                 if existing:
                                     continue
+                                from backend.app.domain.resource_release_integrity import find_verified_resource_release
+                                source_release, source_release_status = find_verified_resource_release(
+                                    db, resource_id=resource.id, resource_version=resource.version,
+                                )
                                 db.add(
                                     PopulationObservation(
                                         id=__import__("uuid").uuid4(),
@@ -3174,6 +3305,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                         ),
                                         availability="AVAILABLE",
                                         quality_status="PROVIDER_DERIVED",
+                                        source_release_artifact_id=source_release.id if source_release else None,
+                                        source_release_sha256=source_release.sha256 if source_release else None,
+                                        source_release_size_bytes=source_release.size_bytes if source_release else None,
+                                        source_release_status=source_release_status,
                                     )
                                 )
                                 created += 1
@@ -3248,6 +3383,38 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             db.commit()
                             raise
 
+                        response_retention = None
+                        if obs_list:
+                            raw_response_bytes = next(
+                                (obs.raw_response_bytes for obs in obs_list if obs.raw_response_bytes),
+                                None,
+                            )
+                            from backend.app.domain.evidence_response_retention import (
+                                ProviderResponseRetention,
+                                retain_provider_response_bytes,
+                            )
+                            sample_response = obs_list[0]
+                            if raw_response_bytes:
+                                response_retention = retain_provider_response_bytes(
+                                    db,
+                                    analysis=analysis,
+                                    resource=resource,
+                                    provider_id=provider.provider_id,
+                                    provider_version=provider.provider_version,
+                                    request_fingerprint=sample_response.request_fingerprint or "",
+                                    raw_response_bytes=raw_response_bytes,
+                                    media_type="application/json",
+                                    store=artifacts,
+                                )
+                            else:
+                                response_retention = ProviderResponseRetention(
+                                    "NOT_AVAILABLE", "Provider adapter did not expose exact raw response bytes."
+                                )
+                        if response_retention and response_retention.status == "NOT_PERMITTED":
+                            raise ResourceConsumptionError(
+                                "PROVIDER_RESPONSE_RETENTION_PROHIBITED",
+                                response_retention.reason,
+                            )
                         for obs in obs_list:
                             existing = db.scalar(
                                 select(PopulationObservation).where(
@@ -3259,6 +3426,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             )
                             if existing:
                                 continue
+                            from backend.app.domain.resource_release_integrity import find_verified_resource_release
+                            source_release, source_release_status = find_verified_resource_release(
+                                db, resource_id=resource.id, resource_version=resource.version,
+                            )
                             db.add(
                                 PopulationObservation(
                                     id=__import__("uuid").uuid4(),
@@ -3277,6 +3448,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     source_record_id=obs.source_record_id,
                                     request_fingerprint=obs.request_fingerprint,
                                     response_sha256=obs.response_sha256,
+                                    response_artifact_id=(response_retention.artifact_id if response_retention and response_retention.artifact_id else None),
+                                    response_artifact_sha256=(response_retention.sha256 if response_retention else None),
+                                    response_artifact_size_bytes=(response_retention.size_bytes if response_retention else None),
+                                    response_retention_status=(response_retention.status if response_retention else "NOT_AVAILABLE"),
+                                    response_retention_reason=(response_retention.reason if response_retention else "No provider response was returned."),
+                                    source_release_artifact_id=source_release.id if source_release else None,
+                                    source_release_sha256=source_release.sha256 if source_release else None,
+                                    source_release_size_bytes=source_release.size_bytes if source_release else None,
+                                    source_release_status=source_release_status,
                                     request_metadata=obs.request_metadata or {},
                                     observed_at=(
                                         datetime.fromisoformat(obs.observed_at)
@@ -3475,6 +3655,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 )
                                 if existing:
                                     continue
+                                from backend.app.domain.resource_release_integrity import find_verified_resource_release
+                                secondary_source_release, secondary_source_release_status = find_verified_resource_release(
+                                    db, resource_id=secondary_resource.id,
+                                    resource_version=secondary_resource.version,
+                                )
                                 db.add(
                                     PopulationObservation(
                                         id=__import__("uuid").uuid4(),
@@ -3499,6 +3684,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                             if obs.observed_at
                                             else None
                                         ),
+                                        source_release_artifact_id=secondary_source_release.id if secondary_source_release else None,
+                                        source_release_sha256=secondary_source_release.sha256 if secondary_source_release else None,
+                                        source_release_size_bytes=secondary_source_release.size_bytes if secondary_source_release else None,
+                                        source_release_status=secondary_source_release_status,
                                     )
                                 )
                                 secondary_count += 1
@@ -4351,6 +4540,35 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         organization_id=case.organization_id,
                         observations=population_rows,
                     )
+                    # Verify exact retained response bytes before the evidence engine
+                    # reads annotation or population values. Non-retained states
+                    # remain explicitly unverified; they are never upgraded here.
+                    from backend.app.domain.evidence_response_retention import verify_provider_response_reference
+                    for annotation_row in annotations:
+                        verify_provider_response_reference(
+                            db, analysis_id=analysis.id, case_id=case.id,
+                            resource_id=annotation_row.resource_id,
+                            request_fingerprint=annotation_row.request_fingerprint,
+                            artifact_id=annotation_row.response_artifact_id,
+                            artifact_sha256=annotation_row.response_artifact_sha256,
+                            artifact_size_bytes=annotation_row.response_artifact_size_bytes,
+                            retention_status=annotation_row.response_retention_status,
+                        )
+                    for population_observation in population_rows:
+                        verify_provider_response_reference(
+                            db, analysis_id=analysis.id, case_id=case.id,
+                            resource_id=population_observation.resource_id,
+                            request_fingerprint=population_observation.request_fingerprint,
+                            artifact_id=population_observation.response_artifact_id,
+                            artifact_sha256=population_observation.response_artifact_sha256,
+                            artifact_size_bytes=population_observation.response_artifact_size_bytes,
+                            retention_status=population_observation.response_retention_status,
+                        )
+                    from backend.app.domain.resource_release_integrity import (
+                        verify_population_source_release_reference,
+                    )
+                    for population_observation in population_rows:
+                        verify_population_source_release_reference(db, population_observation)
                     population_by_variant: dict[str, list[dict]] = {}
                     for obs in population_rows:
                         resource = resource_rows.get(obs.resource_id)
@@ -4421,7 +4639,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             ):
                                 execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_vp_execution, requested_resource_id=clingen_vp_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_VARIANT_PATHOGENICITY_QUERY", "query": query_material})
                                 try:
-                                    assertions = clingen_vp_provider.query_variant(gene=gene, hgvs=hgvs_values)
+                                    assertions = clingen_vp_provider.query_variant(
+                                        gene=gene, hgvs=hgvs_values,
+                                        request_fingerprint=request_fingerprint,
+                                    )
                                     response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
                                     response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
                                     complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
@@ -4558,11 +4779,39 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                         for record in records:
                             if record.resource_id is not None:
+                                response_retention = None
+                                if record.raw_response_bytes:
+                                    record_resource = db.get(Resource, record.resource_id)
+                                    if record_resource is None:
+                                        raise RuntimeError("Evidence response resource disappeared before retention.")
+                                    from backend.app.domain.evidence_response_retention import (
+                                        ProviderResponseRetention,
+                                        retain_provider_response_bytes,
+                                    )
+                                    response_retention = retain_provider_response_bytes(
+                                        db, analysis=analysis, resource=record_resource,
+                                        provider_id="ClinGen Variant Pathogenicity",
+                                        provider_version="ERepo",
+                                        request_fingerprint=record.request_fingerprint or "",
+                                        raw_response_bytes=record.raw_response_bytes,
+                                        media_type=record.response_media_type or "application/json",
+                                        store=artifacts,
+                                    )
+                                    if response_retention.status == "NOT_PERMITTED":
+                                        raise ResourceConsumptionError(
+                                            "PROVIDER_RESPONSE_RETENTION_PROHIBITED",
+                                            response_retention.reason,
+                                        )
                                 provenance = {
                                     "resource_id": record.resource_id,
                                     "source_record_id": record.source_record_id,
                                     "request_fingerprint": record.request_fingerprint,
                                     "response_sha256": record.response_sha256,
+                                    "response_artifact_id": response_retention.artifact_id if response_retention else None,
+                                    "response_artifact_sha256": response_retention.sha256 if response_retention else None,
+                                    "response_artifact_size_bytes": response_retention.size_bytes if response_retention else None,
+                                    "response_retention_status": response_retention.status if response_retention else "NOT_AVAILABLE",
+                                    "response_retention_reason": response_retention.reason if response_retention else "This provider adapter does not yet expose retained raw response bytes.",
                                     "request_metadata": record.request_metadata or {},
                                     "observed_at": record.observed_at,
                                     "source_name": record.source_name,
@@ -4574,6 +4823,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     "source_record_id": None,
                                     "request_fingerprint": ann.request_fingerprint,
                                     "response_sha256": ann.response_sha256,
+                                    "response_artifact_id": ann.response_artifact_id,
+                                    "response_artifact_sha256": ann.response_artifact_sha256,
+                                    "response_artifact_size_bytes": ann.response_artifact_size_bytes,
+                                    "response_retention_status": ann.response_retention_status,
+                                    "response_retention_reason": ann.response_retention_reason,
                                     "request_metadata": ann.request_metadata or {},
                                     "observed_at": ann.observed_at,
                                     "source_name": record.source_name,
@@ -4588,11 +4842,30 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                         "source_record_id": obs.source_record_id,
                                         "request_fingerprint": obs.request_fingerprint,
                                         "response_sha256": obs.response_sha256,
+                                        "response_artifact_id": obs.response_artifact_id,
+                                        "response_artifact_sha256": obs.response_artifact_sha256,
+                                        "response_artifact_size_bytes": obs.response_artifact_size_bytes,
+                                        "response_retention_status": obs.response_retention_status,
+                                        "response_retention_reason": obs.response_retention_reason,
                                         "request_metadata": obs.request_metadata or {},
                                         "observed_at": obs.observed_at,
                                         "source_name": resource.name if resource else record.source_name,
                                         "source_version": resource.version if resource else record.source_version,
                                     }
+                            source_release = None
+                            source_release_status = "NOT_AVAILABLE"
+                            if provenance["resource_id"] is not None:
+                                from backend.app.domain.resource_release_integrity import find_verified_resource_release
+                                source_resource = db.get(Resource, provenance["resource_id"])
+                                if source_resource is not None:
+                                    source_release, source_release_status = find_verified_resource_release(
+                                        db, resource_id=source_resource.id,
+                                        resource_version=source_resource.version,
+                                    )
+                            provenance["source_release_artifact_id"] = source_release.id if source_release else None
+                            provenance["source_release_sha256"] = source_release.sha256 if source_release else None
+                            provenance["source_release_size_bytes"] = source_release.size_bytes if source_release else None
+                            provenance["source_release_status"] = source_release_status
                             fp = evidence_fingerprint(
                                 variant_id=record.variant_id, analysis_id=analysis.id,
                                 evidence_type=record.evidence_type, statement=record.statement,
@@ -4602,6 +4875,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 source_record_id=provenance["source_record_id"],
                                 request_fingerprint=provenance["request_fingerprint"],
                                 response_sha256=provenance["response_sha256"],
+                                response_artifact_id=provenance["response_artifact_id"],
+                                response_artifact_sha256=provenance["response_artifact_sha256"],
+                                response_artifact_size_bytes=provenance["response_artifact_size_bytes"],
+                                response_retention_status=provenance["response_retention_status"],
+                                source_release_artifact_id=provenance["source_release_artifact_id"],
+                                source_release_sha256=provenance["source_release_sha256"],
+                                source_release_size_bytes=provenance["source_release_size_bytes"],
+                                source_release_status=provenance["source_release_status"],
                             )
                             exists = db.scalar(select(Evidence).where(Evidence.analysis_id == analysis.id, Evidence.evidence_fingerprint == fp))
                             if exists:
@@ -4612,6 +4893,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 source_name=provenance["source_name"], source_version=provenance["source_version"],
                                 resource_id=provenance["resource_id"], source_record_id=provenance["source_record_id"],
                                 request_fingerprint=provenance["request_fingerprint"], response_sha256=provenance["response_sha256"],
+                                response_artifact_id=(UUID(str(provenance["response_artifact_id"])) if provenance["response_artifact_id"] else None),
+                                response_artifact_sha256=provenance["response_artifact_sha256"],
+                                response_artifact_size_bytes=provenance["response_artifact_size_bytes"],
+                                response_retention_status=provenance["response_retention_status"],
+                                response_retention_reason=provenance["response_retention_reason"],
+                                source_release_artifact_id=provenance["source_release_artifact_id"],
+                                source_release_sha256=provenance["source_release_sha256"],
+                                source_release_size_bytes=provenance["source_release_size_bytes"],
+                                source_release_status=provenance["source_release_status"],
                                 request_metadata=provenance["request_metadata"], observed_at=provenance["observed_at"],
                                 observation_ids=[str(x) for x in record.observation_ids], payload=record.payload,
                                 created_by_type="SYSTEM", created_by_id=engine.engine_id, evidence_fingerprint=fp,
@@ -4890,6 +5180,45 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         if variant_row is None:
                             blocked_variants += 1; batch_blocked += 1; continue
                         population_rows_for_variant = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id == ann.variant_id)).all()
+                        # Verify retained provider bytes immediately before the ACMG
+                        # assessment consumes annotation/population evidence. A
+                        # non-retained response remains explicitly unverified.
+                        from backend.app.domain.evidence_response_retention import verify_provider_response_reference
+                        verify_provider_response_reference(
+                            db, analysis_id=analysis.id, case_id=case.id,
+                            resource_id=ann.resource_id,
+                            request_fingerprint=ann.request_fingerprint,
+                            artifact_id=ann.response_artifact_id,
+                            artifact_sha256=ann.response_artifact_sha256,
+                            artifact_size_bytes=ann.response_artifact_size_bytes,
+                            retention_status=ann.response_retention_status,
+                        )
+                        for population_observation in population_rows_for_variant:
+                            verify_provider_response_reference(
+                                db, analysis_id=analysis.id, case_id=case.id,
+                                resource_id=population_observation.resource_id,
+                                request_fingerprint=population_observation.request_fingerprint,
+                                artifact_id=population_observation.response_artifact_id,
+                                artifact_sha256=population_observation.response_artifact_sha256,
+                                artifact_size_bytes=population_observation.response_artifact_size_bytes,
+                                retention_status=population_observation.response_retention_status,
+                            )
+                        from backend.app.domain.resource_release_integrity import (
+                            verify_annotation_source_release_reference,
+                            verify_population_source_release_reference,
+                        )
+                        verify_annotation_source_release_reference(db, ann)
+                        for population_observation in population_rows_for_variant:
+                            verify_population_source_release_reference(db, population_observation)
+                        persisted_evidence = db.scalars(select(Evidence).where(
+                            Evidence.analysis_id == analysis.id,
+                            Evidence.variant_id == ann.variant_id,
+                        )).all()
+                        from backend.app.domain.evidence_response_retention import verify_evidence_response_artifact
+                        for evidence_row in persisted_evidence:
+                            verify_evidence_response_artifact(
+                                db, evidence_row, require_retained=False,
+                            )
                         population_resource_rows = _require_population_resource_rows(
                             db,
                             analysis_id=analysis.id,

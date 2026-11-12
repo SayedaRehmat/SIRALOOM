@@ -218,11 +218,11 @@ def test_production_worker_preserves_valid_non_sequence_records_for_review(
             )
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.QUEUED, queue_task_id="routing-test",
                 reference_build="GRCh38",
-                configuration={"input_artifact_id": str(input_artifact.id)},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "input_artifact_id": str(input_artifact.id)},
                 started_at=None, completed_at=None, created_by=user_id,
                 analysis_version=1,
             ))
@@ -355,11 +355,11 @@ def test_production_worker_rejects_malformed_symbolic_sv_with_precise_reason(mon
             )
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.QUEUED, queue_task_id="malformed-sv-test",
                 reference_build="GRCh38",
-                configuration={"input_artifact_id": str(artifact.id)},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "input_artifact_id": str(artifact.id)},
                 started_at=None, completed_at=None, created_by=user_id,
                 analysis_version=1,
             ))
@@ -465,11 +465,11 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             db.add(reference)
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.QUEUED, queue_task_id="gvcf-positive-test",
                 reference_build="GRCh38",
-                configuration={
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, 
                     "input_artifact_id": str(input_artifact.id),
                     "reference_resource_id": str(resource_id),
                 },

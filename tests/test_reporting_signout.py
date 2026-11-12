@@ -66,18 +66,18 @@ def seed_finalizable_report():
     assay = Assay(
         id=uuid4(), organization_id=org.id, name="Test Assay",
         version="1", assay_type="WGS", status="ACTIVE",
-        configuration={"rules": [{"metric": "mean_depth", "direction": "MIN", "threshold": 20}]},
+        configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "rules": [{"metric": "mean_depth", "direction": "MIN", "threshold": 20}]},
     )
     analysis = Analysis(
         id=uuid4(),
         case_id=case.id,
         assay_id=assay.id,
-        analysis_type="VARIANT_INTERPRETATION",
+        analysis_type="RESEARCH",
         workflow_id="variant-v1",
         workflow_version="2.1",
         status="SUCCEEDED",
         reference_build="GRCh38",
-        configuration={},
+        configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, },
         created_by=reviewer.id,
     )
     variant = Variant(
@@ -207,12 +207,12 @@ def test_report_is_not_eligible_until_reportability_is_final():
     analysis = Analysis(
         id=uuid4(),
         case_id=case.id,
-        analysis_type="VARIANT_INTERPRETATION",
+        analysis_type="RESEARCH",
         workflow_id="variant-v1",
         workflow_version="2.1",
         status="SUCCEEDED",
         reference_build="GRCh38",
-        configuration={},
+        configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, },
         created_by=user.id,
     )
     variant = Variant(
@@ -809,7 +809,7 @@ def test_signout_rejects_mutated_acmg_evidence_snapshot():
     db.commit()
 
     from backend.app.reporting.finalization import ReportFinalizationError
-    with pytest.raises(ReportFinalizationError, match="evidence .* changed"):
+    with pytest.raises(ReportFinalizationError, match="evidence .* failed its persisted evidence fingerprint"):
         finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
 
 def test_signout_rejects_mutated_classification_metadata_snapshot():
@@ -1065,3 +1065,31 @@ def test_signed_report_requires_draft_artifact():
         assert "immutable draft artifact" in str(exc)
     else:
         raise AssertionError("Sign-out must require an immutable draft artifact")
+
+
+def test_signout_rechecks_current_clinical_authorization(monkeypatch):
+    db, reviewer, _analysis, report = seed_finalizable_report()
+
+    def reject_expired_authorization(*args, **kwargs):
+        raise ValueError("assay validation approval expired")
+
+    monkeypatch.setattr(
+        "backend.app.domain.clinical_authorization.assert_analysis_clinical_authorization",
+        reject_expired_authorization,
+    )
+    try:
+        with pytest.raises(
+            ReportFinalizationError,
+            match="Clinical authorization is no longer valid: assay validation approval expired",
+        ):
+            finalize_report(
+                db,
+                report_id=report.id,
+                approver_id=reviewer.id,
+                reason="Should be blocked after approval expiry",
+            )
+        db.refresh(report)
+        assert report.status == "DRAFT"
+        assert report.signed_artifact_id is None
+    finally:
+        db.close()

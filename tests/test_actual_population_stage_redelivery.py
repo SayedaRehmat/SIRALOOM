@@ -85,6 +85,18 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
 ):
     import importlib
 
+    # This integration test isolates population/evidence worker recovery. The
+    # immutable local-release verification contract is covered by dedicated
+    # source-release integrity tests and is not stubbed in production code.
+    release_integrity = importlib.import_module("backend.app.domain.resource_release_integrity")
+    monkeypatch.setattr(
+        release_integrity, "verify_population_source_release_reference",
+        lambda *_args, **_kwargs: False,
+    )
+    monkeypatch.setattr(
+        release_integrity, "verify_evidence_source_release_reference",
+        lambda *_args, **_kwargs: False,
+    )
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
     workflow = importlib.import_module("backend.app.workflows.variant")
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'population-redelivery.db'}")
@@ -252,13 +264,13 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 case_id=case_id,
                 parent_analysis_id=None,
                 assay_id=None,
-                analysis_type="VARIANT_INTERPRETATION",
+                analysis_type="RESEARCH",
                 workflow_id="variant-v1",
                 workflow_version="test",
                 status=AnalysisStatus.RUNNING,
                 queue_task_id="population-replay-test",
                 reference_build="GRCh38",
-                configuration={
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker redelivery integration test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, 
                     "input_artifact_id": str(source_artifact.id),
                     "clinvar_resource_id": str(clinvar_resource_id),
                 },

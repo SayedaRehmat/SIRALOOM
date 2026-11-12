@@ -14,6 +14,8 @@ from backend.app.infrastructure.db import models  # noqa: F401
 from backend.app.infrastructure.db import ploidy_models  # noqa: F401
 from backend.app.infrastructure.db import artifact_upload_intents  # noqa: F401
 from backend.app.infrastructure.db import organization_invitations  # noqa: F401
+from backend.app.infrastructure.db import clinical_requests  # noqa: F401
+from backend.app.infrastructure.db import assay_validation  # noqa: F401
 
 
 config = context.config

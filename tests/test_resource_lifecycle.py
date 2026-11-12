@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.resource_lifecycle import run_resource_lifecycle
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceStaging
+from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceReleaseArtifact, ResourceStaging
 
 
 _TEST_REFERENCE_PAYLOAD = b">1\\nCAAAAAC\\n"
@@ -21,6 +21,7 @@ def _db():
         tables=[
             Resource.__table__,
             ResourceStaging.__table__,
+            ResourceReleaseArtifact.__table__,
             ResourceQualification.__table__,
         ],
     )

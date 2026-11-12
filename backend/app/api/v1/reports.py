@@ -104,6 +104,27 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
     db.refresh(case, with_for_update=True)
     require_case_permission(case, principal, db, "write")
 
+    try:
+        from backend.app.domain.clinical_authorization import (
+            assert_analysis_clinical_authorization,
+        )
+
+        assert_analysis_clinical_authorization(
+            db,
+            case=case,
+            analysis_configuration=analysis.configuration,
+            analysis_type=analysis.analysis_type,
+            analysis_assay_id=analysis.assay_id,
+            analysis_workflow_id=analysis.workflow_id,
+            analysis_workflow_version=analysis.workflow_version,
+            analysis_reference_build=analysis.reference_build,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Clinical authorization is no longer valid: {exc}",
+        ) from exc
+
     eligible, errors = final_report_eligibility(
         db, analysis_id=analysis.id, report_type=payload.report_type
     )
