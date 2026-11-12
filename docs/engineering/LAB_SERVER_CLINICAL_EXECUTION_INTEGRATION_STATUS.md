@@ -1,39 +1,66 @@
 # Lab Server execution + clinical integration branch
 
 **Date:** 2026-11-12  
-**Status:** Draft integration branch; source integration is partial and not yet tested  
-**Clinical source:** PR #321, head `f9cb4cd11ea4f8c5c9cf58b4061b774e87ae98b2`  
-**Execution source:** dependent execution stack through PR #315, head `8869c11e8868eed92bd6e9ef7faa3206acc52927`
+**Current branch head:** `74539a2d778a3b48b79f47ca3c459018be6f9d96`  
+**PR:** #327, open draft, not merged or deployed  
+**Status:** source integration advanced; current head has not yet completed CI verification
 
 ## 1. Integration strategy
 
-This branch is based on the exact PR #321 head so its clinical intake, assay validation, runtime attestation, evidence-response retention and source-release changes remain present. Execution-stack files were transplanted from the final stacked execution branch. The original draft PRs remain unchanged; no branch was force-pushed and no PR was merged.
+This branch is based on the exact PR #321 clinical-provenance head
+`f9cb4cd11ea4f8c5c9cf58b4061b774e87ae98b2`. It preserves clinical intake,
+assay validation, runtime attestation, evidence-response retention and
+source-release work while integrating the execution stack from the dependent
+execution PRs. The source PRs remain unchanged and unmerged.
 
-## 2. Integrated in this branch
+## 2. Integrated foundations
 
-- Environment contract and tool compatibility domain.
-- Immutable environment registration and durable tool-execution persistence service.
-- Case-scoped execution service/model changes.
-- Linux OCI executor and persistent executor service.
-- Scientific tool identity, profile registry and toolchain profile configuration.
-- BCFtools execution helpers, ARM64 candidate build definitions and profile lock files.
-- Execution environment, persistence, container, tool-profile and runtime qualification test files.
-- Execution architecture/design documentation.
+- Immutable execution-environment registration and durable tool-execution ledger.
+- Case-scoped execution records with required `case_id`, nullable `analysis_id`,
+  immutable request/environment/input snapshots, output manifests, leases,
+  status constraints and indexes.
+- Linux OCI Docker/Podman executor, scientific tool identity/profile registry,
+  BCFtools profiles, VEP adapter and ARM64 BCFtools candidate build definitions.
+- Case-level environment assignment/revocation, restricted to `lab_admin`,
+  with audit events.
+- A case-bound execution resolver that verifies tenant ownership, registration
+  identity, qualification status and profile snapshot consistency.
+- Lab Server case execution is restricted to Linux Docker/Podman, offline
+  networking, supported single-host schedulers, immutable image digests and
+  explicit non-root per-job CPU/memory/PID limits. CPU and memory limits are
+  checked against concurrency-adjusted capacity and passed into the OCI
+  executor.
+- The API/Beat image is separated from the scientific worker image so the
+  control plane does not need the scientific toolchain installed.
 
-## 3. Model reconciliation
+## 3. Scientific execution routing changes
 
-The clinical branch's complete `backend/app/infrastructure/db/models.py` was retained. The two execution models from the execution-stack head were appended:
+- Artifact upload persists bytes and queues durable validation; it does not
+  perform scientific validation in the API process.
+- The artifact-validation worker resolves the case's assigned execution
+  environment before VCF or index validation. Missing, unqualified, mismatched,
+  cross-tenant, host-process, remote-agent, network-enabled or otherwise
+  unsupported environments fail closed.
+- VCF validation, index concordance, BCFtools normalization and multiallelic
+  splitting require the persistent execution context. Direct BCFtools
+  subprocess fallback paths were removed from `vcf_tools.py`.
+- VEP annotation and runtime/cache checks require the persistent executor.
+  The unregistered VEP subprocess fallback and its transitional opt-in flag
+  were removed.
+- The workflow resolves a case-bound persistent service before BCFtools
+  normalization and injects it into VEP.
 
-- `ExecutionEnvironmentRegistration`
-- `ToolExecutionRecord`
+This establishes the governed route for the reviewed VCF intake/normalization
+and VEP call sites. It does **not** yet prove every scientific provider and
+workflow is covered. Population/phenotype providers, evidence retrieval,
+ACMG assessment, retries/resume, reanalysis, report export and worker-recovery
+routes still require a complete call-site and provenance audit.
 
-The case-scoped model shape is preserved: required `case_id`, nullable `analysis_id`, environment registration foreign key, immutable request/environment/input snapshots, output manifest, lease fields, status constraints and indexes. This is a textual/model reconciliation only; metadata creation and migration parity have not yet been executed.
+## 4. Migration reconciliation
 
-## 4. Alembic revision reconciliation
+The clinical migration chain is preserved through:
 
-The clinical chain is preserved unchanged through:
-
-```text
+```
 0061_analysis_toolchain_profiles
  -> 0062_artifact_validation_dispatches
  -> 0063_clinical_requests_accession
@@ -46,37 +73,67 @@ The clinical chain is preserved unchanged through:
  -> 0070_resource_release_artifacts
 ```
 
-The execution migrations have been added as:
+The integrated execution chain is:
 
-```text
+```
 0070_resource_release_artifacts
  -> 0071_execution_environment_provenance
  -> 0072_case_scoped_tool_executions
+ -> 0073_case_execution_environment
 ```
 
-The revision IDs and `down_revision` declarations were changed in the new files. The original `0063` and `0064` execution migration files were not copied into this branch, so the clinical revisions retain their existing IDs. The case-scoped migration body, data backfill, nullable-analysis change, foreign key, and database-specific execution-ledger triggers were carried forward from the execution stack.
+Revision `0073` adds the nullable case-to-environment foreign key. Its
+foreign-key alteration uses Alembic batch mode so SQLite can rebuild the table;
+the ORM foreign-key name is aligned with the migration. The prior-release
+migration fixture now seeds the actual pre-`0073` schema instead of inserting
+through the newer ORM mapping.
 
-## 5. Overlap reconciliation
+Migration/model parity, the backfill, and trigger behavior still need a fresh
+run on the current head against both supported databases.
 
-All four source-stack overlaps have now been reconciled without replacing the clinical branch wholesale:
+## 5. Test and CI evidence
 
-1. `backend/app/infrastructure/db/models.py` — retained the clinical models and appended `ExecutionEnvironmentRegistration` and `ToolExecutionRecord`.
-2. `backend/app/workflows/variant.py` — applied the persistent-execution integration hunks from #307 onto the clinical version. Clinical authorization, runtime attestation, response-retention and source-release logic were preserved by applying context-matched hunks rather than replacing the file. The persistent helper remains transitional/opt-in; this does not yet satisfy ENV-LS-02/03 mandatory routing.
-3. `backend/app/adapters/annotation/vep.py` — merged persistent VEP execution and execution-record provenance while retaining the clinical exact raw-response-byte capture and metadata required by the response-retention gate.
-4. `tests/test_vep_provider.py` — applied the persistent VEP test additions onto the clinical raw-response-retention tests.
+The first available CI run was on an earlier pre-fix head
+(`6ee9d9457fb9c0f2f99d894aa9abaf7de961caa9`), **not** the current branch head:
 
-The three runtime/provider/test overlaps are now present together in the integration branch. This is source-level reconciliation; it is not proof that the merged behaviors pass tests or that all VCF intake/scientific callsites are routed through the persistent executor.
+- Backend suite: 2,313 passed, 68 skipped, 101 failed.
+- PostgreSQL migration upgrade step passed, but its dependent integration run
+  was cancelled when newer commits were pushed; it is not a completed
+  PostgreSQL migration-and-trigger qualification.
+- SQLite migration failed because revision `0073` attempted to add a
+  foreign key outside batch mode. This has since been corrected in source,
+  but not rerun.
+- API image build failed because the Debian snapshot source entries were
+  incorrectly escaped. This has since been corrected in source, but not rerun.
+- Frontend tests/build and Compose validation passed on that earlier head.
 
-## 6. Verification still required
+The backend failures were largely related to existing unit tests and
+qualification fixtures that did not supply the now-required execution context.
+A test-only injected executor and updated VEP, BCFtools, artifact-validation,
+resource-qualification and migration fixtures have since been added. These
+changes have **not** yet been executed on the current head. No passing status
+is claimed for the updated code.
 
-No tests have been run on this combined branch yet. A migration test assertion was added for required `case_id` and nullable `analysis_id`; it still requires execution in CI. Before ENV-LS-01 can be closed:
+## 6. Known release blockers and remaining work
 
-- Inspect the complete migration graph from the supported baseline and assert one head/no duplicate revisions.
-- Run Alembic upgrade on PostgreSQL and SQLite from empty and supported prior-release databases.
-- Verify migration/model parity and case backfill with representative rows.
-- Verify PostgreSQL and SQLite append-only/state-transition triggers.
-- Run backend unit, integration, migration and container-runtime suites on the exact branch head.
-- Semantically merge the three remaining overlapping workflow/provider/test files, then repeat CI.
-- Review all other changed-file collisions and exact dependency ancestry before proposing any merge.
+1. Run the complete backend suite on the exact current head; fix failures
+   without restoring ungoverned execution.
+2. Run PostgreSQL and SQLite upgrades from empty databases and supported
+   revision `0070` databases; verify one Alembic head, migration/model parity,
+   case backfill, nullable analysis semantics and append-only/state triggers.
+3. Run the OCI runtime qualification suite on a real Docker/Podman runner.
+4. Finish the repository-wide subprocess and workflow call-site inventory,
+   including population/evidence/ACMG/reanalysis/report/retry/recovery paths.
+5. Complete environment registration, measured qualification evidence,
+   lifecycle/revocation, capacity reservation and health/heartbeat operations.
+6. Implement and qualify per-job scratch-disk/storage quotas; the current
+   profile records scratch capacity but does not enforce a per-job quota.
+7. Deliver the signed Lab Server installer/release bundle, SBOM, preflight,
+   offline installation, backup/restore qualification and controlled upgrade
+   manager.
+8. Resolve commercial-use, caching, retention and redistribution terms for the
+   configured GeneBe provider or select a commercially permitted alternative.
 
-This branch is an integration workspace, not a release candidate. It must not be merged or deployed based on the current state.
+The branch is an integration workspace, not a release candidate. It must not
+be merged or deployed based on the current state. No merge or deployment
+authorization has been given.
