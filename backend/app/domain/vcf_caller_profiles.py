@@ -374,6 +374,16 @@ def inspect_caller_provenance(
         if identity_status != "CONFLICTED"
         else None
     )
+    # The documented DRAGEN v4.3 GP scale override is narrow: require
+    # an unambiguous DRAGEN SNV declaration and the exact release represented
+    # by the cited v4.3 documentation. A family marker or conflicting/missing
+    # release must not weaken the VCF-reserved GP probability validation.
+    dragen_gp_phred_semantics_applicable = (
+        profile_id == "dragen_snv_germline"
+        and identity_status == "DECLARED"
+        and version_status == "DECLARED"
+        and caller_version == "4.3.0"
+    )
     present_format_semantics = {
         key: definition["documented_format_semantics"][key]
         for key in sorted(format_fields)
@@ -441,7 +451,7 @@ def inspect_caller_provenance(
             "status": "CALLER_SPECIFIC_SCALE_DIFFERS_FROM_VCF_RESERVED_SEMANTICS",
             "description": "DRAGEN documents FORMAT/GP in Phred scale; VCF reserves FORMAT/GP for posterior probabilities in [0, 1].",
         }]
-        if profile_id == "dragen_snv_germline" and "GP" in format_fields
+        if dragen_gp_phred_semantics_applicable and "GP" in format_fields
         else []
     )
 
@@ -468,6 +478,7 @@ def inspect_caller_provenance(
         "identity_source": "VCF_HEADER_DECLARATION_UNVERIFIED",
         "identity_evidence": sorted(set(identity_evidence)),
         "caller_profile_id": profile_id,
+        "dragen_gp_phred_semantics_applicable": dragen_gp_phred_semantics_applicable,
         "caller_family": caller_family,
         "caller_name": caller_name,
         "caller_version": caller_version,
