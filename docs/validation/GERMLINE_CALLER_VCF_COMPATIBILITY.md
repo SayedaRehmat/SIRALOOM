@@ -97,7 +97,7 @@ Header declarations are untrusted. They can be missing, incomplete, conflicting,
 
 ### 4.2 Unknown and conflicting caller metadata
 
-- A structurally valid VCF with no recognizable caller marker remains structurally valid. Its caller profile is UNKNOWN; SIRALOOM does not guess from GT/AD/DP/GQ/PL.
+- A structurally valid VCF with no recognizable caller marker remains structurally valid. Its caller profile is UNKNOWN; SIRALOOM does not guess from GT/AD/DP/GQ/PL. UNKNOWN caller identity alone does not trigger caller-semantic review or block an otherwise eligible sample-level input; all generic VCF, specimen, reference, and workflow requirements still apply.
 - A GATK GenotypeGVCFs-only header is a partial GATK pipeline identity, not proof of HaplotypeCaller.
 - Conflicting caller-family or release markers are reported as CONFLICTED; no precedence rule silently selects one.
 - Missing version metadata produces a partial identity, not an invented release.
