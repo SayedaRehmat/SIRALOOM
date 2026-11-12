@@ -276,13 +276,15 @@ def _retention_permission(
         return "NOT_PERMITTED", "The exact resource release is blocked or withdrawn.", discovery, None
     if str(discovery.license_status or "").upper() == "RESTRICTED":
         return "NOT_PERMITTED", "The exact resource release is marked RESTRICTED.", discovery, None
+    # Serialize expiry/revocation decisions with concurrent retention requests.
+    # The row lock is held until the caller commits or rolls back its transaction.
     approval = db.scalar(select(ProviderRetentionApproval).where(
         ProviderRetentionApproval.organization_id == organization_id,
         ProviderRetentionApproval.resource_id == resource.id,
         ProviderRetentionApproval.resource_discovery_id == discovery.id,
         ProviderRetentionApproval.release_identity == resource.version,
         ProviderRetentionApproval.status == "APPROVED",
-    ).order_by(ProviderRetentionApproval.version.desc()).limit(1))
+    ).order_by(ProviderRetentionApproval.version.desc()).limit(1).with_for_update())
     if approval is None:
         return "REVIEW_REQUIRED", "No active organization-scoped approval exists for this exact release.", discovery, None
     now = datetime.now(UTC)
@@ -487,7 +489,9 @@ def verify_provider_response_reference(
     if not approval_id:
         raise ValueError("Provider response artifact is missing its governed retention approval reference.")
     try:
-        approval = db.get(ProviderRetentionApproval, UUID(str(approval_id)))
+        approval = db.scalar(select(ProviderRetentionApproval).where(
+            ProviderRetentionApproval.id == UUID(str(approval_id)),
+        ).with_for_update())
     except (TypeError, ValueError):
         approval = None
     if (
