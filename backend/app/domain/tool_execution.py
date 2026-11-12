@@ -216,6 +216,62 @@ class ScientificResourceBinding:
     sha256: str
     assembly: str | None = None
     path: str | None = None
+    sidecar_paths: tuple[str, ...] = ()
+    stat_fingerprint: tuple[tuple[str, int, int, int, int, int], ...] = ()
+
+    @classmethod
+    def from_verified_files(
+        cls,
+        *,
+        resource_id: str,
+        version: str,
+        path: str | Path,
+        sidecar_paths: tuple[str | Path, ...] = (),
+        assembly: str | None = None,
+        verified_primary_sha256: str | None = None,
+    ) -> "ScientificResourceBinding":
+        """Create a reusable binding after primary bytes have been independently verified.
+
+        The primary digest may come from the immutable source-release verifier.
+        Sidecars are hashed here. Device/inode/size/mtime/ctime fingerprints are
+        rechecked on every execution so a large indexed VCF is not rehashed for
+        every single-locus query.
+        """
+        primary = Path(path).resolve(strict=True)
+        paths = (primary, *(Path(item).resolve(strict=True) for item in sidecar_paths))
+        for item in paths:
+            if _contains_symlink_component(item) or not item.is_file():
+                raise ToolExecutionContractError(
+                    "Scientific resource files must be regular files without symlink components."
+                )
+        primary_digest = (verified_primary_sha256 or sha256_file(primary)).lower()
+        if len(primary_digest) != 64 or any(c not in "0123456789abcdef" for c in primary_digest):
+            raise ToolExecutionContractError("Verified primary resource SHA-256 is malformed.")
+        entries = [{"name": primary.name, "sha256": primary_digest}]
+        for item in paths[1:]:
+            entries.append({"name": item.name, "sha256": sha256_file(item)})
+        canonical = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        bundle_digest = hashlib.sha256(canonical).hexdigest()
+        fingerprint = tuple(
+            (
+                str(item),
+                item.stat().st_dev,
+                item.stat().st_ino,
+                item.stat().st_size,
+                item.stat().st_mtime_ns,
+                item.stat().st_ctime_ns,
+            )
+            for item in paths
+        )
+        return cls(
+            resource_id=resource_id,
+            version=version,
+            sha256=bundle_digest,
+            assembly=assembly,
+            path=str(primary),
+            sidecar_paths=tuple(str(item) for item in paths[1:]),
+            stat_fingerprint=fingerprint,
+        )
 
     def validate(self) -> None:
         if not self.resource_id.strip() or not self.version.strip():
@@ -226,7 +282,41 @@ class ScientificResourceBinding:
             raise ToolExecutionContractError(
                 "Scientific resource binding must identify the local bytes to verify."
             )
-        actual_digest = sha256_resource_path(Path(self.path))
+        paths = (Path(self.path), *(Path(item) for item in self.sidecar_paths))
+        if self.stat_fingerprint:
+            current = []
+            for item in paths:
+                resolved = item.resolve(strict=True)
+                if _contains_symlink_component(item) or not resolved.is_file():
+                    raise ToolExecutionContractError(
+                        "Scientific resource files must remain regular files without symlink components."
+                    )
+                stat_result = resolved.stat()
+                current.append((
+                    str(resolved),
+                    stat_result.st_dev,
+                    stat_result.st_ino,
+                    stat_result.st_size,
+                    stat_result.st_mtime_ns,
+                    stat_result.st_ctime_ns,
+                ))
+            if tuple(current) != self.stat_fingerprint:
+                raise ToolExecutionContractError(
+                    f"Scientific resource {self.resource_id!r} changed after its verified snapshot."
+                )
+            return
+
+        primary = Path(self.path)
+        if self.sidecar_paths:
+            entries = [{"name": primary.name, "sha256": sha256_file(primary)}]
+            entries.extend(
+                {"name": item.name, "sha256": sha256_file(item)}
+                for item in (Path(value) for value in self.sidecar_paths)
+            )
+            canonical = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            actual_digest = hashlib.sha256(canonical).hexdigest()
+        else:
+            actual_digest = sha256_resource_path(primary)
         if actual_digest != self.sha256.lower():
             raise ToolExecutionContractError(
                 f"Scientific resource {self.resource_id!r} SHA-256 does not match its governed bytes."
