@@ -234,7 +234,7 @@ def revoke_provider_retention(
     # the same approval-row lock before authorizing any future use.
     approval = db.scalar(select(ProviderRetentionApproval).where(
         ProviderRetentionApproval.id == approval_id,
-    ).with_for_update())
+    ).with_for_update().execution_options(populate_existing=True))
     if approval is None:
         raise ValueError("Provider retention approval does not exist.")
     _authorized_reviewer(db, organization_id=approval.organization_id, reviewer_id=actor_id)
@@ -288,7 +288,7 @@ def _retention_permission(
         ProviderRetentionApproval.resource_discovery_id == discovery.id,
         ProviderRetentionApproval.release_identity == resource.version,
         ProviderRetentionApproval.status == "APPROVED",
-    ).order_by(ProviderRetentionApproval.version.desc()).limit(1).with_for_update())
+    ).order_by(ProviderRetentionApproval.version.desc()).limit(1).with_for_update().execution_options(populate_existing=True))
     if approval is None:
         return "REVIEW_REQUIRED", "No active organization-scoped approval exists for this exact release.", discovery, None
     now = datetime.now(UTC)
@@ -495,7 +495,7 @@ def verify_provider_response_reference(
     try:
         approval = db.scalar(select(ProviderRetentionApproval).where(
             ProviderRetentionApproval.id == UUID(str(approval_id)),
-        ).with_for_update())
+        ).with_for_update().execution_options(populate_existing=True))
     except (TypeError, ValueError):
         approval = None
     if (
