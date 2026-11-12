@@ -1,7 +1,7 @@
 # Lab Server execution + clinical integration branch
 
 **Date:** 2026-11-12  
-**Current branch head:** `74539a2d778a3b48b79f47ca3c459018be6f9d96`  
+**Current branch head:** `13f20cc73ef778a28b79b324b734d009b94d2003`  
 **PR:** #327, open draft, not merged or deployed  
 **Status:** source integration advanced; current head has not yet completed CI verification
 
@@ -82,10 +82,11 @@ The integrated execution chain is:
  -> 0073_case_execution_environment
 ```
 
-Revision `0073` adds the nullable case-to-environment foreign key. Its
-foreign-key alteration uses Alembic batch mode so SQLite can rebuild the table;
-the ORM foreign-key name is aligned with the migration. The prior-release
-migration fixture now seeds the actual pre-`0073` schema instead of inserting
+Revision `0073` adds the nullable case-to-environment foreign key inline with
+the `ALTER TABLE ADD COLUMN` operation. This avoids rebuilding populated
+SQLite `cases` tables and disturbing their many inbound foreign keys. The ORM
+foreign-key name is aligned with the migration. The prior-release SQLite and
+PostgreSQL fixtures seed the actual pre-`0073` schema instead of inserting
 through the newer ORM mapping.
 
 Migration/model parity, the backfill, and trigger behavior still need a fresh
@@ -110,9 +111,12 @@ The first available CI run was on an earlier pre-fix head
 The backend failures were largely related to existing unit tests and
 qualification fixtures that did not supply the now-required execution context.
 A test-only injected executor and updated VEP, BCFtools, artifact-validation,
-resource-qualification and migration fixtures have since been added. These
-changes have **not** yet been executed on the current head. No passing status
-is claimed for the updated code.
+resource-qualification and migration fixtures have since been added. A
+PostgreSQL integration test now creates an isolated database, upgrades a
+populated revision-0070 schema through head, verifies case backfill and checks
+append-only/state-transition triggers. These changes have **not** yet been
+executed on the current head. No passing status is claimed for the updated
+code.
 
 ## 6. Known release blockers and remaining work
 
