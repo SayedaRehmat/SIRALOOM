@@ -22,6 +22,20 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
         "caller_family": "GATK",
         "caller_name": "GATK HaplotypeCaller",
         "documented_example_vcf_versions": ["VCFv4.2"],
+        "expected_header_definitions": {
+            "INFO": {
+                "AC": ("A", "Integer"), "AF": ("A", "Float"), "AN": ("1", "Integer"),
+                "DP": ("1", "Integer"), "FS": ("1", "Float"), "MQ": ("1", "Float"),
+                "MQRankSum": ("1", "Float"), "QD": ("1", "Float"),
+                "ReadPosRankSum": ("1", "Float"), "SOR": ("1", "Float"),
+            },
+            "FORMAT": {
+                "GT": ("1", "String"), "AD": ("R", "Integer"), "DP": ("1", "Integer"),
+                "GQ": ("1", "Integer"), "PL": ("G", "Integer"), "PS": ("1", "Integer"),
+                "PGT": ("1", "String"), "PID": ("1", "String"),
+                "MIN_DP": ("1", "Integer"), "RGQ": ("1", "Integer"),
+            },
+        },
         "germline_capability": "GERMLINE_SMALL_VARIANT_CALLER",
         "documented_format_semantics": {
             "GT": "Sample genotype; allele indexes refer to REF followed by ALT order.",
@@ -57,6 +71,16 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
         "caller_family": "GOOGLE_DEEPVARIANT",
         "caller_name": "Google DeepVariant",
         "documented_example_vcf_versions": ["VCFv4.2"],
+        "expected_header_definitions": {
+            "INFO": {"END": ("1", "Integer")},
+            "FORMAT": {
+                "GT": ("1", "String"), "GQ": ("1", "Integer"), "DP": ("1", "Integer"),
+                "MIN_DP": ("1", "Integer"), "AD": ("R", "Integer"), "VAF": ("A", "Float"),
+                "PL": ("G", "Integer"), "PS": ("1", "Integer"),
+                "MF": ("R", "Float"), "MD": ("R", "Integer"), "MT": ("1", "String"),
+                "MI": ("1", "Float"), "MED_DP": ("1", "Integer"),
+            },
+        },
         "germline_capability": "GERMLINE_SMALL_VARIANT_CALLER",
         "documented_format_semantics": {
             "GT": "Sample genotype; allele indexes refer to REF followed by ALT order.",
@@ -83,6 +107,21 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
         "caller_family": "ILLUMINA_DRAGEN",
         "caller_name": "Illumina DRAGEN Small Variant Caller",
         "documented_example_vcf_versions": ["VCFv4.2"],
+        "expected_header_definitions": {
+            "INFO": {
+                "AC": ("A", "Integer"), "AF": ("A", "Float"), "AN": ("1", "Integer"),
+                "DP": ("1", "Integer"), "FS": ("1", "Float"), "MQ": ("1", "Float"),
+                "QD": ("1", "Float"), "SOR": ("1", "Float"),
+                "FractionInformativeReads": ("1", "Float"), "R2_5P_bias": ("1", "Float"),
+            },
+            "FORMAT": {
+                "GT": ("1", "String"), "AD": ("R", "Integer"), "AF": ("A", "Float"),
+                "DP": ("1", "Integer"), "F1R2": ("R", "Integer"), "F2R1": ("R", "Integer"),
+                "GQ": ("1", "Integer"), "PL": ("G", "Integer"), "GL": ("G", "Float"),
+                "GP": ("G", "Float"), "PRI": ("G", "Float"), "SB": ("4", "Integer"),
+                "MB": ("4", "Integer"), "PS": ("1", "Integer"), "MIN_DP": ("1", "Integer"),
+            },
+        },
         "germline_capability": "GERMLINE_AND_SOMATIC_MODES; MODE_NOT_ATTESTED_BY_SOURCE_TAG",
         "documented_format_semantics": {
             "GT": "Sample genotype; interpret with the declared sample ploidy and DRAGEN mode.",
@@ -185,6 +224,8 @@ def inspect_caller_provenance(
     dragen_command_lines: list[str] = []
     info_fields: set[str] = set()
     format_fields: set[str] = set()
+    info_definitions: dict[str, dict[str, str | None]] = {}
+    format_definitions: dict[str, dict[str, str | None]] = {}
     filter_ids: set[str] = set()
     alt_ids: set[str] = set()
 
@@ -210,13 +251,23 @@ def inspect_caller_provenance(
         elif line.startswith("##DRAGENCommandLine=") or line.startswith("##DRAGENCommandLine<"):
             dragen_command_lines.append(line)
         elif line.startswith("##INFO=<"):
-            field_id = _header_id(line)
+            attributes = _attributes(line)
+            field_id = attributes.get("ID") or _header_id(line)
             if field_id:
                 info_fields.add(field_id)
+                info_definitions[field_id] = {
+                    "number": attributes.get("Number"),
+                    "type": attributes.get("Type"),
+                }
         elif line.startswith("##FORMAT=<"):
-            field_id = _header_id(line)
+            attributes = _attributes(line)
+            field_id = attributes.get("ID") or _header_id(line)
             if field_id:
                 format_fields.add(field_id)
+                format_definitions[field_id] = {
+                    "number": attributes.get("Number"),
+                    "type": attributes.get("Type"),
+                }
         elif line.startswith("##FILTER=<"):
             field_id = _header_id(line)
             if field_id:
@@ -362,6 +413,9 @@ def inspect_caller_provenance(
         "declared_alt_ids": sorted(alt_ids),
         "documented_format_semantics_for_present_fields": present_format_semantics,
         "documented_info_semantics_for_present_fields": present_info_semantics,
+        "field_declaration_checks": field_declaration_checks,
+        "field_declaration_mismatches": field_declaration_mismatches,
+        "caller_semantic_compatibility_status": semantic_status,
         "documented_filter_ids": definition["documented_filter_ids"] if definition else [],
         "gvcf_reference_confidence_markers_present": bool(gvcf_marker_count),
         "gvcf_handling_status": "ROUTE_TO_GVCF_WORKFLOW" if gvcf_marker_count else "NO_GVCF_MARKER_DETECTED",
