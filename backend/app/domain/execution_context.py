@@ -7,6 +7,7 @@ from backend.app.domain.execution_environments import (
     ExecutionEnvironmentError,
     execution_environment_profile_from_snapshot,
 )
+from backend.app.domain.container_tool_execution import ContainerResourceLimits
 from backend.app.domain.persistent_tool_executor import PersistentToolExecutionService
 from backend.app.infrastructure.db.models import Case, ExecutionEnvironmentRegistration
 
@@ -76,6 +77,11 @@ def persistent_execution_for_case(
             "Linux Docker/Podman container profile with offline networking and no remote scheduler."
         )
 
+    if profile.job_limits is None:
+        raise ExecutionEnvironmentAssignmentError(
+            "CASE_EXECUTION_LIMITS_REQUIRED: the qualified environment has no per-job OCI limits."
+        )
+
     return PersistentToolExecutionService(
         db,
         organization_id=case.organization_id,
@@ -83,4 +89,10 @@ def persistent_execution_for_case(
         analysis_id=analysis_id,
         environment_registration_id=registration.id,
         worker_id=worker_id,
+        container_limits=ContainerResourceLimits(
+            cpu_cores=profile.job_limits.cpu_cores,
+            memory_bytes=profile.job_limits.memory_bytes,
+            pids_limit=profile.job_limits.pids_limit,
+            container_user=profile.job_limits.container_user,
+        ),
     )
