@@ -329,6 +329,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             "symbolic_source_record_count": strict_profile["symbolic_records"],
             "breakend_source_record_count": strict_profile["breakend_records"],
             "gvcf_marker_count": strict_profile["gvcf_markers"],
+            "caller_provenance": strict_profile["caller_provenance"],
             "vcf45_reference_span_records": strict_profile["vcf45_reference_span_records"],
             "vcf45_max_reference_end": strict_profile["vcf45_max_reference_end"],
             "vcf45_reference_block_sample_count": strict_profile["vcf45_reference_block_sample_count"],
