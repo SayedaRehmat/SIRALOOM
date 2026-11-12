@@ -114,7 +114,7 @@ Caller-specific fields are not transformed by a caller-name switch. Their declar
 - Number=R: one value for REF and each ALT;
 - Number=G: one value per possible genotype for the sample ploidy.
 
-The BCFtools regression suite now includes DRAGEN-style multiallelic fields (AD, AF, PL, GL, GP, PRI, F1R2, F2R1, and PS) and checks that per-allele/per-genotype values are remapped while source GT and source allele lineage remain recoverable. This validates SIRALOOM's transformation behavior for those declared cardinalities; it does not certify DRAGEN's caller accuracy.
+The BCFtools regression suite now includes DRAGEN-style multiallelic fields (AD, AF, PL, GL, GP, PRI, F1R2, F2R1, and PS) and checks that per-allele/per-genotype values are remapped while source GT and source allele lineage remain recoverable. This validates SIRALOOM's transformation behavior for those declared cardinalities; it does not certify DRAGEN's caller accuracy. The documentation-derived GP values exceed the VCF-reserved probability range, so the test separately asserts that the normalized output is rejected by strict VCF intake while the original caller values and allele lineage remain preserved.
 
 ### 4.4 GVCF boundary
 
