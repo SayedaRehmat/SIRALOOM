@@ -40,15 +40,32 @@ class _TestPersistentExecution:
         argv = [executable, *list(request.argv)]
         environment = dict(os.environ)
         environment.update(dict(getattr(request, "environment", {}) or {}))
-        completed = subprocess.run(
-            argv,
-            cwd=str(request.workspace),
-            env=environment,
-            capture_output=True,
-            text=True,
-            timeout=max(1, int(request.timeout_seconds)),
-            check=False,
-        )
+        if request.operation == "annotate":
+            process = subprocess.Popen(
+                argv,
+                cwd=str(request.workspace),
+                env=environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                start_new_session=True,
+            )
+            stdout, stderr = process.communicate(timeout=max(1, int(request.timeout_seconds)))
+            completed = SimpleNamespace(
+                returncode=process.returncode,
+                stdout=stdout or "",
+                stderr=stderr or "",
+            )
+        else:
+            completed = subprocess.run(
+                argv,
+                cwd=str(request.workspace),
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=max(1, int(request.timeout_seconds)),
+                check=False,
+            )
         record_id = uuid4()
         self.execution_record_ids.append(record_id)
         return SimpleNamespace(
@@ -81,6 +98,7 @@ def _inject_explicit_local_execution_for_scientific_unit_tests(monkeypatch, requ
         "test_artifact_validation",
         "test_unsupported_vcf_worker_routing",
         "test_resource_qualification",
+        "test_vep_provider",
     }
     if module_name not in eligible:
         return
@@ -132,7 +150,7 @@ def _inject_explicit_local_execution_for_scientific_unit_tests(monkeypatch, requ
             lambda *_args, **_kwargs: execution,
         )
 
-    if module_name == "test_resource_qualification":
+    if module_name in {"test_resource_qualification", "test_vep_provider"}:
         from backend.app.adapters.annotation.vep import VEPProvider
         original_factory = VEPProvider.from_execution_contract
 
