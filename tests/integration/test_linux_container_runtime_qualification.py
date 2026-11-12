@@ -11,7 +11,11 @@ from uuid import uuid4
 import pytest
 
 from backend.app.domain.container_tool_execution import ContainerResourceLimits, LinuxContainerToolExecutor
-from backend.app.domain.execution_environments import ExecutionCapacity, ExecutionEnvironmentProfile
+from backend.app.domain.execution_environments import (
+    ExecutionCapacity,
+    ExecutionEnvironmentProfile,
+    ExecutionJobLimits,
+)
 from backend.app.domain.tool_execution import (
     InputArtifact, OutputArtifact, ScientificResourceBinding, ToolExecutionError, ToolExecutionContractError,
     ToolExecutionRequest, ToolIdentity, current_platform_id, sha256_file, sha256_resource_path,
@@ -66,6 +70,12 @@ def _build_context(tmp_path: Path):
         network_policy="OFFLINE",
         runtime_image_reference=IMAGE_REFERENCE,
         qualification_status="ENVIRONMENT_QUALIFIED",
+        job_limits=ExecutionJobLimits(
+            cpu_cores=1,
+            memory_bytes=512 * 1024**2,
+            pids_limit=64,
+            container_user=f"{os.getuid()}:{os.getgid()}",
+        ),
     )
     limits = ContainerResourceLimits(
         cpu_cores=1, memory_bytes=512 * 1024**2, pids_limit=64,
