@@ -6,6 +6,7 @@ import pytest
 
 from backend.app.config import settings
 from backend.app.domain import ingestion
+from backend.app.domain.artifact_validation import _validation_payload
 from backend.app.domain.vcf import parse_vcf
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
@@ -195,7 +196,7 @@ def test_gvcf_reference_confidence_markers_are_routed_not_mislabelled_as_variant
     assert provenance["gvcf_handling_status"] == "ROUTE_TO_GVCF_WORKFLOW"
 
 
-def test_caller_provenance_is_persisted_in_ingestion_validation_metadata(
+def test_caller_provenance_is_included_in_persisted_validation_payload(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fixture = FIXTURES / "gatk_haplotypecaller_v4_2_6_1_doc_example.vcf"
@@ -206,11 +207,11 @@ def test_caller_provenance_is_persisted_in_ingestion_validation_metadata(
     )
 
     result = ingestion.validate_vcf(fixture)
+    payload = _validation_payload(result)
 
     assert result.status == "VALID"
-    assert result.metadata is not None
-    assert result.metadata["caller_provenance"]["caller_profile_id"] == "gatk_haplotypecaller"
-    assert result.metadata["caller_provenance"]["caller_version"] == "4.2.6.1"
+    assert payload["caller_provenance"]["caller_profile_id"] == "gatk_haplotypecaller"
+    assert payload["caller_provenance"]["caller_version"] == "4.2.6.1"
 
 
 def test_deepvariant_vaf_and_likelihood_fields_are_preserved_verbatim() -> None:
