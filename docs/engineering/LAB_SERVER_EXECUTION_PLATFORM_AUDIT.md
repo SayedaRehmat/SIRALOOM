@@ -154,6 +154,55 @@ This is a concrete integration blocker:
 
 Therefore the stacked execution migrations cannot be applied unchanged alongside the PR #321 migration chain. Before integration, create one ordered Alembic history, renumber/rebase the execution migrations after the clinical integration migrations (or otherwise reconcile the dependency graph), verify every `down_revision`, and run upgrade from the supported baseline plus upgrade from the previous release. Never resolve this by deleting a migration or bypassing migration checks.
 
+### 3.2.1 Exact revision graph and safe target sequence (verified 2026-11-12)
+
+The current PR #321 integration branch is at `f9cb4cd11ea4f8c5c9cf58b4061b774e87ae98b2`. Its migration chain, as present on that exact branch, is:
+
+```text
+0061_analysis_toolchain_profiles
+  -> 0062_artifact_validation_dispatches
+  -> 0063_clinical_requests_accession
+  -> 0064_accession_procedure_approval
+  -> 0065_case_accession_reconciliation
+  -> 0066_assay_version_governance
+  -> 0067_assay_validation_lifecycle
+  -> 0068_evidence_response_artifacts
+  -> 0069_provider_retention_approvals
+  -> 0070_resource_release_artifacts
+```
+
+The execution stack's current migration declarations are:
+
+- #306: `revision = "0063_execution_environment_provenance"`, `down_revision = "0062_artifact_validation_dispatches"`.
+- #309: `revision = "0064_case_scoped_tool_executions"`, `down_revision = "0063_execution_environment_provenance"`.
+
+The migration files are not semantically interchangeable with the clinical revisions at 0063/0064. The collision is in the Alembic revision namespace and graph, not simply a Git filename issue. The clinical branch already uses 0065–0070, so renumbering the execution migrations to 0065/0066 would also collide.
+
+**Proposed target when the two stacks are reconciled:** preserve the clinical chain unchanged through 0070, then append:
+
+```text
+0070_resource_release_artifacts
+  -> 0071_execution_environment_provenance
+  -> 0072_case_scoped_tool_executions
+```
+
+The execution migration files must be renamed and their `revision`/`down_revision` declarations changed consistently. All references to the old revision IDs in migration tests, migration fixtures, docs and CI scripts must be searched and updated. The #309 migration's data backfill and database-specific trigger recreation must be retained. The #306 migration's tables, constraints, indexes and append-only/immutability triggers must be preserved.
+
+**Critical sequencing constraint:** do not simply edit the #315 stacked branch's migrations to depend on 0070 while that branch's own parent history lacks PR #321. That would make the execution stack un-upgradable on its own and would hide a dependency on a different PR. The integration must be a deliberate combined tree/branch based on #321 (or a new integration branch whose ancestry includes both stacks), with the execution code and models reconciled against the #321 versions. The #321 `models.py` and execution-stack `models.py` changes overlap and must be merged semantically, not copied wholesale.
+
+**Required migration verification before integration is accepted:**
+
+1. Enumerate every revision in the combined tree and assert unique revision IDs and exactly one intended head.
+2. Assert the full `down_revision` chain is resolvable from the supported baseline.
+3. Compare SQLAlchemy model metadata with the resulting schema, including nullable `analysis_id`, required `case_id`, both foreign keys and execution-ledger constraints.
+4. Upgrade an empty database from the supported baseline to head on PostgreSQL and SQLite.
+5. Upgrade a database stamped at the previous supported release to head on PostgreSQL and SQLite.
+6. Exercise the #309 case backfill against representative existing execution rows before making `case_id` non-null.
+7. Verify PostgreSQL and SQLite trigger behavior after both migrations.
+8. Run downgrade only where the migration's data-safety guards permit it; do not claim rollback if historical execution records prevent downgrade.
+
+No migration has been rewritten or applied by this audit update. This section records the verified graph and the safe target sequence; code integration and database execution remain pending.
+
 ### 3.3 PR #321 runtime attestation is related but not a replacement
 
 PR #321 adds `runtime_attestation.py` and a six-component runtime identity/assay binding for clinical execution. That is a separate and important clinical authorization layer. It does not replace environment registration, durable tool execution records, container isolation, tool-profile resolution or scheduler/worker lifecycle. The two mechanisms must be composed without contradictory identity sources.
