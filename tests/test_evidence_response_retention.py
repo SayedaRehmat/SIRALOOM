@@ -608,3 +608,83 @@ def test_postgres_revocation_serializes_with_worker_retry(tmp_path, monkeypatch)
         revoker.join(timeout=2)
         worker.join(timeout=2)
         engine.dispose()
+
+
+@pytest.mark.integration
+def test_postgres_evidence_verification_racing_expiry_fails_closed(tmp_path, monkeypatch):
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    db, store, case, analysis, variant, resource = _seed(
+        tmp_path, monkeypatch, database_url=database_url
+    )
+    engine = db.get_bind()
+    artifact, digest, size = _persist_raw(
+        store, db, case, analysis, resource, tmp_path,
+        raw=b'{"evidence":"must-be-revalidated"}',
+    )
+    evidence = _evidence(analysis, variant, resource, artifact, digest, size)
+    db.add(evidence)
+    db.flush()
+    evidence_id, analysis_id, resource_id = evidence.id, analysis.id, resource.id
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+        ProviderRetentionApproval.status == "APPROVED",
+    ))
+    approval_id = approval.id
+    approval.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+    db.commit()
+    db.close()
+
+    barrier = threading.Barrier(2)
+    outcomes = []
+    errors = []
+
+    def verify():
+        try:
+            with Session(engine) as session:
+                row = session.get(Evidence, evidence_id)
+                barrier.wait(timeout=5)
+                try:
+                    verify_evidence_response_artifact(session, row)
+                    outcomes.append("VERIFIED")
+                except ValueError:
+                    outcomes.append("REJECTED")
+                session.commit()
+        except Exception as exc:  # surfaced in the main test thread  # noqa: BLE001
+            errors.append(exc)
+
+    def retry():
+        try:
+            with Session(engine) as session:
+                local_analysis = session.get(Analysis, analysis_id)
+                local_resource = session.get(Resource, resource_id)
+                barrier.wait(timeout=5)
+                result = retain_provider_response_bytes(
+                    session, analysis=local_analysis, resource=local_resource,
+                    provider_id="TestProvider", provider_version="1",
+                    request_fingerprint="evidence-expiry-race",
+                    raw_response_bytes=b'{"new":"response"}',
+                )
+                outcomes.append(result.status)
+                session.commit()
+        except Exception as exc:  # surfaced in the main test thread  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [
+        threading.Thread(target=verify, name="evidence-verifier"),
+        threading.Thread(target=retry, name="expiry-retry"),
+    ]
+    try:
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=15)
+        assert all(not thread.is_alive() for thread in threads)
+        assert not errors
+        assert sorted(outcomes) == ["REJECTED", "REVIEW_REQUIRED"]
+        with Session(engine) as session:
+            assert session.get(ProviderRetentionApproval, approval_id).status == "EXPIRED"
+    finally:
+        engine.dispose()
