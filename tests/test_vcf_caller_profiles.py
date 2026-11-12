@@ -353,6 +353,21 @@ def test_dragen_header_declarations_never_relax_reserved_gp_probability_validati
     assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
 
 
+def test_ingestion_preserves_dragen_provenance_when_reserved_gp_validation_rejects_file() -> None:
+    fixture = FIXTURES / "dragen_snv_v4_3_doc_example.vcf"
+
+    result = ingestion.validate_vcf(fixture)
+
+    assert result.status == "INVALID"
+    assert result.error_code == "VCF_FIELD_TYPE_INVALID"
+    provenance = result.metadata["caller_provenance"]
+    assert provenance["caller_profile_id"] == "dragen_snv_germline"
+    assert provenance["dragen_gp_phred_semantics_applicable"] is False
+    assert provenance["caller_semantic_compatibility_status"] == "CALLER_SPEC_SEMANTIC_DEVIATION"
+    assert provenance["caller_semantic_compatibility_review_required"] is True
+    assert provenance["field_semantic_deviations"][0]["field_id"] == "GP"
+
+
 def test_dragen_documented_gp_deviation_is_reported_without_authorizing_validation_override() -> None:
     fixture = FIXTURES / "dragen_snv_v4_3_doc_example.vcf"
     provenance = inspect_caller_provenance(fixture)
