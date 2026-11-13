@@ -597,7 +597,7 @@ def main() -> int:
             ],
         }
         (args.report.parent / "caller-acquisition-manifest.json").write_text(
-            json.dumps(acquisition_manifest, indent=2, sort_keys=True) + "\\n",
+            json.dumps(acquisition_manifest, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
         report["caller_acquisition_manifest"] = acquisition_manifest
