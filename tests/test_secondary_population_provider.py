@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from backend.app.adapters.population import secondary
 from backend.app.adapters.population.secondary import (
     LocalTabixSecondaryPopulationProvider,
     SecondaryPopulationProviderError,
@@ -23,156 +24,11 @@ def test_requires_explicit_info_mapping():
         LocalTabixSecondaryPopulationProvider.from_execution_contract(contract())
 
 
-def test_reads_alt_specific_fields(monkeypatch):
-    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
-        info_fields={"AC": "AC", "AN": "AN", "AF": "AF", "HOM_ALT": "nhomalt"},
-        population_code="GLOBAL", population_label="1000 Genomes Phase 3",
-    ))
-    monkeypatch.setattr(
-        "backend.app.adapters.population.secondary.subprocess.run",
-        lambda *a, **k: SimpleNamespace(
-            returncode=0, stderr="",
-            stdout="1\t100\trs1\tA\tC,G\t.\tPASS\tAC=2,4;AN=100;AF=0.02,0.04;nhomalt=0,1\n",
-        ),
-    )
-    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
-    obs = provider.query_variant(variant)[0]
-    assert (obs.allele_count, obs.allele_number, obs.allele_frequency, obs.homozygote_count) == (4, 100, 0.04, 1)
-    assert len(obs.request_fingerprint) == 64
-    assert len(obs.response_sha256) == 64
-    assert obs.request_metadata["alternate"] == "G"
-    assert obs.observed_at
-
-
-def test_no_match_still_returns_query_and_response_provenance(monkeypatch):
-    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
-        info_fields={"AC": "AC", "AN": "AN"},
-    ))
-    response = "1\t100\trs1\tA\tC\t.\tPASS\tAC=1;AN=100\n"
-    monkeypatch.setattr(
-        "backend.app.adapters.population.secondary.subprocess.run",
-        lambda *a, **k: SimpleNamespace(returncode=0, stderr="", stdout=response),
-    )
-    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
-
-    observations, provenance = provider.query_variant_with_provenance(variant)
-
-    assert observations == []
-    assert len(provenance["request_fingerprint"]) == 64
-    assert provenance["response_sha256"] == hashlib.sha256(response.encode()).hexdigest()
-    assert provenance["request_metadata"]["alternate"] == "G"
-    assert provenance["observed_at"]
-    assert provenance["query_outcome"] == "NO_MATCH"
-
-
-def test_contig_matching_is_exact_by_default(monkeypatch):
-    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
-        info_fields={"AF": "AF"},
-    ))
-    monkeypatch.setattr(
-        "backend.app.adapters.population.secondary.subprocess.run",
-        lambda *a, **k: SimpleNamespace(
-            returncode=0, stderr="",
-            stdout="chr1	100	rs1	A	G	.	PASS	AF=0.02\n",
-        ),
-    )
-    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
-    assert provider.query_variant(variant) == []
-
-
-def test_contig_aliasing_requires_explicit_contract_policy(monkeypatch):
-    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
-        info_fields={"AF": "AF", "AN": "AN"},
-        contig_policy="CHR_PREFIX",
-    ))
-    monkeypatch.setattr(
-        "backend.app.adapters.population.secondary.subprocess.run",
-        lambda *a, **k: SimpleNamespace(
-            returncode=0, stderr="",
-            stdout="chr1	100	rs1	A	G	.	PASS	AF=0.02;AN=100\n",
-        ),
-    )
-    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
-    assert provider.query_variant(variant)[0].allele_frequency == 0.02
-
-
-def test_af_without_allele_number_is_not_exposed(monkeypatch):
-    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
-        info_fields={"AF": "AF"},
-    ))
-    monkeypatch.setattr(
-        "backend.app.adapters.population.secondary.subprocess.run",
-        lambda *a, **k: SimpleNamespace(
-            returncode=0, stderr="",
-            stdout="1\t100\trs1\tA\tG\t.\tPASS\tAF=0.02\n",
-        ),
-    )
-    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
-    observation = provider.query_variant(variant)[0]
-    assert observation.allele_number is None
-    assert observation.allele_frequency is None
-    assert observation.availability == "NOT_AVAILABLE"
-
-
-@pytest.mark.parametrize(
-    ("info", "message"),
-    [
-        ("AC=2;AN=-1;AF=0.02", "allele number cannot be negative"),
-        ("AC=-1;AN=100;AF=0.02", "allele count cannot be negative"),
-        ("AC=101;AN=100;AF=1.0", "cannot exceed allele number"),
-        ("AC=1;AN=100;AF=0.02", "inconsistent with AC/AN"),
-        ("AC=1;AN=100;AF=0", "inconsistent with AC/AN"),
-        ("AC=1;AN=100;AF=1.2", "between 0 and 1"),
-        ("AC=1;AN=100;AF=NaN", "must be finite"),
-    ],
-)
-def test_rejects_invalid_or_inconsistent_population_frequency(monkeypatch, info, message):
-    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
-        info_fields={"AC": "AC", "AN": "AN", "AF": "AF"},
-    ))
-    monkeypatch.setattr(
-        "backend.app.adapters.population.secondary.subprocess.run",
-        lambda *a, **k: SimpleNamespace(
-            returncode=0, stderr="",
-            stdout=f"1\t100\trs1\tA\tG\t.\tPASS\t{info}\n",
-        ),
-    )
-    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
-    with pytest.raises(SecondaryPopulationProviderError, match=message):
-        provider.query_variant(variant)
-
-
-def test_rounded_source_af_is_validated_then_normalized_from_counts(monkeypatch):
-    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
-        info_fields={"AC": "AC", "AN": "AN", "AF": "AF"},
-    ))
-    monkeypatch.setattr(
-        "backend.app.adapters.population.secondary.subprocess.run",
-        lambda *a, **k: SimpleNamespace(
-            returncode=0, stderr="",
-            stdout="1\t100\trs1\tA\tG\t.\tPASS\tAC=1;AN=300;AF=0.0033\n",
-        ),
-    )
-    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
-
-    observation = provider.query_variant(variant)[0]
-
-    assert observation.allele_frequency == 1 / 300
-
-
-def test_zero_allele_number_never_produces_af(monkeypatch):
-    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
-        info_fields={"AC": "AC", "AN": "AN", "AF": "AF"},
-    ))
-    monkeypatch.setattr(
-        "backend.app.adapters.population.secondary.subprocess.run",
-        lambda *a, **k: SimpleNamespace(
-            returncode=0, stderr="",
-            stdout="1\t100\trs1\tA\tG\t.\tPASS\tAC=0;AN=0;AF=0\n",
-        ),
-    )
-    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
-    assert provider.query_variant(variant)[0].allele_frequency is None
+def test_requires_frequency_or_count_denominator_mapping():
+    with pytest.raises(SecondaryPopulationProviderError, match="AF or both AC and AN"):
+        LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+            info_fields={"AC": "AC"},
+        ))
 
 
 def test_rejects_unknown_contig_policy():
@@ -192,6 +48,78 @@ def test_rejects_remote_execution():
     )
     with pytest.raises(SecondaryPopulationProviderError, match="LOCAL/FILE"):
         LocalTabixSecondaryPopulationProvider.from_execution_contract(c)
+
+
+def test_local_provider_fails_closed_until_case_bound_executor_is_injected():
+    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+        info_fields={"AC": "AC", "AN": "AN"},
+    ))
+    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
+    with pytest.raises(SecondaryPopulationProviderError, match="GOVERNED_EXECUTION_UNAVAILABLE"):
+        provider.query_variant(variant)
+
+
+def test_info_parser_and_alt_specific_values():
+    info = secondary._parse_info("AC=2,4;AN=100;AF=0.02,0.04;nhomalt=0,1")
+    assert secondary._array_int(info["AC"], 1) == 4
+    assert secondary._scalar_int(info["AN"]) == 100
+    assert secondary._array_value(info["AF"], 1) == "0.04"
+    assert secondary._array_int(info["nhomalt"], 1) == 1
+
+
+@pytest.mark.parametrize(
+    ("info", "message"),
+    [
+        ("AC=2;AN=-1;AF=0.02", "allele number cannot be negative"),
+        ("AC=-1;AN=100;AF=0.02", "allele count cannot be negative"),
+        ("AC=101;AN=100;AF=1.0", "cannot exceed allele number"),
+        ("AC=1;AN=100;AF=0.02", "inconsistent with AC/AN"),
+        ("AC=1;AN=100;AF=0", "inconsistent with AC/AN"),
+    ],
+)
+def test_rejects_invalid_population_metrics(info, message):
+    parsed = secondary._parse_info(info)
+    ac = secondary._scalar_int(parsed.get("AC"))
+    an = secondary._scalar_int(parsed.get("AN"))
+    af_text = parsed.get("AF")
+    af = secondary._parse_frequency(af_text)
+    with pytest.raises(SecondaryPopulationProviderError, match=message):
+        secondary._validate_population_metrics(ac=ac, an=an, af=af, af_text=af_text)
+
+
+@pytest.mark.parametrize("value", ["1.2", "NaN", "inf", "-0.1", "not-a-number"])
+def test_rejects_invalid_frequency_values(value):
+    with pytest.raises(SecondaryPopulationProviderError):
+        secondary._parse_frequency(value)
+
+
+def test_rounded_source_af_is_validated_then_normalized_from_counts():
+    parsed = secondary._parse_info("AC=1;AN=300;AF=0.0033")
+    af = secondary._parse_frequency(parsed["AF"])
+    result = secondary._validate_population_metrics(
+        ac=secondary._scalar_int(parsed["AC"]),
+        an=secondary._scalar_int(parsed["AN"]),
+        af=af,
+        af_text=parsed["AF"],
+    )
+    assert result == 1 / 300
+
+
+def test_zero_allele_number_never_produces_af():
+    parsed = secondary._parse_info("AC=0;AN=0;AF=0")
+    af = secondary._parse_frequency(parsed["AF"])
+    result = secondary._validate_population_metrics(
+        ac=secondary._scalar_int(parsed["AC"]),
+        an=secondary._scalar_int(parsed["AN"]),
+        af=af,
+        af_text=parsed["AF"],
+    )
+    assert result is None
+
+
+def test_contig_aliasing_requires_explicit_contract_policy():
+    assert secondary._contigs_match("chr1", "1", "CHR_PREFIX") is True
+    assert secondary._contigs_match("chr1", "1", "EXACT") is False
 
 
 def test_secondary_population_no_data_is_a_limitation_not_pipeline_failure():
