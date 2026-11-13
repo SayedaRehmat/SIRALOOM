@@ -230,6 +230,8 @@ jobs:
           test -n "$RTG_BIN"
           echo "$(dirname "$RTG_BIN")" >> "$GITHUB_PATH"
           "$RTG_BIN" version
+      - name: Test full-reference qualification helpers
+        run: uv run --locked pytest -q tests/test_grch38_giab_benchmark.py
       - name: Run full-reference qualification and three-caller GIAB benchmark
         env:
           DATABASE_URL: sqlite:///./real-caller-benchmark-ci.db
