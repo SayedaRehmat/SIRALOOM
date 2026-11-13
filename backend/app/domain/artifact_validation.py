@@ -152,7 +152,12 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
             _copy_verified_artifact(db, case, artifact, artifact_path)
 
             if kind == "VCF":
-                result = validate_vcf(artifact_path)
+                result = validate_vcf(
+                    artifact_path,
+                    caller_attestation=ingestion.get("caller_attestation"),
+                    organization_id=case.organization_id,
+                    artifact_sha256=artifact.sha256,
+                )
                 specimen = db.get(Specimen, artifact.specimen_id) if artifact.specimen_id else None
                 if result.sample_names and specimen is None:
                     from backend.app.domain.ingestion import ValidationResult
