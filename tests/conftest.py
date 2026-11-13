@@ -33,57 +33,61 @@ class _TestPersistentExecution:
         self.case_id = uuid4()
         self.worker_id = "pytest-local-executor"
         self.execution_record_ids = []
-        from backend.app.config import settings
-        from backend.app.domain.execution_environments import (
-            ExecutionCapacity,
-            ExecutionEnvironmentProfile,
-            ExecutionJobLimits,
-        )
-        from backend.app.domain.tool_execution import current_platform_id
+        def registration():
+            from backend.app.config import settings
+            from backend.app.domain.execution_environments import (
+                ExecutionCapacity,
+                ExecutionEnvironmentProfile,
+                ExecutionJobLimits,
+            )
+            from backend.app.domain.tool_execution import current_platform_id
 
-        executable = shutil.which(settings.bcftools_executable)
-        if executable is None:
-            executable = shutil.which("bcftools")
-        if executable is None:
-            raise RuntimeError("Scientific unit-test executor requires the pinned BCFtools test binary.")
-        executable_sha256 = hashlib.sha256(Path(executable).read_bytes()).hexdigest()
-        image_digest = "sha256:" + ("1" * 64)
-        profile = ExecutionEnvironmentProfile(
-            environment_id="pytest-qualified-oci",
-            profile_version="1",
-            owner_scope="SIRALOOM",
-            organization_id=None,
-            executor_kind="CONTAINER",
-            platform=current_platform_id(),
-            operating_system="linux",
-            architecture="x86_64",
-            kernel_release="pytest",
-            runtime_kind="DOCKER",
-            runtime_version="pytest-docker",
-            runtime_image_digest=image_digest,
-            runtime_image_reference=f"registry.example/siraloom-test@{image_digest}",
-            scheduler="DOCKER_COMPOSE",
-            capacity=ExecutionCapacity(
-                cpu_cores=4,
-                memory_bytes=8 * 1024**3,
-                scratch_bytes=8 * 1024**3,
-                max_concurrency=2,
-            ),
-            job_limits=ExecutionJobLimits(
-                cpu_cores=1,
-                memory_bytes=2 * 1024**3,
-                pids_limit=256,
-                container_user="10001:10001",
-            ),
-            workspace_root="/tmp/siraloom-test-execution",
-            storage_profile_ids=("pytest-artifacts",),
-            supported_tool_profile_ids=(settings.bcftools_profile_id,),
-            tool_executable_sha256=((settings.bcftools_profile_id, executable_sha256),),
-            network_policy="OFFLINE",
-            qualification_status="ENVIRONMENT_QUALIFIED",
-        )
-        registration = SimpleNamespace(profile_json=profile.snapshot())
-        self.db = SimpleNamespace(get=lambda *_args, **_kwargs: registration)
+            executable = settings.bcftools_executable
+            if not Path(executable).is_absolute():
+                executable = shutil.which(executable) or ""
+            if not executable or not Path(executable).is_file():
+                executable = shutil.which("bcftools") or ""
+            if not executable:
+                raise RuntimeError("Scientific unit-test executor requires the pinned BCFtools test binary.")
+            executable_sha256 = hashlib.sha256(Path(executable).read_bytes()).hexdigest()
+            image_digest = "sha256:" + ("1" * 64)
+            profile = ExecutionEnvironmentProfile(
+                environment_id="pytest-qualified-oci",
+                profile_version="1",
+                owner_scope="SIRALOOM",
+                organization_id=None,
+                executor_kind="CONTAINER",
+                platform=current_platform_id(),
+                operating_system="linux",
+                architecture="x86_64",
+                kernel_release="pytest",
+                runtime_kind="DOCKER",
+                runtime_version="pytest-docker",
+                runtime_image_digest=image_digest,
+                runtime_image_reference=f"registry.example/siraloom-test@{image_digest}",
+                scheduler="DOCKER_COMPOSE",
+                capacity=ExecutionCapacity(
+                    cpu_cores=4,
+                    memory_bytes=8 * 1024**3,
+                    scratch_bytes=8 * 1024**3,
+                    max_concurrency=2,
+                ),
+                job_limits=ExecutionJobLimits(
+                    cpu_cores=1,
+                    memory_bytes=2 * 1024**3,
+                    pids_limit=256,
+                    container_user="10001:10001",
+                ),
+                workspace_root="/tmp",
+                storage_profile_ids=("pytest-artifacts",),
+                supported_tool_profile_ids=(settings.bcftools_profile_id,),
+                tool_executable_sha256=((settings.bcftools_profile_id, executable_sha256),),
+                network_policy="OFFLINE",
+                qualification_status="ENVIRONMENT_QUALIFIED",
+            )
+            return SimpleNamespace(profile_json=profile.snapshot())
+
+        self.db = SimpleNamespace(get=lambda *_args, **_kwargs: registration())
 
     def execute(self, profile, request, *, artifact_publisher=None):
         executable = str(profile.executable)
