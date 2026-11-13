@@ -757,7 +757,7 @@ def _run_bcftools_command(
         qualification_status="SOFTWARE_QUALIFIED",
         version_args=("--version",),
         version_output_contains=(
-            f"bcftools {settings.bcftools_version}\\nUsing htslib {settings.htslib_version}"
+            f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}"
         ),
         supported_operations=("validate", "normalize", "sort", "index", "convert", "split_multiallelic"),
         runtime_image_digest=environment.runtime_image_digest,
