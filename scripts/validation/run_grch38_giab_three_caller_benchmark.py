@@ -344,6 +344,9 @@ def run_reference_pipeline(callset: dict[str, Any], fasta: Path, lengths: dict[s
         attestation = None
     strict = smoke.validate_vcf_strict(source, caller_attestation=attestation)
     provenance = strict["caller_provenance"]
+    if strict["sample_count"] != 1:
+        raise RuntimeError(f"{caller}: expected one HG002 sample in caller VCF, observed {strict['sample_count']}")
+    sample_names = run(["bcftools", "query", "-l", str(source)]).splitlines()
     expected_profile = EXPECTED_CALLERS[caller]
     if provenance.get("caller_profile_id") != expected_profile:
         raise RuntimeError(
@@ -374,7 +377,7 @@ def run_reference_pipeline(callset: dict[str, Any], fasta: Path, lengths: dict[s
             "filename": callset["filename"], "bytes": callset["bytes"],
             "sha256": callset["sha256"], "zenodo_checksum": callset["zenodo_checksum"],
             "observed_records": strict["records"], "vcf_version": strict["fileformat"],
-            "sample_count": strict["sample_count"],
+            "sample_count": strict["sample_count"], "sample_names": sample_names,
         },
         "caller_provenance": provenance,
         "reference_contigs_observed_in_vcf": sorted(present_contigs),
@@ -424,7 +427,7 @@ def genotype_comparison(query: Path, truth: Path, regions: Path, contig_order: d
         )
         assert proc.stdout is not None
         for line in proc.stdout:
-            fields = line.rstrip("\\n").split("\\t")
+            fields = line.rstrip("\n").split("\t")
             if len(fields) != 5:
                 raise RuntimeError(f"Expected one-sample genotype row from {path}: {line!r}")
             chrom, pos, ref, alt, gt = fields
