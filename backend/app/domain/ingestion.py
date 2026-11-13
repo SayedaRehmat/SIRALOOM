@@ -200,6 +200,7 @@ def validate_vcf(
     caller_attestation: dict | None = None,
     organization_id: UUID | None = None,
     artifact_sha256: str | None = None,
+    expected_reference_build: str | None = None,
 ) -> ValidationResult:
     p = Path(path)
     if classify_filename(p.name) != "VCF":
@@ -213,6 +214,7 @@ def validate_vcf(
             caller_attestation=caller_attestation,
             organization_id=organization_id,
             artifact_sha256=artifact_sha256,
+            expected_reference_build=expected_reference_build,
         )
         compression = strict_profile["compression"]
         headers, detected_build, has_fileformat, fileformat = _header_info(p)
