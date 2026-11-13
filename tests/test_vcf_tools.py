@@ -1354,7 +1354,7 @@ def test_normalization_uses_selected_executable_and_rejects_htslib_drift(tmp_pat
     assert commands == [[str(selected), "--version"]]
 
 
-def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path, monkeypatch):
+def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path, monkeypatch, qualified_test_execution_factory):
     executable = tmp_path / "bcftools"
     executable.write_text("#!/bin/sh\\necho 'bcftools 1.25'\\n", encoding="utf-8")
     executable.chmod(0o755)
@@ -1364,10 +1364,8 @@ def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path, m
     calls = []
 
     from backend.app.config import settings
-    from conftest import _TestPersistentExecution
-
     monkeypatch.setattr(settings, "bcftools_executable", str(executable))
-    execution = _TestPersistentExecution()
+    execution = qualified_test_execution_factory()
 
     def capture_execute(profile, request, *, artifact_publisher=None):
         calls.append((profile, request))
