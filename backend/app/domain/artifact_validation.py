@@ -17,6 +17,10 @@ from backend.app.config import settings
 from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.domain.case_intake import case_status_after_vcf_upload
 from backend.app.domain.enums import ArtifactType
+from backend.app.domain.execution_context import (
+    ExecutionEnvironmentAssignmentError,
+    persistent_execution_for_case,
+)
 from backend.app.domain.ingestion import (
     VCFValidationUnavailable,
     normalize_build,
@@ -118,10 +122,6 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
         case = db.get(Case, artifact.case_id)
         if case is None or case.organization_id is None:
             raise RuntimeError("Artifact case/tenant identity is unavailable for validation.")
-        from backend.app.domain.execution_context import (
-            ExecutionEnvironmentAssignmentError,
-            persistent_execution_for_case,
-        )
         try:
             persistent_execution = persistent_execution_for_case(
                 db,
