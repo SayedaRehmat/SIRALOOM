@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -26,7 +27,7 @@ UCSC_MD5 = f"{UCSC_BASE}/md5sum.txt"
 UCSC_EXPECTED_MD5 = "efb4edf237dd3594e94610ed803c8a44"
 UCSC_CHR20 = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/chr20.fa.gz"
 GIAB_BASE = (
-    "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/ftp/release/"
+    "https://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/release/"
     "AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh38"
 )
 GIAB_VCF = f"{GIAB_BASE}/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz"
@@ -55,19 +56,41 @@ def load_smoke_module():
     return module
 
 
-def request_bytes(url: str, destination: Path) -> None:
+def http_error_context(url: str, destination: Path | None, status: int, reason: str) -> str:
+    target = f"; destination={destination}" if destination is not None else ""
+    return f"HTTP request failed: status={status}, reason={reason!r}, url={url!r}{target}"
+
+
+def request_bytes(url: str, destination: Path) -> dict[str, Any]:
     destination.parent.mkdir(parents=True, exist_ok=True)
     request = urllib.request.Request(url, headers={"User-Agent": "SIRALOOM-GRCh38-GIAB-qualification/1.0"})
-    with urllib.request.urlopen(request, timeout=180) as response, destination.open("wb") as output:
-        shutil.copyfileobj(response, output, length=1024 * 1024)
+    try:
+        with urllib.request.urlopen(request, timeout=180) as response, destination.open("wb") as output:
+            shutil.copyfileobj(response, output, length=1024 * 1024)
+            transfer = {
+                "http_status": response.status,
+                "final_url": response.geturl(),
+                "content_length_header": response.headers.get("Content-Length"),
+            }
+    except urllib.error.HTTPError as error:
+        raise RuntimeError(http_error_context(url, destination, error.code, error.reason)) from error
+    except urllib.error.URLError as error:
+        raise RuntimeError(f"URL request failed: url={url!r}, reason={error.reason!r}, destination={destination}") from error
     if destination.stat().st_size == 0:
-        raise RuntimeError(f"Downloaded empty resource: {url}")
+        raise RuntimeError(f"Downloaded empty resource: url={url!r}, destination={destination}")
+    transfer["downloaded_bytes"] = destination.stat().st_size
+    return transfer
 
 
 def request_text(url: str) -> str:
     request = urllib.request.Request(url, headers={"User-Agent": "SIRALOOM-GRCh38-GIAB-qualification/1.0"})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        return response.read().decode("utf-8")
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            return response.read().decode("utf-8")
+    except urllib.error.HTTPError as error:
+        raise RuntimeError(http_error_context(url, None, error.code, error.reason)) from error
+    except urllib.error.URLError as error:
+        raise RuntimeError(f"URL request failed: url={url!r}, reason={error.reason!r}") from error
 
 
 def sha256(path: Path) -> str:
@@ -255,12 +278,25 @@ def download_giab(root: Path, smoke):
     result = {}
     for label, url in resources:
         target = root / Path(url).name
-        if not target.exists():
-            request_bytes(url, target)
+        print(f"[GIAB_RESOURCE_VERIFY] resource={label} url={url}", flush=True)
+        if target.exists() and target.stat().st_size:
+            transfer = {
+                "verification": "CACHED_LOCAL_FILE",
+                "downloaded_bytes": target.stat().st_size,
+            }
+        else:
+            transfer = request_bytes(url, target)
+            transfer["verification"] = "HTTP_DOWNLOAD_VERIFIED"
         result[label] = {
             "url": url, "path": str(target), "bytes": target.stat().st_size,
             "sha256": sha256(target), "md5": md5(target),
+            "url_verification": transfer,
         }
+        print(
+            f"[GIAB_RESOURCE_VERIFIED] resource={label} "
+            f"verification={transfer['verification']} bytes={target.stat().st_size}",
+            flush=True,
+        )
     if not result["truth_vcf"]["bytes"] or not result["high_confidence_bed"]["bytes"]:
         raise RuntimeError("GIAB truth VCF or high-confidence BED is empty")
     run(["gzip", "-t", result["truth_vcf"]["path"]])
