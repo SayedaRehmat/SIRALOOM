@@ -643,13 +643,51 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
         )
         secondary_calls = {"count": 0}
 
-        def fake_tabix_run(*_args, **_kwargs):
-            secondary_calls["count"] += 1
-            return SimpleNamespace(returncode=0, stderr="", stdout=secondary_response)
+        from backend.app.adapters.population.secondary import (
+            LocalTabixSecondaryPopulationProvider,
+            SecondaryPopulationObservation,
+        )
 
+        class FakeSecondaryProvider:
+            provider_id = "fixture-population"
+
+            def query_variant_with_provenance(self, variant):
+                secondary_calls["count"] += 1
+                raw_response = secondary_response.encode("utf-8")
+                request_fingerprint = hashlib.sha256(
+                    f"{variant.genome_build}:{variant.chromosome}:{variant.position}:"
+                    f"{variant.reference}:{variant.alternate}".encode("utf-8")
+                ).hexdigest()
+                response_sha256 = hashlib.sha256(raw_response).hexdigest()
+                observations = []
+                if secondary_match_expected:
+                    observations.append(SecondaryPopulationObservation(
+                        population_level="GLOBAL",
+                        population_code="GLOBAL",
+                        population_label="Fixture secondary population",
+                        allele_count=1,
+                        allele_number=100,
+                        allele_frequency=0.01,
+                        homozygote_count=0,
+                        availability="AVAILABLE",
+                        quality_status="PASS",
+                        source_record_id="rs-secondary",
+                        request_fingerprint=request_fingerprint,
+                        response_sha256=response_sha256,
+                        request_metadata={"alternate": "C"},
+                        observed_at=datetime.now(UTC).isoformat(),
+                    ))
+                return observations, {
+                    "query_outcome": "MATCHED" if observations else "NO_MATCH",
+                    "request_fingerprint": request_fingerprint,
+                    "response_sha256": response_sha256,
+                }
+
+        fake_secondary_provider = FakeSecondaryProvider()
         monkeypatch.setattr(
-            "backend.app.adapters.population.secondary.subprocess.run",
-            fake_tabix_run,
+            LocalTabixSecondaryPopulationProvider,
+            "from_execution_contract",
+            classmethod(lambda _cls, _contract: fake_secondary_provider),
         )
 
         contract = SimpleNamespace(
