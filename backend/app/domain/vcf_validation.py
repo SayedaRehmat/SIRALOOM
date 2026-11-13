@@ -6,8 +6,9 @@ import re
 import struct
 import zlib
 from contextlib import contextmanager
-from math import comb, isnan
+from math import comb, isfinite, isnan
 from pathlib import Path
+from typing import Any
 
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 
@@ -1074,6 +1075,7 @@ def _validate_declared_value(
     local_allele_count: int | None = None,
     base_modification_cardinality: int | None = None,
     allow_empty_values: bool = False,
+    allow_phred_gp: bool = False,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
@@ -1133,7 +1135,10 @@ def _validate_declared_value(
             if valid:
                 numeric_value = float(item)
                 if (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
-                    valid = 0.0 <= numeric_value <= 1.0
+                    if field_scope == "FORMAT" and key == "GP" and allow_phred_gp:
+                        valid = isfinite(numeric_value) and numeric_value >= 0.0
+                    else:
+                        valid = 0.0 <= numeric_value <= 1.0
                 if (field_scope, key) in NONNEGATIVE_FLOAT_FIELDS:
                     valid = numeric_value >= 0.0
                 if _base_modification_field_kind(key) == "fraction":
@@ -1581,8 +1586,121 @@ def _validate_record(
     return chrom, pos, alts
 
 
-def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None = None) -> dict:
+def _verify_dragen_42_gp_attestation(
+    path: Path,
+    attestation: dict[str, Any],
+) -> dict[str, Any]:
+    """Verify the pinned public DRAGEN 4.2 fixture before applying GP semantics.
+
+    This is deliberately an exact public-dataset allowlist, not a general
+    caller-controlled override. Production run attestations require a separate
+    governed trust/signature mechanism.
+    """
+    expected = {
+        "schema_version": 1,
+        "caller_profile_id": "dragen_snv_germline",
+        "caller_release": "4.2",
+        "source_record_url": "https://zenodo.org/records/8350256",
+        "source_filename": "HG002_35x.hard-filtered.vcf.gz",
+        "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
+        "semantic_deviation": "FORMAT/GP_PHRED_SCALE",
+    }
+    for key, value in expected.items():
+        if attestation.get(key) != value:
+            raise StrictVCFValidationError(
+                f"DRAGEN GP semantic attestation has an invalid {key}",
+                code="VCF_CALLER_ATTESTATION_INVALID",
+            )
+    source_sha256 = attestation.get("source_sha256")
+    artifact_sha256 = attestation.get("artifact_sha256")
+    source_artifact_path = attestation.get("source_artifact_path")
+    if not isinstance(source_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", source_sha256):
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation lacks a valid source SHA-256",
+            code="VCF_CALLER_ATTESTATION_INVALID",
+        )
+    if not isinstance(artifact_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", artifact_sha256):
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation lacks a valid artifact SHA-256",
+            code="VCF_CALLER_ATTESTATION_INVALID",
+        )
+    if not isinstance(source_artifact_path, str) or not source_artifact_path:
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation lacks its source artifact path",
+            code="VCF_CALLER_ATTESTATION_INVALID",
+        )
+    source_path = Path(source_artifact_path)
+    if not source_path.is_file():
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation source artifact is unavailable",
+            code="VCF_CALLER_ATTESTATION_SOURCE_MISSING",
+        )
+    source_sha = hashlib.sha256()
+    source_md5 = hashlib.md5(usedforsecurity=False)
+    with source_path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            source_sha.update(chunk)
+            source_md5.update(chunk)
+    if (
+        source_sha.hexdigest() != source_sha256
+        or source_md5.hexdigest() != expected["source_md5"]
+    ):
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation does not match the pinned Zenodo source artifact",
+            code="VCF_CALLER_ATTESTATION_DIGEST_MISMATCH",
+        )
+    artifact_sha = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            artifact_sha.update(chunk)
+    observed_sha256 = artifact_sha.hexdigest()
+    if observed_sha256 != artifact_sha256:
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation artifact SHA-256 does not match the VCF bytes",
+            code="VCF_CALLER_ATTESTATION_DIGEST_MISMATCH",
+        )
+    provenance = inspect_caller_provenance(path)
+    if provenance.get("caller_profile_id") != expected["caller_profile_id"]:
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation conflicts with the VCF caller-family declaration",
+            code="VCF_CALLER_ATTESTATION_CALLER_CONFLICT",
+        )
+    declared_release = provenance.get("caller_version")
+    if declared_release:
+        normalized_release = declared_release.removeprefix("v")
+        if normalized_release not in {"4.2", "4.2.0"}:
+            raise StrictVCFValidationError(
+                "DRAGEN GP semantic attestation conflicts with the VCF-declared caller release",
+                code="VCF_CALLER_ATTESTATION_RELEASE_CONFLICT",
+            )
+    return {
+        "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
+        "caller_profile_id": expected["caller_profile_id"],
+        "caller_release": expected["caller_release"],
+        "field": "FORMAT/GP",
+        "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+        "clinical_review_required": True,
+        "source_record_url": expected["source_record_url"],
+        "source_filename": expected["source_filename"],
+        "source_md5": expected["source_md5"],
+        "source_sha256": source_sha256,
+        "artifact_sha256": observed_sha256,
+    }
+
+
+def validate_vcf_strict(
+    path: str | Path,
+    *,
+    reference_contigs: set[str] | None = None,
+    caller_attestation: dict[str, Any] | None = None,
+) -> dict:
     source = Path(path)
+    caller_semantic_attestation = (
+        _verify_dragen_42_gp_attestation(source, caller_attestation)
+        if caller_attestation is not None
+        else None
+    )
+    dragen_gp_phred_semantics_applicable = caller_semantic_attestation is not None
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
@@ -2083,7 +2201,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
-                            )
+                            allow_phred_gp=dragen_gp_phred_semantics_applicable,
+                        )
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
                         format_keys=format_keys,
@@ -2227,15 +2346,33 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 "reason_code": "UNRESOLVED_SPANNING_DELETION_CONTEXT",
             })
 
+    caller_provenance = inspect_caller_provenance(
+        path,
+        fileformat=fileformat,
+        gvcf_marker_count=gvcf_markers,
+        sample_record_count=sample_record_count,
+        sample_records_without_gt=sample_records_without_gt,
+    )
+    if caller_semantic_attestation is not None:
+        caller_provenance["caller_semantic_compatibility_status"] = "CALLER_SPEC_SEMANTIC_DEVIATION"
+        caller_provenance["caller_semantic_compatibility_review_required"] = True
+        caller_provenance["dragen_gp_phred_semantics_applicable"] = True
+        caller_provenance["field_semantic_deviations"] = [
+            *caller_provenance.get("field_semantic_deviations", []),
+            {
+                "namespace": "FORMAT",
+                "field_id": "GP",
+                "status": "CALLER_SPEC_SEMANTIC_DEVIATION",
+                "caller_release": "4.2",
+                "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+                "clinical_interpretation": "REVIEW_REQUIRED",
+            },
+        ]
     return {
         "fileformat": fileformat,
-        "caller_provenance": inspect_caller_provenance(
-            path,
-            fileformat=fileformat,
-            gvcf_marker_count=gvcf_markers,
-            sample_record_count=sample_record_count,
-            sample_records_without_gt=sample_records_without_gt,
-        ),
+        "caller_semantic_attestation": caller_semantic_attestation,
+        "caller_semantic_compatibility_review_required": dragen_gp_phred_semantics_applicable,
+        "caller_provenance": caller_provenance,
         "records": records,
         "alternate_allele_count": alternate_allele_count,
         "reference_only_records": reference_only,
