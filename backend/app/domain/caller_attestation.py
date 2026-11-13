@@ -10,7 +10,7 @@ import hashlib
 import hmac
 import json
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -82,7 +82,7 @@ def validate_attestation_envelope(value: Any) -> dict[str, Any]:
         raise CallerAttestationError("Caller run manifest issued_at must be ISO-8601.") from exc
     if issued_at.tzinfo is None:
         raise CallerAttestationError("Caller run manifest issued_at must include a timezone.")
-    if issued_at > datetime.now(timezone.utc).replace(microsecond=0) + __import__("datetime").timedelta(minutes=10):
+    if issued_at > datetime.now(timezone.utc).replace(microsecond=0) + timedelta(minutes=10):
         raise CallerAttestationError("Caller run manifest issued_at is implausibly far in the future.")
     return value
 
