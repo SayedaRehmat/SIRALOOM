@@ -9,6 +9,9 @@ from contextlib import contextmanager
 from math import comb, isfinite, isnan
 from pathlib import Path
 from typing import Any
+from uuid import UUID
+
+from backend.app.domain.caller_attestation import CallerAttestationError, verify_signed_caller_manifest
 
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 
@@ -1693,13 +1696,75 @@ def validate_vcf_strict(
     *,
     reference_contigs: set[str] | None = None,
     caller_attestation: dict[str, Any] | None = None,
+    organization_id: UUID | None = None,
+    artifact_sha256: str | None = None,
+    expected_reference_build: str | None = None,
 ) -> dict:
     source = Path(path)
-    caller_semantic_attestation = (
-        _verify_dragen_42_gp_attestation(source, caller_attestation)
-        if caller_attestation is not None
-        else None
-    )
+    caller_semantic_attestation = None
+    caller_run_attestation = None
+    if caller_attestation is not None:
+        if isinstance(caller_attestation, dict) and set(caller_attestation) == {"manifest", "key_id", "signature"}:
+            if organization_id is None or artifact_sha256 is None:
+                raise StrictVCFValidationError(
+                    "A signed caller run manifest requires the owning organization and persisted artifact digest.",
+                    code="VCF_CALLER_ATTESTATION_CONTEXT_REQUIRED",
+                )
+            try:
+                caller_run_attestation = verify_signed_caller_manifest(
+                    source,
+                    caller_attestation,
+                    organization_id=organization_id,
+                    expected_artifact_sha256=artifact_sha256,
+                )
+            except CallerAttestationError as exc:
+                raise StrictVCFValidationError(str(exc), code=exc.code) from exc
+            header_provenance = inspect_caller_provenance(source)
+            manifest = caller_attestation["manifest"]
+            if expected_reference_build is not None:
+                expected_build = expected_reference_build.strip()
+                manifest_build = manifest["reference_build"]
+                if manifest_build != expected_build:
+                    raise StrictVCFValidationError(
+                        "Signed caller run manifest reference build conflicts with the artifact assembly selection.",
+                        code="VCF_CALLER_ATTESTATION_BUILD_CONFLICT",
+                    )
+            if header_provenance.get("caller_profile_id") != manifest["caller_profile_id"]:
+                raise StrictVCFValidationError(
+                    "Signed caller run manifest conflicts with the VCF-declared caller family.",
+                    code="VCF_CALLER_ATTESTATION_CALLER_CONFLICT",
+                )
+            declared_release = header_provenance.get("caller_version")
+            declared_release_normalized = declared_release.removeprefix("v") if declared_release else None
+            manifest_release_normalized = manifest["caller_release"].removeprefix("v")
+            releases_match = (
+                declared_release_normalized == manifest_release_normalized
+                or {declared_release_normalized, manifest_release_normalized} == {"4.2", "4.2.0"}
+            )
+            if declared_release and not releases_match:
+                raise StrictVCFValidationError(
+                    "Signed caller run manifest conflicts with the VCF-declared caller release.",
+                    code="VCF_CALLER_ATTESTATION_RELEASE_CONFLICT",
+                )
+            if (
+                manifest["caller_profile_id"] == "dragen_snv_germline"
+                and manifest["caller_release"] in {"4.2", "4.2.0"}
+                and "GP" in header_provenance.get("declared_format_fields", [])
+            ):
+                caller_semantic_attestation = {
+                    "status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
+                    "caller_profile_id": manifest["caller_profile_id"],
+                    "caller_release": manifest["caller_release"],
+                    "field": "FORMAT/GP",
+                    "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+                    "clinical_review_required": True,
+                    "manifest_id": manifest["manifest_id"],
+                    "signer_id": manifest["signer_id"],
+                }
+        else:
+            # Retain the exact public HG002 fixture attestation used by the
+            # real-caller regression harness. It is not a production trust path.
+            caller_semantic_attestation = _verify_dragen_42_gp_attestation(source, caller_attestation)
     dragen_gp_phred_semantics_applicable = caller_semantic_attestation is not None
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
@@ -2354,7 +2419,13 @@ def validate_vcf_strict(
         sample_records_without_gt=sample_records_without_gt,
     )
     if caller_semantic_attestation is not None:
-        caller_provenance["caller_semantic_compatibility_status"] = "CALLER_SPEC_SEMANTIC_DEVIATION"
+        prior_semantic_status = caller_provenance.get("caller_semantic_compatibility_status")
+        if prior_semantic_status not in {
+            "CONFLICTED_CALLER_METADATA",
+            "MISSING_REQUIRED_FORMAT_FIELD",
+            "DECLARATION_MISMATCH",
+        }:
+            caller_provenance["caller_semantic_compatibility_status"] = "CALLER_SPEC_SEMANTIC_DEVIATION"
         caller_provenance["caller_semantic_compatibility_review_required"] = True
         caller_provenance["dragen_gp_phred_semantics_applicable"] = True
         caller_provenance["field_semantic_deviations"] = [
@@ -2371,6 +2442,7 @@ def validate_vcf_strict(
     return {
         "fileformat": fileformat,
         "caller_semantic_attestation": caller_semantic_attestation,
+        "caller_run_attestation": caller_run_attestation,
         "caller_semantic_compatibility_review_required": dragen_gp_phred_semantics_applicable,
         "caller_provenance": caller_provenance,
         "records": records,

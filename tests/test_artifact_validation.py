@@ -98,7 +98,7 @@ def test_worker_validates_persisted_vcf_and_records_site_only_eligibility(
     monkeypatch.setattr(
         validation,
         "validate_vcf",
-        lambda path: (
+        lambda path, **_kwargs: (
             calls.append(Path(path).read_bytes())
             or ValidationResult(
                 status="VALID",
@@ -148,7 +148,7 @@ def test_worker_marks_unknown_caller_without_gt_ineligible_for_genotype_analysis
     monkeypatch.setattr(
         validation,
         "validate_vcf",
-        lambda _path: ValidationResult(
+        lambda _path, **_kwargs: ValidationResult(
             status="VALID",
             file_kind="VCF",
             record_count=1,
@@ -181,7 +181,7 @@ def test_worker_tool_unavailability_does_not_classify_vcf_as_invalid(
 ):
     from backend.app.domain.ingestion import VCFValidationUnavailable
 
-    def unavailable(_path):
+    def unavailable(_path, **_kwargs):
         raise VCFValidationUnavailable("temporary BCFtools outage")
 
     monkeypatch.setattr(validation, "validate_vcf", unavailable)
@@ -220,7 +220,7 @@ def test_worker_persists_caller_review_gate_without_marking_structural_vcf_inval
     monkeypatch.setattr(
         validation,
         "validate_vcf",
-        lambda _path: ValidationResult(
+        lambda _path, **_kwargs: ValidationResult(
             status="VALID",
             file_kind="VCF",
             record_count=1,
@@ -261,3 +261,58 @@ def test_worker_persists_caller_review_gate_without_marking_structural_vcf_inval
         assert audit is not None
         assert audit.payload["validation"]["caller_provenance"] == caller_provenance
 
+
+
+
+def test_worker_propagates_persisted_caller_attestation_and_keeps_review_gate(
+    validation_runtime, monkeypatch
+):
+    envelope = {
+        "manifest": {"manifest_id": "manifest-001"},
+        "key_id": "lab-key-v1",
+        "signature": "a" * 64,
+    }
+    with validation_runtime["factory"]() as db:
+        artifact = db.get(Artifact, validation_runtime["artifact_id"])
+        artifact_metadata = dict(artifact.metadata_json or {})
+        ingestion_metadata = dict(artifact_metadata.get("ingestion") or {})
+        ingestion_metadata["caller_attestation"] = envelope
+        artifact_metadata["ingestion"] = ingestion_metadata
+        artifact.metadata_json = artifact_metadata
+        artifact_sha256 = artifact.sha256
+        db.commit()
+        case = db.get(Case, validation_runtime["case_id"])
+        organization_id = case.organization_id
+
+    observed = {}
+    caller_provenance = {
+        "caller_profile_id": "dragen_snv_germline",
+        "caller_semantic_compatibility_status": "CALLER_SPEC_SEMANTIC_DEVIATION",
+        "caller_semantic_compatibility_review_required": True,
+        "field_semantic_deviations": [{
+            "namespace": "FORMAT",
+            "field_id": "GP",
+            "clinical_interpretation": "REVIEW_REQUIRED",
+        }],
+    }
+
+    def fake_validate_vcf(path, **kwargs):
+        observed.update(kwargs)
+        return ValidationResult(
+            "VALID", "VCF", 1, ["SAMPLE1"], "GRCh38", [], [],
+            "VCFv4.2", {"caller_provenance": caller_provenance},
+        )
+
+    monkeypatch.setattr(validation, "validate_vcf", fake_validate_vcf)
+    result = validation.validate_persisted_artifact(validation_runtime["artifact_id"])
+
+    assert result["status"] == "VALID"
+    assert observed["caller_attestation"] == envelope
+    assert observed["organization_id"] == organization_id
+    assert observed["artifact_sha256"] == artifact_sha256
+    assert observed["expected_reference_build"] == "GRCh38"
+    with validation_runtime["factory"]() as db:
+        artifact = db.get(Artifact, validation_runtime["artifact_id"])
+        assert artifact.metadata_json["workflow_eligibility"] == "REVIEW_REQUIRED"
+        assert artifact.metadata_json["ingestion"]["caller_attestation"] == envelope
+        assert artifact.metadata_json["validation"]["caller_provenance"] == caller_provenance

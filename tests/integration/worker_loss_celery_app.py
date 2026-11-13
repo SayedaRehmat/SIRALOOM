@@ -525,8 +525,8 @@ def artifact_validation_worker_loss(
     )
     settings.worker_scratch_root = scratch_root
 
-    def terminate_after_tool(path):
-        result = original_validate_vcf(path)
+    def terminate_after_tool(path, **kwargs):
+        result = original_validate_vcf(path, **kwargs)
         if redis.set(marker("first-attempt"), "after_tool", nx=True, ex=600):
             os._exit(73)
         return result

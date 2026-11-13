@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import tempfile
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -36,6 +37,7 @@ from backend.app.domain.artifact_integrity import (
     verify_artifact_file,
 )
 from backend.app.domain.case_intake import case_status_after_vcf_upload
+from backend.app.domain.caller_attestation import CallerAttestationError, validate_attestation_envelope
 from backend.app.domain.enums import ArtifactType
 from backend.app.domain.ingestion import classify_filename, normalize_build
 from backend.app.domain.storage_capacity import preflight_upload_capacity
@@ -212,6 +214,7 @@ async def upload_artifact(
     specimen_id: UUID | None = Form(default=None),
     genome_build: str | None = Form(default=None),
     paired_artifact_id: UUID | None = Form(default=None),
+    caller_attestation_json: str | None = Form(default=None),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
@@ -234,6 +237,28 @@ async def upload_artifact(
     kind = classify_filename(filename)
     if kind == "UNSUPPORTED":
         raise HTTPException(status_code=400, detail="Unsupported input. Use .vcf, .vcf.gz, .vcf.bgz, .tbi, or .csi.")
+    caller_attestation_envelope = None
+    caller_attestation_sha256 = None
+    if caller_attestation_json is not None:
+        if kind != "VCF":
+            raise HTTPException(status_code=400, detail="Caller run manifests can only accompany a primary VCF.")
+        try:
+            caller_attestation_envelope = validate_attestation_envelope(json.loads(caller_attestation_json))
+            manifest_org = UUID(caller_attestation_envelope["manifest"]["organization_id"])
+            if manifest_org != principal.organization_id:
+                raise CallerAttestationError(
+                    "Caller run manifest organization does not match the authenticated laboratory.",
+                    code="CALLER_ATTESTATION_TENANT_MISMATCH",
+                )
+            canonical_envelope = json.dumps(
+                caller_attestation_envelope, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            )
+            caller_attestation_sha256 = hashlib.sha256(canonical_envelope.encode("utf-8")).hexdigest()
+        except (json.JSONDecodeError, CallerAttestationError, TypeError, ValueError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": getattr(exc, "code", "CALLER_ATTESTATION_INVALID"), "message": str(exc)},
+            ) from exc
     if kind in {"TBI", "CSI"} and paired_artifact_id is None:
         raise HTTPException(status_code=400, detail="An index file must be uploaded with paired_artifact_id referencing its primary VCF artifact.")
 
@@ -351,6 +376,10 @@ async def upload_artifact(
                     "file_kind": "VCF",
                     "original_filename": filename,
                     "capacity_preflight": capacity_preflight,
+                    **(
+                        {"caller_attestation": caller_attestation_envelope}
+                        if caller_attestation_envelope is not None else {}
+                    ),
                 },
             }
         else:
@@ -396,6 +425,7 @@ async def upload_artifact(
                 genome_build=build_for_artifact,
                 specimen_id=specimen_id,
                 paired_artifact_id=paired_artifact_id,
+                caller_attestation_sha256=caller_attestation_sha256,
             )
             try:
                 upload_intent, _created = reserve_upload_intent(

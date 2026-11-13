@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from uuid import UUID
 
 from backend.app.config import settings
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
@@ -193,7 +194,14 @@ def _bcftools_validate(path: Path) -> tuple[str | None, str, str]:
     return None, version_line, detected_htslib_version
 
 
-def validate_vcf(path: str | Path) -> ValidationResult:
+def validate_vcf(
+    path: str | Path,
+    *,
+    caller_attestation: dict | None = None,
+    organization_id: UUID | None = None,
+    artifact_sha256: str | None = None,
+    expected_reference_build: str | None = None,
+) -> ValidationResult:
     p = Path(path)
     if classify_filename(p.name) != "VCF":
         return ValidationResult("INVALID", "UNSUPPORTED", 0, [], None, ["File is not a supported VCF input."], [])
@@ -201,7 +209,13 @@ def validate_vcf(path: str | Path) -> ValidationResult:
     bcftools_version: str | None = None
     htslib_version: str | None = None
     try:
-        strict_profile = validate_vcf_strict(p)
+        strict_profile = validate_vcf_strict(
+            p,
+            caller_attestation=caller_attestation,
+            organization_id=organization_id,
+            artifact_sha256=artifact_sha256,
+            expected_reference_build=expected_reference_build,
+        )
         compression = strict_profile["compression"]
         headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
@@ -340,6 +354,9 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             "breakend_source_record_count": strict_profile["breakend_records"],
             "gvcf_marker_count": strict_profile["gvcf_markers"],
             "caller_provenance": strict_profile["caller_provenance"],
+            "caller_run_attestation": strict_profile.get("caller_run_attestation"),
+            "caller_semantic_attestation": strict_profile.get("caller_semantic_attestation"),
+            "caller_semantic_compatibility_review_required": strict_profile.get("caller_semantic_compatibility_review_required", False),
             "vcf45_reference_span_records": strict_profile["vcf45_reference_span_records"],
             "vcf45_max_reference_end": strict_profile["vcf45_max_reference_end"],
             "vcf45_reference_block_sample_count": strict_profile["vcf45_reference_block_sample_count"],
