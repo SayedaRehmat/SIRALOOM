@@ -25,6 +25,7 @@ def upload_request_fingerprint(
     genome_build: str | None,
     specimen_id: UUID | None,
     paired_artifact_id: UUID | None,
+    caller_attestation_sha256: str | None = None,
 ) -> str:
     """Bind a key to bytes and every upload field that changes artifact meaning."""
     identity = {
@@ -36,6 +37,7 @@ def upload_request_fingerprint(
         "genome_build": genome_build,
         "specimen_id": str(specimen_id) if specimen_id else None,
         "paired_artifact_id": str(paired_artifact_id) if paired_artifact_id else None,
+        "caller_attestation_sha256": caller_attestation_sha256,
     }
     canonical = json.dumps(identity, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
