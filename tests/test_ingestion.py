@@ -989,7 +989,7 @@ def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch
     path.write_text(VALID_VCF, encoding="utf-8")
     selected_path = tmp_path / "toolchains" / settings.bcftools_profile_id / "bin" / "bcftools"
     selected_path.parent.mkdir(parents=True)
-    selected_path.write_text("#!/bin/sh\\n", encoding="utf-8")
+    selected_path.write_text("#!/bin/sh\n", encoding="utf-8")
     selected_path.chmod(0o755)
     selected = str(selected_path)
     commands = []
@@ -998,7 +998,7 @@ def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch
     def run(command, **kwargs):
         commands.append(command)
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, f"bcftools {settings.bcftools_version}\\nUsing htslib {settings.htslib_version}\\n", "")
+            return subprocess.CompletedProcess(command, 0, f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
