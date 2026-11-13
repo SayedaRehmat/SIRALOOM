@@ -136,7 +136,7 @@ def _bcftools_validate_in_workspace(
         raise VCFValidationUnavailable(
             "The qualified BCFtools/HTSlib profile does not declare an executable."
         )
-    from backend.app.domain.vcf_tools import _run_bcftools_command, VCFToolError, VCFToolUnavailable
+    from backend.app.domain.vcf_tools import _htslib_input_paths, _run_bcftools_command, VCFToolError, VCFToolUnavailable
 
     try:
         version_result = _run_bcftools_command(
