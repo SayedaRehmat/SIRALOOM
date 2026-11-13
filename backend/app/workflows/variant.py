@@ -1471,6 +1471,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     caller_attestation=ingestion_metadata.get("caller_attestation"),
                     organization_id=artifact_case.organization_id,
                     artifact_sha256=input_artifact.sha256,
+                    expected_reference_build=analysis.reference_build,
                 )
                 validation_step.input_artifacts = [str(input_artifact.id)]
                 validation_step.output_artifacts = [str(input_artifact.id)]
