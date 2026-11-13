@@ -120,7 +120,9 @@ def build_fai(fasta: Path) -> list[dict[str, Any]]:
                         "line_bases": line_bases, "line_width": line_width,
                     })
                 break
-            line = line.rstrip(b"\r\n")
+            raw_line = line
+            line_ending_bytes = len(raw_line) - len(raw_line.rstrip(b"\r\n"))
+            line = raw_line.rstrip(b"\r\n")
             if not line:
                 raise RuntimeError(f"Blank FASTA line near byte offset {offset}")
             if line.startswith(b">"):
@@ -145,7 +147,7 @@ def build_fai(fasta: Path) -> list[dict[str, Any]]:
             if set(seq) - set(b"ACGTRYSWKMBDHVN"):
                 raise RuntimeError(f"Invalid IUPAC nucleotide in FASTA contig {name}")
             bases = len(line)
-            width = len(line) + (1 if handle.tell() < fasta.stat().st_size else 0)
+            width = len(line) + line_ending_bytes
             if line_bases is None:
                 line_bases, line_width = bases, width
             elif previous_line_bases != line_bases:
