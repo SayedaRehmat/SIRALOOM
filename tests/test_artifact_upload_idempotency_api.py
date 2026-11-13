@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -302,3 +305,64 @@ def test_artifact_upload_fails_closed_when_scratch_volume_write_fails(
         assert db.scalar(
             select(func.count(Artifact.id)).where(Artifact.case_id == upload_api["case_id"])
         ) == 0
+
+
+
+def test_upload_persists_signed_caller_manifest_and_binds_it_to_idempotency(upload_api):
+    organization_id = upload_api["organization_id"]
+    content = (
+        b"##fileformat=VCFv4.2\n"
+        b"##source=DRAGEN_SNV\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        b"1\t10\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\n"
+    )
+    manifest = {
+        "schema_version": 1,
+        "manifest_id": "run-manifest-upload-test-001",
+        "organization_id": str(organization_id),
+        "artifact_sha256": hashlib.sha256(content).hexdigest(),
+        "caller_profile_id": "dragen_snv_germline",
+        "caller_release": "4.2",
+        "pipeline_run_id": "pipeline-run-upload-test-001",
+        "assay_id": "WGS-GERMLINE-35X",
+        "reference_build": "GRCh38",
+        "issued_at": datetime.now(timezone.utc).isoformat(),
+        "signer_id": "lab-pipeline-attestor",
+    }
+    envelope = {
+        "manifest": manifest,
+        "key_id": "caller-run-key-2026-01",
+        "signature": "a" * 64,
+    }
+    key = "caller-attestation-upload-attempt-001"
+    response = upload_api["client"].post(
+        f"/api/v1/cases/{upload_api['case_id']}/artifacts",
+        data={
+            "genome_build": "GRCh38",
+            "caller_attestation_json": json.dumps(envelope),
+        },
+        files={"file": ("dragen.vcf", content, "text/vcf")},
+        headers={"Idempotency-Key": key},
+    )
+    assert response.status_code == 201, response.text
+    artifact_id = UUID(response.json()["artifact_id"])
+
+    with upload_api["session_factory"]() as db:
+        artifact = db.get(Artifact, artifact_id)
+        assert artifact.metadata_json["ingestion"]["caller_attestation"] == envelope
+
+    changed_envelope = {
+        **envelope,
+        "manifest": {**manifest, "manifest_id": "different-manifest-id"},
+    }
+    replay = upload_api["client"].post(
+        f"/api/v1/cases/{upload_api['case_id']}/artifacts",
+        data={
+            "genome_build": "GRCh38",
+            "caller_attestation_json": json.dumps(changed_envelope),
+        },
+        files={"file": ("dragen.vcf", content, "text/vcf")},
+        headers={"Idempotency-Key": key},
+    )
+    assert replay.status_code == 409, replay.text
+    assert replay.json()["detail"]["code"] == "IDEMPOTENCY_KEY_REUSED"
