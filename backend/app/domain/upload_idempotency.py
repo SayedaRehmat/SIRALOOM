@@ -37,7 +37,8 @@ def upload_request_fingerprint(
         "genome_build": genome_build,
         "specimen_id": str(specimen_id) if specimen_id else None,
         "paired_artifact_id": str(paired_artifact_id) if paired_artifact_id else None,
-        "caller_attestation_sha256": caller_attestation_sha256,
     }
+    if caller_attestation_sha256 is not None:
+        identity["caller_attestation_sha256"] = caller_attestation_sha256
     canonical = json.dumps(identity, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
