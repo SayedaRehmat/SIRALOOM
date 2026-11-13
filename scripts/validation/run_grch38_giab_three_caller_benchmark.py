@@ -355,7 +355,7 @@ def download_stratifications(root: Path):
 
 def observed_contigs(vcf: Path) -> set[str]:
     proc = subprocess.Popen(
-        ["bcftools", "query", "-f", "%CHROM\\n", str(vcf)],
+        ["bcftools", "query", "-f", "%CHROM\n", str(vcf)],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
     assert proc.stdout is not None
@@ -392,16 +392,16 @@ def project_vcf_by_reference_contigs(
     auxiliary_count = 0
     header_lines = 0
     with opener(source, "rt", encoding="utf-8-sig") as input_handle, \
-         projection_path.open("w", encoding="utf-8", newline="\\n") as projection, \
-         auxiliary_path.open("w", encoding="utf-8", newline="\\n") as auxiliary:
+         projection_path.open("w", encoding="utf-8", newline="\n") as projection, \
+         auxiliary_path.open("w", encoding="utf-8", newline="\n") as auxiliary:
         for raw in input_handle:
             if raw.startswith("#"):
                 projection.write(raw)
                 auxiliary.write(raw)
                 header_lines += 1
                 continue
-            line = raw.rstrip("\\r\\n")
-            fields = line.split("\\t", 2)
+            line = raw.rstrip("\r\n")
+            fields = line.split("\t", 2)
             if len(fields) < 2:
                 raise RuntimeError(f"Malformed source VCF row while projecting benchmark contigs: {line[:200]!r}")
             chrom = fields[0]
@@ -523,7 +523,7 @@ def genotype_comparison(query: Path, truth: Path, regions: Path, contig_order: d
     This is a shared-allele genotype concordance metric; RTG remains authoritative
     for TP/FP/FN because this calculation does not count unmatched calls.
     """
-    fmt = "%CHROM\\t%POS\\t%REF\\t%ALT[\\t%GT]\\n"
+    fmt = "%CHROM\t%POS\t%REF\t%ALT[\t%GT]\n"
 
     def stream(path: Path):
         proc = subprocess.Popen(
