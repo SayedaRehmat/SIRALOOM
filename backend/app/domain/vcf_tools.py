@@ -935,7 +935,15 @@ def _validate_vcf_index_record_counts(
     if len(sidecars) != 1:
         raise VCFToolError("VCF index validation requires exactly one adjacent CSI or TBI sidecar.")
     index_input = sidecars[0]
-    index_inputs = [vcf_path, index_input]
+    index_inputs = [
+        vcf_path,
+        index_input,
+        *(
+            candidate
+            for suffix in (".gzi",)
+            if (candidate := Path(str(vcf_path) + suffix)).is_file()
+        ),
+    ]
     try:
         stats = _run_bcftools_command(
             [bcftools_executable, "index", "--stats", str(vcf_path)],
