@@ -287,27 +287,6 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
         if worker_log_handle is not None:
             worker_log_handle.close()
         redis.delete(*marker_keys)
-        with Session(engine) as db:
-            db.query(AuditEvent).filter(
-                AuditEvent.analysis_id == analysis_id
-            ).delete(synchronize_session=False)
-            db.query(WorkflowStep).filter(
-                WorkflowStep.analysis_id == analysis_id
-            ).delete(synchronize_session=False)
-            db.query(Artifact).filter(
-                Artifact.analysis_id == analysis_id
-            ).delete(synchronize_session=False)
-            db.query(Analysis).filter(Analysis.id == analysis_id).delete(
-                synchronize_session=False
-            )
-            db.query(Case).filter(Case.id == case_id).delete(
-                synchronize_session=False
-            )
-            db.query(User).filter(User.id == user_id).delete(
-                synchronize_session=False
-            )
-            db.query(Organization).filter(
-                Organization.id == organization_id
-            ).delete(synchronize_session=False)
-            db.commit()
+        # Execution records are append-only. Preserve the unique case,
+        # registration, analysis and artifact lineage for the durable ledger.
         engine.dispose()
