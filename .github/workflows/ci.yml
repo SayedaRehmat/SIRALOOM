@@ -261,6 +261,8 @@ jobs:
             artifacts/grch38-giab-three-caller-report.json
             artifacts/reference-manifest.json
             artifacts/dataset-manifest.json
+            artifacts/caller-acquisition-manifest.json
+            artifacts/caller-reference-provenance/
             artifacts/rtg-raw-comparison-outputs.tar.gz
           if-no-files-found: warn
           retention-days: 30
