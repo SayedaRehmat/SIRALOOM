@@ -1726,7 +1726,13 @@ def validate_vcf_strict(
                     code="VCF_CALLER_ATTESTATION_CALLER_CONFLICT",
                 )
             declared_release = header_provenance.get("caller_version")
-            if declared_release and declared_release.removeprefix("v") != manifest["caller_release"].removeprefix("v"):
+            declared_release_normalized = declared_release.removeprefix("v") if declared_release else None
+            manifest_release_normalized = manifest["caller_release"].removeprefix("v")
+            releases_match = (
+                declared_release_normalized == manifest_release_normalized
+                or {declared_release_normalized, manifest_release_normalized} == {"4.2", "4.2.0"}
+            )
+            if declared_release and not releases_match:
                 raise StrictVCFValidationError(
                     "Signed caller run manifest conflicts with the VCF-declared caller release.",
                     code="VCF_CALLER_ATTESTATION_RELEASE_CONFLICT",
@@ -1734,6 +1740,7 @@ def validate_vcf_strict(
             if (
                 manifest["caller_profile_id"] == "dragen_snv_germline"
                 and manifest["caller_release"] in {"4.2", "4.2.0"}
+                and "GP" in header_provenance.get("declared_format_fields", [])
             ):
                 caller_semantic_attestation = {
                     "status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
