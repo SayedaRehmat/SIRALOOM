@@ -269,26 +269,8 @@ def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_onc
         if worker_log_handle is not None:
             worker_log_handle.close()
         redis.delete(*marker_keys)
-        with Session(engine) as db:
-            db.query(AuditEvent).filter(AuditEvent.case_id == case_id).delete(
-                synchronize_session=False
-            )
-            db.query(ArtifactValidationDispatch).filter(
-                ArtifactValidationDispatch.id == dispatch_id
-            ).delete(synchronize_session=False)
-            db.query(Artifact).filter(Artifact.id == artifact_id).delete(
-                synchronize_session=False
-            )
-            db.query(Case).filter(Case.id == case_id).delete(
-                synchronize_session=False
-            )
-            db.query(User).filter(User.id == user_id).delete(
-                synchronize_session=False
-            )
-            db.query(Organization).filter(
-                Organization.id == organization_id
-            ).delete(synchronize_session=False)
-            db.commit()
+        # Execution records are append-only. Preserve this unique case,
+        # registration and organization lineage for the durable ledger.
         shutil.rmtree(artifact_root, ignore_errors=True)
         shutil.rmtree(scratch_root, ignore_errors=True)
         engine.dispose()
