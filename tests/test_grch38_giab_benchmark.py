@@ -84,12 +84,12 @@ def test_http_error_context_identifies_exact_resource_url_and_destination(tmp_pa
 def test_project_vcf_preserves_noncanonical_records_and_all_headers(tmp_path):
     source = tmp_path / "source.vcf"
     source.write_text(
-        "##fileformat=VCFv4.2\\n"
-        "##contig=<ID=chr1,length=10>\\n"
-        "##contig=<ID=hs38d1,length=10>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tHG002\\n"
-        "chr1\\t2\\t.\\tA\\tG\\t50\\tPASS\\t.\\tGT\\t0/1\\n"
-        "hs38d1\\t3\\t.\\tC\\tT\\t40\\tPASS\\t.\\tGT\\t0/1\\n",
+        "##fileformat=VCFv4.2\n"
+        "##contig=<ID=chr1,length=10>\n"
+        "##contig=<ID=hs38d1,length=10>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHG002\n"
+        "chr1\t2\t.\tA\tG\t50\tPASS\t.\tGT\t0/1\n"
+        "hs38d1\t3\t.\tC\tT\t40\tPASS\t.\tGT\t0/1\n",
         encoding="utf-8",
     )
     projection = tmp_path / "projection.vcf"
@@ -104,17 +104,17 @@ def test_project_vcf_preserves_noncanonical_records_and_all_headers(tmp_path):
     assert result["auxiliary_records_by_contig"] == {"hs38d1": 1}
     assert result["source_record_count"] == 2
     assert "##contig=<ID=hs38d1,length=10>" in projection.read_text()
-    assert "hs38d1\\t3\\t.\\tC\\tT" in auxiliary.read_text()
-    assert "chr1\\t2\\t.\\tA\\tG" in projection.read_text()
-    assert "chr1\\t2\\t.\\tA\\tG" not in auxiliary.read_text()
+    assert "hs38d1\t3\t.\tC\tT" in auxiliary.read_text()
+    assert "chr1\t2\t.\tA\tG" in projection.read_text()
+    assert "chr1\t2\t.\tA\tG" not in auxiliary.read_text()
 
 
 def test_project_vcf_fails_when_no_records_match_reference_contigs(tmp_path):
     source = tmp_path / "source.vcf"
     source.write_text(
-        "##fileformat=VCFv4.2\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "hs38d1\\t3\\t.\\tC\\tT\\t40\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.2\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "hs38d1\t3\t.\tC\tT\t40\tPASS\t.\n",
         encoding="utf-8",
     )
     with pytest.raises(RuntimeError, match="No records overlap"):
