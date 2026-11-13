@@ -104,7 +104,7 @@ def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_onc
             ))
             db.commit()
         with Session(engine) as db:
-            db.add(Case(
+            case = Case(
                 id=case_id,
                 organization_id=organization_id,
                 case_identifier=f"ARTIFACT-WORKER-LOSS-{dispatch_id}",
@@ -112,7 +112,14 @@ def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_onc
                 clinical_context={},
                 language="en",
                 created_by=user_id,
-            ))
+            )
+            db.add(case)
+            db.flush()
+            integration_dir = str(Path(__file__).resolve().parent)
+    if integration_dir not in sys.path:
+        sys.path.insert(0, integration_dir)
+    from execution_environment_fixtures import assign_qualified_container_environment
+            assign_qualified_container_environment(db, case, created_by=user_id)
             db.commit()
 
         store = ArtifactStore(artifact_root)
