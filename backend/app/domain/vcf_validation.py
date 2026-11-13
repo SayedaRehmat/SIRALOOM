@@ -1698,6 +1698,7 @@ def validate_vcf_strict(
     caller_attestation: dict[str, Any] | None = None,
     organization_id: UUID | None = None,
     artifact_sha256: str | None = None,
+    expected_reference_build: str | None = None,
 ) -> dict:
     source = Path(path)
     caller_semantic_attestation = None
@@ -1720,6 +1721,14 @@ def validate_vcf_strict(
                 raise StrictVCFValidationError(str(exc), code=exc.code) from exc
             header_provenance = inspect_caller_provenance(source)
             manifest = caller_attestation["manifest"]
+            if expected_reference_build is not None:
+                expected_build = expected_reference_build.strip()
+                manifest_build = manifest["reference_build"]
+                if manifest_build != expected_build:
+                    raise StrictVCFValidationError(
+                        "Signed caller run manifest reference build conflicts with the artifact assembly selection.",
+                        code="VCF_CALLER_ATTESTATION_BUILD_CONFLICT",
+                    )
             if header_provenance.get("caller_profile_id") != manifest["caller_profile_id"]:
                 raise StrictVCFValidationError(
                     "Signed caller run manifest conflicts with the VCF-declared caller family.",
