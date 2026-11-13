@@ -788,7 +788,7 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
         assert command[1] == "view"
         contig = command[command.index("--regions") + 1]
         selected = [line for line in records if line.startswith(contig + "\t")]
-        kwargs["stdout"].write("".join(selected).encode("utf-8"))
+        Path(command[command.index("-o") + 1]).write_text("".join(selected), encoding="utf-8")
         return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
 
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
@@ -857,7 +857,7 @@ def test_csi_index_validation_compares_indexed_record_streams_with_sequential_bg
         assert command[1] == "view"
         contig = command[command.index("--regions") + 1]
         selected = [line for line in records if line.startswith(contig + "\t")]
-        kwargs["stdout"].write("".join(selected).encode("utf-8"))
+        Path(command[command.index("-o") + 1]).write_text("".join(selected), encoding="utf-8")
         return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
