@@ -157,6 +157,7 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
                     caller_attestation=ingestion.get("caller_attestation"),
                     organization_id=case.organization_id,
                     artifact_sha256=artifact.sha256,
+                    expected_reference_build=artifact.genome_build,
                 )
                 specimen = db.get(Specimen, artifact.specimen_id) if artifact.specimen_id else None
                 if result.sample_names and specimen is None:
