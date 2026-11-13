@@ -186,6 +186,83 @@ jobs:
           path: artifacts/real-caller-vcf-report.json
           if-no-files-found: warn
 
+  grch38-giab-three-caller-benchmark:
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'benchmark/grch38-giab-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock
+          environment-name: bcftools
+          cache-environment: true
+          init-shell: bash
+      - name: Install pinned uv lock manager
+        run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
+      - name: Install backend from committed lock
+        run: |
+          uv lock --check
+          uv sync --locked --extra dev
+      - name: Verify pinned BCFtools and HTSlib
+        run: |
+          test "$(bcftools --version | sed -n '1p')" = "bcftools 1.25"
+          test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.25"
+      - name: Install Java for RTG Tools
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install pinned RTG Tools 3.12.1
+        run: |
+          curl --fail --location --retry 5 --retry-all-errors \
+            https://github.com/RealTimeGenomics/rtg-tools/releases/download/3.12.1/rtg-tools-3.12.1-nojre.zip \
+            --output /tmp/rtg-tools-3.12.1-nojre.zip
+          mkdir -p /opt/rtg-tools
+          unzip -q /tmp/rtg-tools-3.12.1-nojre.zip -d /opt/rtg-tools
+          RTG_BIN="$(find /opt/rtg-tools -type f -name rtg -perm -u+x | head -n 1)"
+          test -n "$RTG_BIN"
+          echo "$(dirname "$RTG_BIN")" >> "$GITHUB_PATH"
+          "$RTG_BIN" version
+      - name: Run full-reference qualification and three-caller GIAB benchmark
+        env:
+          DATABASE_URL: sqlite:///./real-caller-benchmark-ci.db
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+        run: |
+          uv run --locked python scripts/validation/run_grch38_giab_three_caller_benchmark.py \
+            --rtg rtg \
+            --work-dir /tmp/siraloom-grch38-giab \
+            --report artifacts/grch38-giab-three-caller-report.json
+      - name: Preserve raw RTG comparison outputs
+        if: always()
+        run: |
+          mkdir -p artifacts
+          if [ -d /tmp/siraloom-grch38-giab/rtg ]; then
+            tar -czf artifacts/rtg-raw-comparison-outputs.tar.gz \
+              -C /tmp/siraloom-grch38-giab rtg
+          fi
+      - name: Upload GRCh38 and GIAB qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grch38-giab-three-caller-qualification
+          path: |
+            artifacts/grch38-giab-three-caller-report.json
+            artifacts/reference-manifest.json
+            artifacts/dataset-manifest.json
+            artifacts/rtg-raw-comparison-outputs.tar.gz
+          if-no-files-found: warn
+          retention-days: 30
+
   frontend:
     runs-on: ubuntu-latest
     steps:
