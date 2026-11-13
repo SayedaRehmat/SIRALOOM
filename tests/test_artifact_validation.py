@@ -98,7 +98,7 @@ def test_worker_validates_persisted_vcf_and_records_site_only_eligibility(
     monkeypatch.setattr(
         validation,
         "validate_vcf",
-        lambda path: (
+        lambda path, **_kwargs: (
             calls.append(Path(path).read_bytes())
             or ValidationResult(
                 status="VALID",
@@ -148,7 +148,7 @@ def test_worker_marks_unknown_caller_without_gt_ineligible_for_genotype_analysis
     monkeypatch.setattr(
         validation,
         "validate_vcf",
-        lambda _path: ValidationResult(
+        lambda _path, **_kwargs: ValidationResult(
             status="VALID",
             file_kind="VCF",
             record_count=1,
@@ -181,7 +181,7 @@ def test_worker_tool_unavailability_does_not_classify_vcf_as_invalid(
 ):
     from backend.app.domain.ingestion import VCFValidationUnavailable
 
-    def unavailable(_path):
+    def unavailable(_path, **_kwargs):
         raise VCFValidationUnavailable("temporary BCFtools outage")
 
     monkeypatch.setattr(validation, "validate_vcf", unavailable)
