@@ -154,14 +154,14 @@ def _migration_lab(session):
     case_id = uuid4()
     case_table = Table("cases", MetaData(), autoload_with=session.get_bind())
     case_values = {
-        "id": case_id,
-        "organization_id": organization.id,
+        "id": case_id.hex,
+        "organization_id": organization.id.hex,
         "case_identifier": f"MIG-{uuid4().hex[:10]}",
         "status": "OPEN",
         "accession_reconciliation_status": "NEW_WORKFLOW",
         "clinical_context": {},
         "language": "en",
-        "created_by": user.id,
+        "created_by": user.id.hex,
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
     }
