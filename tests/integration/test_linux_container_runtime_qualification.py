@@ -197,7 +197,7 @@ def test_real_bcftools_execution_and_output_provenance(tmp_path):
 def test_real_input_and_resource_mounts_are_read_only_but_workspace_is_writable(tmp_path):
     executor, environment, _, python_tool = _build_context(tmp_path)
     workspace = _workspace(tmp_path)
-    input_path = tmp_path / "input.txt"
+    input_path = workspace / "input.txt"
     input_path.write_text("immutable-input", encoding="utf-8")
     resource_path = tmp_path / "reference.fa"
     resource_path.write_text(">chr1\nACGT\n", encoding="utf-8")
