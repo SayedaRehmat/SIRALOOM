@@ -889,7 +889,7 @@ def test_csi_index_validation_rejects_same_count_but_different_indexed_records(
     def fake_run(command, **kwargs):
         if command[1:3] == ["index", "--stats"]:
             return subprocess.CompletedProcess(command, 0, stdout="1\t100\t1\n", stderr="")
-        kwargs["stdout"].write(indexed_record.encode("utf-8"))
+        Path(command[command.index("-o") + 1]).write_text(indexed_record, encoding="utf-8")
         return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
