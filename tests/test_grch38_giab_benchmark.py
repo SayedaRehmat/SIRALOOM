@@ -11,6 +11,7 @@ from scripts.validation.run_grch38_giab_three_caller_benchmark import (
     build_fai,
     fasta_sequence,
     http_error_context,
+    project_vcf_by_reference_contigs,
 )
 
 
@@ -77,3 +78,46 @@ def test_http_error_context_identifies_exact_resource_url_and_destination(tmp_pa
     assert "status=404" in message
     assert url in message
     assert str(destination) in message
+
+
+
+def test_project_vcf_preserves_noncanonical_records_and_all_headers(tmp_path):
+    source = tmp_path / "source.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.2\\n"
+        "##contig=<ID=chr1,length=10>\\n"
+        "##contig=<ID=hs38d1,length=10>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tHG002\\n"
+        "chr1\\t2\\t.\\tA\\tG\\t50\\tPASS\\t.\\tGT\\t0/1\\n"
+        "hs38d1\\t3\\t.\\tC\\tT\\t40\\tPASS\\t.\\tGT\\t0/1\\n",
+        encoding="utf-8",
+    )
+    projection = tmp_path / "projection.vcf"
+    auxiliary = tmp_path / "auxiliary.vcf"
+
+    result = project_vcf_by_reference_contigs(
+        source, projection, auxiliary, {"chr1"}
+    )
+
+    assert result["projection_record_count"] == 1
+    assert result["auxiliary_record_count"] == 1
+    assert result["auxiliary_records_by_contig"] == {"hs38d1": 1}
+    assert result["source_record_count"] == 2
+    assert "##contig=<ID=hs38d1,length=10>" in projection.read_text()
+    assert "hs38d1\\t3\\t.\\tC\\tT" in auxiliary.read_text()
+    assert "chr1\\t2\\t.\\tA\\tG" in projection.read_text()
+    assert "chr1\\t2\\t.\\tA\\tG" not in auxiliary.read_text()
+
+
+def test_project_vcf_fails_when_no_records_match_reference_contigs(tmp_path):
+    source = tmp_path / "source.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.2\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "hs38d1\\t3\\t.\\tC\\tT\\t40\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(RuntimeError, match="No records overlap"):
+        project_vcf_by_reference_contigs(
+            source, tmp_path / "projection.vcf", tmp_path / "auxiliary.vcf", {"chr1"}
+        )
