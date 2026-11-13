@@ -709,6 +709,19 @@ def bcftools_available(executable: str = "bcftools") -> bool:
     return shutil.which(executable) is not None
 
 
+def _htslib_input_paths(path: str | Path) -> list[Path]:
+    """Include adjacent HTSlib indexes so containers can mount them read-only."""
+    primary = Path(path)
+    return [
+        primary,
+        *(
+            candidate
+            for suffix in (".csi", ".tbi", ".gzi", ".fai")
+            if (candidate := Path(str(primary) + suffix)).is_file()
+        ),
+    ]
+
+
 def _run_bcftools_command(
     command: list[str],
     *,
@@ -869,7 +882,7 @@ def split_multiallelic_vcf(
         workflow_id=workflow_id,
         operation="split_multiallelic",
         workspace=output_path.parent,
-        input_paths=[input_path],
+        input_paths=_htslib_input_paths(input_path),
         output_paths=[output_path],
         timeout_seconds=300,
     )
@@ -1756,7 +1769,7 @@ def normalize_vcf_with_bcftools(
             completed = _run_bcftools_command(
                 normalize_command, persistent_execution=persistent_execution,
                 workflow_id=workflow_id, operation="normalize", workspace=work,
-                input_paths=[provenance_input, reference_fasta],
+                input_paths=[provenance_input, *_htslib_input_paths(reference_fasta)],
                 output_paths=[normalized_path], timeout_seconds=timeout,
             )
         except subprocess.TimeoutExpired as exc:
