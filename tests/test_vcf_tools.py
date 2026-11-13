@@ -1356,10 +1356,10 @@ def test_normalization_uses_selected_executable_and_rejects_htslib_drift(tmp_pat
 
 def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path, monkeypatch, qualified_test_execution_factory):
     executable = tmp_path / "bcftools"
-    executable.write_text("#!/bin/sh\\necho 'bcftools 1.25'\\n", encoding="utf-8")
+    executable.write_text("#!/bin/sh\necho 'bcftools 1.25'\n", encoding="utf-8")
     executable.chmod(0o755)
     input_path = tmp_path / "input.vcf"
-    input_path.write_text("##fileformat=VCFv4.2\\n", encoding="utf-8")
+    input_path.write_text("##fileformat=VCFv4.2\n", encoding="utf-8")
     output_path = tmp_path / "output.vcf.gz"
     calls = []
 
