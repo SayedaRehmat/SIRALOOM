@@ -194,18 +194,25 @@ class LinuxContainerToolExecutor:
             "--mount", f"type=bind,src={workspace},dst=/workspace",
         ]
         argv = list(request.argv)
-        input_mount_names: set[str] = set()
+        input_mount_targets: set[str] = set()
         for item in request.inputs:
             host = Path(item.path).resolve(strict=True)
+            if not host.is_file():
+                raise ToolExecutionContractError("Container input artifacts must be regular files.")
             if host.is_relative_to(workspace):
-                raise ToolExecutionContractError(
-                    "Inputs inside the writable workspace cannot be guaranteed read-only; stage them outside the workspace."
-                )
-            name = self._safe_mount_name(item.name)
-            if name in input_mount_names:
-                raise ToolExecutionContractError("Input names collide after safe mount-name normalization.")
-            input_mount_names.add(name)
-            target = f"/inputs/{name}"
+                relative = host.relative_to(workspace)
+                if not relative.parts:
+                    raise ToolExecutionContractError("A container input cannot be the workspace directory.")
+                # Overlay a read-only file bind mount at its original workspace
+                # path. The workspace remains writable for outputs, but the
+                # exact input bytes are not writable through that mount.
+                target = "/workspace/" + relative.as_posix()
+            else:
+                name = self._safe_mount_name(item.name)
+                target = f"/inputs/{name}"
+            if target in input_mount_targets:
+                raise ToolExecutionContractError("Input mount targets collide after path normalization.")
+            input_mount_targets.add(target)
             mounts.extend(["--mount", f"type=bind,src={host},dst={target},readonly"])
             argv = [arg.replace(item.path, target) for arg in argv]
         resource_mount_names: set[str] = set()
