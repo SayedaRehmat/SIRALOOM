@@ -732,32 +732,36 @@ def _run_bcftools_command(
         InputArtifact, OutputArtifact, ToolExecutionRequest, ToolIdentity,
         current_platform_id, sha256_file,
     )
+    from backend.app.domain.execution_environments import execution_environment_profile_from_snapshot
     from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
 
-    executable = Path(shutil.which(command[0]) or command[0]).resolve(strict=True)
-    environment = persistent_execution.db.get(
+    registration = persistent_execution.db.get(
         ExecutionEnvironmentRegistration, persistent_execution.environment_registration_id
     )
-    if environment is None:
+    if registration is None:
         raise VCFToolError("Persistent BCFtools execution environment registration is missing.")
+    environment = execution_environment_profile_from_snapshot(registration.profile_json)
+    executable = str(settings.bcftools_executable)
+    if not Path(executable).is_absolute():
+        raise VCFToolError("The registered BCFtools executable must be an absolute in-image path.")
+    approved_digest = dict(environment.tool_executable_sha256).get(settings.bcftools_profile_id)
+    if not approved_digest:
+        raise VCFToolError("The qualified environment has no executable digest for the configured BCFtools profile.")
     profile = ToolIdentity(
         tool_id="bcftools",
         version=settings.bcftools_version,
         profile_id=settings.bcftools_profile_id,
-        executable=str(executable),
-        executable_sha256=sha256_file(executable),
-        platform=current_platform_id(),
+        executable=executable,
+        executable_sha256=approved_digest,
+        platform=environment.platform,
         qualification_status="SOFTWARE_QUALIFIED",
         version_args=("--version",),
         version_output_contains=(
-            f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}"
+            f"bcftools {settings.bcftools_version}\\nUsing htslib {settings.htslib_version}"
         ),
         supported_operations=("validate", "normalize", "sort", "index", "convert", "split_multiallelic"),
-        runtime_image_digest=environment.profile_json.get("runtime_image_digest"),
-        runtime_path=tuple(
-            item for item in dict.fromkeys((str(executable.parent), "/usr/bin", "/bin"))
-            if Path(item).is_dir()
-        ),
+        runtime_image_digest=environment.runtime_image_digest,
+        runtime_path=("/opt/conda/bin", "/usr/bin", "/bin"),
     )
     inputs = tuple(
         InputArtifact(
