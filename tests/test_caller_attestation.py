@@ -152,3 +152,48 @@ def test_header_release_conflict_rejects_signed_manifest(tmp_path, monkeypatch) 
             artifact_sha256=digest, expected_reference_build="GRCh38",
         )
     assert error.value.code == "VCF_CALLER_ATTESTATION_RELEASE_CONFLICT"
+
+
+
+def test_signed_manifest_for_other_dragen_release_does_not_authorize_42_gp_semantics(tmp_path, monkeypatch) -> None:
+    organization_id = uuid4()
+    path = tmp_path / "dragen.vcf"
+    digest = _write_dragen_vcf(path)
+    envelope = _signed_envelope(path, organization_id, monkeypatch, caller_release="4.3.0")
+
+    with pytest.raises(StrictVCFValidationError) as error:
+        validate_vcf_strict(
+            path,
+            caller_attestation=envelope,
+            organization_id=organization_id,
+            artifact_sha256=digest,
+            expected_reference_build="GRCh38",
+        )
+    assert error.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_untrusted_signer_and_post_signing_artifact_mutation_are_rejected(tmp_path, monkeypatch) -> None:
+    organization_id = uuid4()
+    path = tmp_path / "dragen.vcf"
+    digest = _write_dragen_vcf(path)
+    envelope = _signed_envelope(path, organization_id, monkeypatch)
+    monkeypatch.setattr(
+        "backend.app.domain.caller_attestation.settings.caller_attestation_hmac_keys_json",
+        json.dumps({str(organization_id): {"different-key-id": "c" * 64}}),
+    )
+
+    with pytest.raises(StrictVCFValidationError) as signer_error:
+        validate_vcf_strict(
+            path, caller_attestation=envelope, organization_id=organization_id,
+            artifact_sha256=digest, expected_reference_build="GRCh38",
+        )
+    assert signer_error.value.code == "CALLER_ATTESTATION_SIGNER_UNTRUSTED"
+
+    envelope = _signed_envelope(path, organization_id, monkeypatch)
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    with pytest.raises(StrictVCFValidationError) as digest_error:
+        validate_vcf_strict(
+            path, caller_attestation=envelope, organization_id=organization_id,
+            artifact_sha256=digest, expected_reference_build="GRCh38",
+        )
+    assert digest_error.value.code == "CALLER_ATTESTATION_ARTIFACT_DIGEST_MISMATCH"
