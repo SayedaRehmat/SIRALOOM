@@ -2419,7 +2419,13 @@ def validate_vcf_strict(
         sample_records_without_gt=sample_records_without_gt,
     )
     if caller_semantic_attestation is not None:
-        caller_provenance["caller_semantic_compatibility_status"] = "CALLER_SPEC_SEMANTIC_DEVIATION"
+        prior_semantic_status = caller_provenance.get("caller_semantic_compatibility_status")
+        if prior_semantic_status not in {
+            "CONFLICTED_CALLER_METADATA",
+            "MISSING_REQUIRED_FORMAT_FIELD",
+            "DECLARATION_MISMATCH",
+        }:
+            caller_provenance["caller_semantic_compatibility_status"] = "CALLER_SPEC_SEMANTIC_DEVIATION"
         caller_provenance["caller_semantic_compatibility_review_required"] = True
         caller_provenance["dragen_gp_phred_semantics_applicable"] = True
         caller_provenance["field_semantic_deviations"] = [
