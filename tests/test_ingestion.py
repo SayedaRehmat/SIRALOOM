@@ -546,7 +546,7 @@ def test_vcfgz_validation_reads_real_content(tmp_path: Path, monkeypatch):
 def test_vcfbgz_validation_parses_compressed_records(tmp_path: Path, monkeypatch):
     import backend.app.domain.ingestion as ingestion
 
-    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version))
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path, **_kwargs: (None, f"bcftools {settings.bcftools_version}", settings.htslib_version))
     path = tmp_path / "sample.vcf.bgz"
     _write_bgzf(path, VALID_VCF.encode("utf-8"))
     result = validate_vcf(path)
