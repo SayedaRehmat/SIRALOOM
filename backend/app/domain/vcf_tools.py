@@ -1629,9 +1629,12 @@ def normalize_vcf_with_bcftools(
     bcftools_executable = bcftools_executable or settings.bcftools_executable
     expected_bcftools_version = expected_bcftools_version or settings.bcftools_version
     expected_htslib_version = settings.htslib_version
-    executable_available = Path(bcftools_executable).is_file() or shutil.which(bcftools_executable) is not None
-    if not executable_available:
-        raise VCFToolError("bcftools is required for SIRALOOM reference-aware VCF normalization.")
+    # BCFtools is resolved and byte-attested inside the qualified OCI image.
+    # The API/worker host is intentionally not required to contain that binary.
+    if not bcftools_executable or not Path(bcftools_executable).is_absolute():
+        raise VCFToolError(
+            "The qualified BCFtools profile must declare an absolute in-image executable path."
+        )
     input_path = Path(input_path)
     output_path = Path(output_path)
     reference_fasta = Path(reference_fasta)
