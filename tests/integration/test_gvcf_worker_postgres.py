@@ -95,7 +95,7 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
                 status="ACTIVE",
             ))
             db.flush()
-            db.add(Case(
+            case = Case(
                 id=case_id,
                 organization_id=organization_id,
                 case_identifier=f"GVCF-{analysis_id}",
@@ -103,7 +103,15 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
                 clinical_context={},
                 language="en",
                 created_by=user_id,
-            ))
+            )
+            db.add(case)
+            db.flush()
+            import sys
+            integration_dir = str(Path(__file__).resolve().parent)
+            if integration_dir not in sys.path:
+                sys.path.insert(0, integration_dir)
+            from execution_environment_fixtures import assign_qualified_container_environment
+            assign_qualified_container_environment(db, case, created_by=user_id)
             db.flush()
             db.add(OrganizationStorageProfile(
                 id=uuid4(),
