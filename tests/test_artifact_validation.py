@@ -133,7 +133,7 @@ def test_worker_tool_unavailability_does_not_classify_vcf_as_invalid(
 ):
     from backend.app.domain.ingestion import VCFValidationUnavailable
 
-    def unavailable(_path):
+    def unavailable(_path, **_kwargs):
         raise VCFValidationUnavailable("temporary BCFtools outage")
 
     monkeypatch.setattr(validation, "validate_vcf", unavailable)
