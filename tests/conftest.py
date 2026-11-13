@@ -91,6 +91,11 @@ class _TestPersistentExecution:
 
     def execute(self, profile, request, *, artifact_publisher=None):
         executable = str(profile.executable)
+        # Unit tests may describe the executable by its immutable in-image
+        # path while the injected local test runner substitutes the pinned
+        # host binary. Production never uses this harness.
+        if not Path(executable).is_file():
+            executable = shutil.which("bcftools") or executable
         argv = [executable, *list(request.argv)]
         environment = dict(os.environ)
         environment.update(dict(getattr(request, "environment", {}) or {}))
@@ -175,6 +180,7 @@ def _inject_explicit_local_execution_for_scientific_unit_tests(monkeypatch, requ
         "normalize_vcf_with_bcftools",
         "split_multiallelic_vcf",
         "validate_vcf_index_concordance",
+        "_validate_vcf_index_record_counts",
     ):
         if hasattr(vcf_tools, name):
             monkeypatch.setattr(vcf_tools, name, inject(getattr(vcf_tools, name)))
