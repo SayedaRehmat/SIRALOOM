@@ -129,7 +129,6 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
                 worker_id=f"artifact-validation:{artifact.id}",
             )
         except ExecutionEnvironmentAssignmentError as exc:
-            from backend.app.domain.ingestion import VCFValidationUnavailable
             raise VCFValidationUnavailable(str(exc)) from exc
 
         metadata = dict(artifact.metadata_json or {})
