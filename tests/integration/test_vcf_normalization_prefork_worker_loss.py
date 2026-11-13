@@ -113,7 +113,7 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
             ))
             db.commit()
         with Session(engine) as db:
-            db.add(Case(
+            case = Case(
                 id=case_id,
                 organization_id=organization_id,
                 case_identifier=f"VCF-WORKER-LOSS-{analysis_id}",
@@ -121,7 +121,14 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
                 clinical_context={},
                 language="en",
                 created_by=user_id,
-            ))
+            )
+            db.add(case)
+            db.flush()
+            integration_dir = str(Path(__file__).resolve().parent)
+            if integration_dir not in sys.path:
+                sys.path.insert(0, integration_dir)
+            from execution_environment_fixtures import assign_qualified_container_environment
+            assign_qualified_container_environment(db, case, created_by=user_id)
             db.commit()
         with Session(engine) as db:
             db.add(Analysis(
