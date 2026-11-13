@@ -1328,6 +1328,8 @@ def test_normalization_uses_selected_executable_and_rejects_htslib_drift(tmp_pat
     selected = tmp_path / "toolchains" / "bcftools-1.25" / "bin" / "bcftools"
     selected.parent.mkdir(parents=True)
     selected.write_text("#!/bin/sh\n", encoding="utf-8")
+    from backend.app.config import settings
+    monkeypatch.setattr(settings, "bcftools_executable", str(selected))
     commands = []
 
     def run(command, **kwargs):
@@ -1352,7 +1354,7 @@ def test_normalization_uses_selected_executable_and_rejects_htslib_drift(tmp_pat
     assert commands == [[str(selected), "--version"]]
 
 
-def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path):
+def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path, monkeypatch):
     executable = tmp_path / "bcftools"
     executable.write_text("#!/bin/sh\\necho 'bcftools 1.25'\\n", encoding="utf-8")
     executable.chmod(0o755)
@@ -1361,25 +1363,24 @@ def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path):
     output_path = tmp_path / "output.vcf.gz"
     calls = []
 
-    class FakePersistentExecution:
-        organization_id = uuid4()
-        analysis_id = uuid4()
-        environment_registration_id = uuid4()
-        db = SimpleNamespace(get=lambda _model, _identifier: SimpleNamespace(
-            profile_json={"runtime_image_digest": None}
+    from backend.app.config import settings
+    from conftest import _TestPersistentExecution
+
+    monkeypatch.setattr(settings, "bcftools_executable", str(executable))
+    execution = _TestPersistentExecution()
+
+    def capture_execute(profile, request, *, artifact_publisher=None):
+        calls.append((profile, request))
+        return SimpleNamespace(result=SimpleNamespace(
+            provenance=SimpleNamespace(exit_code=0),
+            stdout="",
+            stderr="",
         ))
 
-        def execute(self, profile, request):
-            calls.append((profile, request))
-            return SimpleNamespace(result=SimpleNamespace(
-                provenance=SimpleNamespace(exit_code=0),
-                stdout="",
-                stderr="",
-            ))
-
+    execution.execute = capture_execute
     completed = _run_bcftools_command(
         [str(executable), "norm", "--no-version", "-o", str(output_path), str(input_path)],
-        persistent_execution=FakePersistentExecution(),
+        persistent_execution=execution,
         workflow_id="normalize",
         operation="normalize",
         workspace=tmp_path,
@@ -1393,6 +1394,7 @@ def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path):
     profile, request = calls[0]
     assert profile.tool_id == "bcftools"
     assert profile.profile_id == settings.bcftools_profile_id
+    assert profile.executable == str(executable)
     assert profile.executable_sha256 == hashlib.sha256(executable.read_bytes()).hexdigest()
     assert request.workflow_id == "normalize"
     assert request.operation == "normalize"
