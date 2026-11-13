@@ -171,6 +171,10 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
             db.query(User).filter(User.id == user_id).delete(
                 synchronize_session=False
             )
+            from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
+            db.query(ExecutionEnvironmentRegistration).filter(
+                ExecutionEnvironmentRegistration.organization_id == organization_id
+            ).delete(synchronize_session=False)
             db.query(Organization).filter(
                 Organization.id == organization_id
             ).delete(synchronize_session=False)
