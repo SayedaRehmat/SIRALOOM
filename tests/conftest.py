@@ -142,6 +142,12 @@ def client():
     return TestClient(app)
 
 
+@pytest.fixture
+def qualified_test_execution_factory():
+    """Factory for unit tests that need a fully populated fake environment."""
+    return _TestPersistentExecution
+
+
 @pytest.fixture(autouse=True)
 def _inject_explicit_local_execution_for_scientific_unit_tests(monkeypatch, request):
     """Inject a test executor only into unit tests that intentionally run local tools."""
