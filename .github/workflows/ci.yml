@@ -200,7 +200,7 @@ jobs:
           digest="$(curl -fsSI \
             -H 'Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json' \
             http://localhost:5000/v2/siraloom/backend/manifests/ci \
-            | awk 'BEGIN{IGNORECASE=1} /^Docker-Content-Digest:/ {gsub("\\r","",$2); print $2}')"
+            | sed -n 's/^[Dd]ocker-[Cc]ontent-[Dd]igest: //p' | tr -d '\\r')"
           test -n "$digest"
           image="localhost:5000/siraloom/backend@$digest"
           docker pull "$image"
