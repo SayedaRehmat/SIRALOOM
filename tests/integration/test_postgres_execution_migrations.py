@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import os
 from pathlib import Path
 from uuid import uuid4
 
@@ -30,6 +31,7 @@ def test_postgres_upgrade_from_supported_0070_database_preserves_rows_and_guards
     target_url = source_url.set(database=database_name)
     target_engine = None
     database_created = False
+    original_database_url = os.environ.get("DATABASE_URL")
     try:
         with admin_engine.connect() as connection:
             connection.execute(text(f'CREATE DATABASE "{database_name}"'))
@@ -37,6 +39,11 @@ def test_postgres_upgrade_from_supported_0070_database_preserves_rows_and_guards
         target_engine = create_engine(target_url)
         cfg = Config(str(Path(__file__).parents[2] / "alembic.ini"))
         cfg.set_main_option("sqlalchemy.url", str(target_url).replace("%", "%%"))
+        # migrations/env.py deliberately gives DATABASE_URL precedence over
+        # sqlalchemy.url. Point that variable at the isolated database too;
+        # otherwise the upgrade mutates the shared CI database while this
+        # test inserts fixture rows into an empty temporary database.
+        os.environ["DATABASE_URL"] = str(target_url)
 
         # Construct a populated supported prior-release (0070) database.
         command.upgrade(cfg, "0070_resource_release_artifacts")
@@ -185,6 +192,10 @@ def test_postgres_upgrade_from_supported_0070_database_preserves_rows_and_guards
             "DELETE FROM tool_execution_records WHERE execution_id='legacy-postgres-execution'"
         ))
     finally:
+        if original_database_url is None:
+            os.environ.pop("DATABASE_URL", None)
+        else:
+            os.environ["DATABASE_URL"] = original_database_url
         if target_engine is not None:
             target_engine.dispose()
         if database_created:
