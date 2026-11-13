@@ -57,7 +57,7 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
 
     barrier = Barrier(2)
 
-    def controlled_validate(path: str | Path) -> ValidationResult:
+    def controlled_validate(path: str | Path, **_kwargs) -> ValidationResult:
         barrier.wait(timeout=20)
         if Path(path).name == "valid.vcf":
             return ValidationResult(
