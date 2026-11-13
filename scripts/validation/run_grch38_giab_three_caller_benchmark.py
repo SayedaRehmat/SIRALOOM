@@ -261,6 +261,8 @@ def download_giab(root: Path, smoke):
         }
     if not result["truth_vcf"]["bytes"] or not result["high_confidence_bed"]["bytes"]:
         raise RuntimeError("GIAB truth VCF or high-confidence BED is empty")
+    run(["gzip", "-t", result["truth_vcf"]["path"]])
+    run(["bcftools", "index", "-n", result["truth_vcf"]["path"]])
     return result
 
 
@@ -363,7 +365,8 @@ def run_reference_pipeline(callset: dict[str, Any], fasta: Path, lengths: dict[s
         sequence_path, normalized, reference_fasta=fasta,
         expected_bcftools_version="1.25", timeout_seconds=7200,
     )
-    normalized_strict = smoke.validate_vcf_strict(normalized, caller_attestation=None)
+    normalized_attestation = smoke.dragen_gp_attestation(callset, normalized) if caller == "DRAGEN" else None
+    normalized_strict = smoke.validate_vcf_strict(normalized, caller_attestation=normalized_attestation)
     if not Path(str(normalized) + ".csi").exists() and not Path(str(normalized) + ".tbi").exists():
         raise RuntimeError(f"{caller}: normalized full-reference output has no index")
     return {
@@ -527,6 +530,22 @@ def main() -> int:
         report["failures"].append(f"Qualification harness: {type(error).__name__}: {error}")
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if report.get("reference"):
+        (args.report.parent / "reference-manifest.json").write_text(
+            json.dumps(report["reference"], indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    dataset_manifest = {
+        "giab": report.get("giab", {}),
+        "stratifications": report.get("stratifications", {}),
+        "callsets": [
+            {"caller": name, **value.get("source", {})}
+            for name, value in report.get("callers", {}).items()
+        ],
+        "tool_versions": report.get("tool_versions", {}),
+    }
+    (args.report.parent / "dataset-manifest.json").write_text(
+        json.dumps(dataset_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["overall"] == "PASS" else 1
 
