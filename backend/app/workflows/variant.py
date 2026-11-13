@@ -1461,7 +1461,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if validation_step.status != StepStatus.SUCCEEDED:
             mark_step(db, validation_step, StepStatus.RUNNING)
             try:
-                profile = validate_vcf_strict(str(input_path))
+                input_metadata = input_artifact.metadata_json or {}
+                ingestion_metadata = input_metadata.get("ingestion") or {}
+                artifact_case = db.get(Case, analysis.case_id)
+                if artifact_case is None:
+                    raise RuntimeError("Analysis input artifact case is unavailable for caller provenance verification.")
+                profile = validate_vcf_strict(
+                    str(input_path),
+                    caller_attestation=ingestion_metadata.get("caller_attestation"),
+                    organization_id=artifact_case.organization_id,
+                    artifact_sha256=input_artifact.sha256,
+                )
                 validation_step.input_artifacts = [str(input_artifact.id)]
                 validation_step.output_artifacts = [str(input_artifact.id)]
                 validation_status = "PASS_WITH_WARNINGS" if profile.get("warning_codes") else "PASS"
