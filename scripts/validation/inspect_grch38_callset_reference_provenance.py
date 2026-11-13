@@ -27,6 +27,7 @@ ZENODO_RECORDS = {
 REFERENCE_PROVENANCE = {
     "GATK_HAPLOTYPECALLER": {
         "source": "Published BWA-MEM workflow; read-group platform-unit contains HG002_38_nodecoy",
+        "source_publication_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12022141/",
         "reference_label": "GRCh38 / nodecoy (publication metadata)",
         "reference_fasta_path_reported": None,
         "package_manifest_url": None,
@@ -37,6 +38,7 @@ REFERENCE_PROVENANCE = {
     },
     "DEEPVARIANT": {
         "source": "Published BWA-MEM workflow; command reports --ref=/mnt/reference/hg38.fa",
+        "source_publication_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12022141/",
         "reference_label": "hg38.fa (publication command)",
         "reference_fasta_path_reported": "/mnt/reference/hg38.fa",
         "package_manifest_url": None,
@@ -46,7 +48,8 @@ REFERENCE_PROVENANCE = {
         "limitation": "The command identifies a filename/path but does not publish its source URL, bytes, checksum, or sequence dictionary.",
     },
     "DRAGEN": {
-        "source": "DRAGEN 4.2 reference directory reported by the study",
+        "source": "DRAGEN 4.2 reference directory reported by the study; study describes multigenome mapping with GRCh38 plus 64 haplotypes and a specialized HLA caller",
+        "source_publication_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12022141/",
         "reference_label": "hg38-alt_masked.graph.cnv.hla.rna_v3",
         "reference_fasta_path_reported": None,
         "package_manifest_url": "https://support.illumina.com/downloads/dragen-reference-genomes-hg38.html",
@@ -171,7 +174,7 @@ def scan_variant_counts(vcf: Path) -> dict[str, dict[str, int]]:
 
 def representative_records(vcf: Path, contig: str, limit: int = 5) -> list[str]:
     process = subprocess.Popen(
-        ["bcftools", "view", "-H", "-r", contig, str(vcf)],
+        ["bcftools", "view", "-H", "-i", f'CHROM="{contig}"', str(vcf)],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
     assert process.stdout is not None
