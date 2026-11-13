@@ -270,8 +270,6 @@ def test_bcftools_validation_failure_is_not_misclassified_as_invalid_vcf(
 
     path = tmp_path / "sample.vcf"
     path.write_text(VALID_VCF, encoding="utf-8")
-    monkeypatch.setattr(ingestion.shutil, "which", lambda _name: "/usr/bin/bcftools")
-
     def fail_to_run(*_args, **_kwargs):
         if failure == "timeout":
             raise ingestion.subprocess.TimeoutExpired("bcftools", 120)
@@ -279,21 +277,27 @@ def test_bcftools_validation_failure_is_not_misclassified_as_invalid_vcf(
 
     monkeypatch.setattr(ingestion.subprocess, "run", fail_to_run)
 
-    with pytest.raises(ingestion.VCFValidationUnavailable, match="bcftools/htslib"):
+    with pytest.raises(ingestion.VCFValidationUnavailable, match="BCFtools/HTSlib"):
         ingestion.validate_vcf(path)
 
 
-def test_vcf_intake_fails_retryably_when_bcftools_is_not_installed(
+def test_vcf_intake_uses_in_image_executable_without_host_path_dependency(
     tmp_path: Path, monkeypatch
 ):
     import backend.app.domain.ingestion as ingestion
 
     path = tmp_path / "sample.vcf"
     path.write_text(VALID_VCF, encoding="utf-8")
-    monkeypatch.setattr(ingestion.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(
+        ingestion.settings,
+        "bcftools_executable",
+        "/opt/conda/bin/bcftools",
+    )
 
-    with pytest.raises(ingestion.VCFValidationUnavailable, match="executable was not found"):
-        ingestion.validate_vcf(path)
+    result = ingestion.validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.metadata["bcftools_version"] == f"bcftools {settings.bcftools_version}"
 
 
 def test_vcf_validation_excludes_reference_only_rows_and_reports_count(tmp_path: Path):
@@ -531,7 +535,7 @@ def test_vcf_record_parser_does_not_silently_strip_a_bom(tmp_path: Path):
 def test_vcfgz_validation_reads_real_content(tmp_path: Path, monkeypatch):
     import backend.app.domain.ingestion as ingestion
 
-    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version))
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path, **_kwargs: (None, f"bcftools {settings.bcftools_version}", settings.htslib_version))
     path = tmp_path / "sample.vcf.gz"
     _write_bgzf(path, VALID_VCF.encode("utf-8"))
     result = validate_vcf(path)
@@ -542,7 +546,7 @@ def test_vcfgz_validation_reads_real_content(tmp_path: Path, monkeypatch):
 def test_vcfbgz_validation_parses_compressed_records(tmp_path: Path, monkeypatch):
     import backend.app.domain.ingestion as ingestion
 
-    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version))
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path, **_kwargs: (None, f"bcftools {settings.bcftools_version}", settings.htslib_version))
     path = tmp_path / "sample.vcf.bgz"
     _write_bgzf(path, VALID_VCF.encode("utf-8"))
     result = validate_vcf(path)
@@ -571,7 +575,7 @@ def test_bgzf_validator_checks_every_concatenated_block(tmp_path: Path, monkeypa
     monkeypatch.setattr(
         ingestion,
         "_bcftools_validate",
-        lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version),
+        lambda _path, **_kwargs: (None, f"bcftools {settings.bcftools_version}", settings.htslib_version),
     )
     path = tmp_path / "multi-block.vcf.gz"
     content = VALID_VCF.encode("utf-8")
@@ -621,7 +625,7 @@ def test_bgzf_without_terminal_empty_block_is_accepted_with_warning(tmp_path: Pa
     monkeypatch.setattr(
         ingestion,
         "_bcftools_validate",
-        lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version),
+        lambda _path, **_kwargs: (None, f"bcftools {settings.bcftools_version}", settings.htslib_version),
     )
     path = tmp_path / "bgzf-without-eof.vcf.gz"
     _write_bgzf(path, VALID_VCF.encode("utf-8"))
@@ -983,17 +987,16 @@ def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch
 
     path = tmp_path / "sample.vcf"
     path.write_text(VALID_VCF, encoding="utf-8")
-    selected = f"/opt/siraloom/toolchains/{settings.bcftools_profile_id}/bin/bcftools"
-    resolved = []
+    selected_path = tmp_path / "toolchains" / settings.bcftools_profile_id / "bin" / "bcftools"
+    selected_path.parent.mkdir(parents=True)
+    selected_path.write_text("#!/bin/sh\n", encoding="utf-8")
+    selected_path.chmod(0o755)
+    selected = str(selected_path)
+    commands = []
     monkeypatch.setattr(ingestion.settings, "bcftools_executable", selected)
-    monkeypatch.setattr(
-        ingestion.shutil,
-        "which",
-        lambda name: resolved.append(name) or selected,
-    )
 
     def run(command, **kwargs):
-        assert command[0] == selected
+        commands.append(command)
         if command[1] == "--version":
             return subprocess.CompletedProcess(command, 0, f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
@@ -1002,5 +1005,5 @@ def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch
     result = ingestion.validate_vcf(path)
 
     assert result.status == "VALID"
-    assert resolved == [selected]
+    assert commands[0][0] == selected
     assert result.metadata["bcftools_profile_id"] == settings.bcftools_profile_id

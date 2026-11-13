@@ -2,6 +2,8 @@ import hashlib
 import json
 import shutil
 import subprocess
+from types import SimpleNamespace
+from uuid import uuid4
 from pathlib import Path
 
 import pytest
@@ -13,6 +15,7 @@ from backend.app.domain.vcf_tools import (
     VCFToolError,
     classify_records,
     normalize_vcf_with_bcftools,
+    _run_bcftools_command,
 )
 
 
@@ -771,6 +774,8 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
             "2\t4\t.\tG\tA\t.\tPASS\t.\n"
         )
 
+    Path(str(staged_vcf) + ".csi").write_bytes(b"fixture-index")
+
     records = [
         "1\t1\t.\tA\tG\t.\tPASS\t.\n",
         "1\t2\t.\tC\tT\t.\tPASS\t.\n",
@@ -785,12 +790,12 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
         assert command[1] == "view"
         contig = command[command.index("--regions") + 1]
         selected = [line for line in records if line.startswith(contig + "\t")]
-        kwargs["stdout"].write("".join(selected).encode("utf-8"))
+        Path(command[command.index("-o") + 1]).write_text("".join(selected), encoding="utf-8")
         return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
 
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
     result = vcf_tools._validate_vcf_index_record_counts(
-        staged_vcf, bcftools_executable="bcftools", timeout_seconds=30
+        staged_vcf, bcftools_executable=settings.bcftools_executable, timeout_seconds=30
     )
 
     assert result == {
@@ -817,6 +822,8 @@ def test_csi_index_record_counts_reject_mismatch_with_sequential_bgzf_scan(
             "1\t2\t.\tC\tT\t.\tPASS\t.\n"
         )
 
+    Path(str(staged_vcf) + ".csi").write_bytes(b"fixture-index")
+
     def fake_run(command, **kwargs):
         return subprocess.CompletedProcess(
             command, 0, stdout="1\t7\t1\n", stderr=""
@@ -825,7 +832,7 @@ def test_csi_index_record_counts_reject_mismatch_with_sequential_bgzf_scan(
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
     with pytest.raises(VCFToolError, match="record counts disagree by contig"):
         vcf_tools._validate_vcf_index_record_counts(
-            staged_vcf, bcftools_executable="bcftools", timeout_seconds=30
+            staged_vcf, bcftools_executable=settings.bcftools_executable, timeout_seconds=30
         )
 
 
@@ -848,18 +855,20 @@ def test_csi_index_validation_compares_indexed_record_streams_with_sequential_bg
         handle.write("##fileformat=VCFv4.3\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
         handle.writelines(records)
 
+    Path(str(vcf) + ".csi").write_bytes(b"fixture-index")
+
     def fake_run(command, **kwargs):
         if command[1:3] == ["index", "--stats"]:
             return subprocess.CompletedProcess(command, 0, stdout="1\t100\t2\n2\t100\t1\n", stderr="")
         assert command[1] == "view"
         contig = command[command.index("--regions") + 1]
         selected = [line for line in records if line.startswith(contig + "\t")]
-        kwargs["stdout"].write("".join(selected).encode("utf-8"))
+        Path(command[command.index("-o") + 1]).write_text("".join(selected), encoding="utf-8")
         return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     result = _validate_vcf_index_record_counts(
-        vcf, bcftools_executable="bcftools", timeout_seconds=10
+        vcf, bcftools_executable=settings.bcftools_executable, timeout_seconds=10
     )
     assert result["method"] == "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN"
     assert result["records"] == 3
@@ -883,16 +892,18 @@ def test_csi_index_validation_rejects_same_count_but_different_indexed_records(
         handle.write("##fileformat=VCFv4.3\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
         handle.write(sequential_record)
 
+    Path(str(vcf) + ".csi").write_bytes(b"fixture-index")
+
     def fake_run(command, **kwargs):
         if command[1:3] == ["index", "--stats"]:
             return subprocess.CompletedProcess(command, 0, stdout="1\t100\t1\n", stderr="")
-        kwargs["stdout"].write(indexed_record.encode("utf-8"))
+        Path(command[command.index("-o") + 1]).write_text(indexed_record, encoding="utf-8")
         return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     with pytest.raises(VCFToolError, match="records disagree with the sequential VCF stream"):
         _validate_vcf_index_record_counts(
-            vcf, bcftools_executable="bcftools", timeout_seconds=10
+            vcf, bcftools_executable=settings.bcftools_executable, timeout_seconds=10
         )
 
 
@@ -1325,6 +1336,8 @@ def test_normalization_uses_selected_executable_and_rejects_htslib_drift(tmp_pat
     selected = tmp_path / "toolchains" / "bcftools-1.25" / "bin" / "bcftools"
     selected.parent.mkdir(parents=True)
     selected.write_text("#!/bin/sh\n", encoding="utf-8")
+    from backend.app.config import settings
+    monkeypatch.setattr(settings, "bcftools_executable", str(selected))
     commands = []
 
     def run(command, **kwargs):
@@ -1347,3 +1360,68 @@ def test_normalization_uses_selected_executable_and_rejects_htslib_drift(tmp_pat
         )
 
     assert commands == [[str(selected), "--version"]]
+
+
+def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path, monkeypatch, qualified_test_execution_factory):
+    executable = tmp_path / "bcftools"
+    executable.write_text("#!/bin/sh\necho 'bcftools 1.25'\n", encoding="utf-8")
+    executable.chmod(0o755)
+    input_path = tmp_path / "input.vcf"
+    input_path.write_text("##fileformat=VCFv4.2\n", encoding="utf-8")
+    output_path = tmp_path / "output.vcf.gz"
+    calls = []
+
+    from backend.app.config import settings
+    monkeypatch.setattr(settings, "bcftools_executable", str(executable))
+    execution = qualified_test_execution_factory()
+
+    def capture_execute(profile, request, *, artifact_publisher=None):
+        calls.append((profile, request))
+        return SimpleNamespace(result=SimpleNamespace(
+            provenance=SimpleNamespace(exit_code=0),
+            stdout="",
+            stderr="",
+        ))
+
+    execution.execute = capture_execute
+    completed = _run_bcftools_command(
+        [str(executable), "norm", "--no-version", "-o", str(output_path), str(input_path)],
+        persistent_execution=execution,
+        workflow_id="normalize",
+        operation="normalize",
+        workspace=tmp_path,
+        input_paths=[input_path],
+        output_paths=[output_path],
+        timeout_seconds=60,
+    )
+
+    assert completed.returncode == 0
+    assert len(calls) == 1
+    profile, request = calls[0]
+    assert profile.tool_id == "bcftools"
+    assert profile.profile_id == settings.bcftools_profile_id
+    assert profile.executable == str(executable)
+    assert profile.executable_sha256 == hashlib.sha256(executable.read_bytes()).hexdigest()
+    assert request.workflow_id == "normalize"
+    assert request.operation == "normalize"
+    assert request.inputs[0].sha256 == hashlib.sha256(input_path.read_bytes()).hexdigest()
+    assert request.outputs[0].path == str(output_path)
+
+
+def test_normalization_refuses_to_run_without_case_bound_execution(tmp_path: Path):
+    input_vcf = tmp_path / "input.vcf"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t1\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    reference = make_reference(tmp_path)
+
+    with pytest.raises(VCFToolError, match="case-bound qualified execution environment"):
+        normalize_vcf_with_bcftools(
+            input_vcf,
+            tmp_path / "normalized.vcf.gz",
+            reference_fasta=reference,
+            persistent_execution=None,
+        )

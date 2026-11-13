@@ -37,6 +37,7 @@ def test_case_update_locks_row_before_mutating_clinical_metadata(monkeypatch):
         organization_id=organization_id,
         case_identifier="CASE-LOCK-1",
         status="OPEN",
+        execution_environment_registration_id=None,
         language="en",
         clinical_context={"phenotype": ["HP:0001250"]},
         updated_at=None,

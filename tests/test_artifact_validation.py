@@ -90,7 +90,7 @@ def test_worker_validates_persisted_vcf_and_records_site_only_eligibility(
     monkeypatch.setattr(
         validation,
         "validate_vcf",
-        lambda path: (
+        lambda path, **_kwargs: (
             calls.append(Path(path).read_bytes())
             or ValidationResult(
                 status="VALID",
@@ -133,7 +133,7 @@ def test_worker_tool_unavailability_does_not_classify_vcf_as_invalid(
 ):
     from backend.app.domain.ingestion import VCFValidationUnavailable
 
-    def unavailable(_path):
+    def unavailable(_path, **_kwargs):
         raise VCFValidationUnavailable("temporary BCFtools outage")
 
     monkeypatch.setattr(validation, "validate_vcf", unavailable)

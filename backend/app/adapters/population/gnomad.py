@@ -3,9 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import os
-import signal
-import subprocess
 import time
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
@@ -454,162 +451,11 @@ class LocalGnomADTabixProvider:
         return provider
 
     def query_variant(self, variant: CanonicalVariant) -> list[PopulationObservationData]:
-        chrom = variant.chromosome
-        region = f"{chrom}:{variant.position}-{variant.position}"
-        try:
-            proc = subprocess.Popen(
-                ["tabix", self.vcf_path, region],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                start_new_session=True,
-            )
-            try:
-                stdout, stderr = proc.communicate(timeout=30)
-            except subprocess.TimeoutExpired as exc:
-                try:
-                    os.killpg(proc.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                proc.wait()
-                raise GnomADProviderError("tabix timed out and its process group was terminated") from exc
-        except FileNotFoundError as exc:
-            raise GnomADProviderError("tabix executable is not available") from exc
-        if proc.returncode not in (0, 1):
-            raise GnomADProviderError((stderr or "").strip() or f"tabix failed with code {proc.returncode}")
-
-        from datetime import datetime, timezone
-
-        request_metadata = {
-            "provider": self.provider_id,
-            "provider_version": self.provider_version,
-            "resource_location": self.vcf_path,
-            "region": region,
-            "genome_build": variant.genome_build,
-            "execution_scope": self.execution_scope,
-        }
-        request_fingerprint = hashlib.sha256(
-            json.dumps(
-                {
-                    **request_metadata,
-                    "reference": variant.reference,
-                    "alternate": variant.alternate,
-                },
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode("utf-8")
-        ).hexdigest()
-        response_sha256 = hashlib.sha256(stdout.encode("utf-8")).hexdigest()
-        observed_at = datetime.now(timezone.utc).isoformat()
-
-        best: dict[str, Any] | None = None
-        for line in stdout.splitlines():
-            fields = line.split("\t")
-            if len(fields) < 8:
-                raise GnomADProviderError(
-                    "Local gnomAD tabix returned a malformed VCF record with fewer than 8 fixed fields"
-                )
-            record_chrom, pos_s, _vid, ref, alt, _qual, _flt, info_s = fields[:8]
-            try:
-                record_position = int(pos_s)
-            except ValueError as exc:
-                raise GnomADProviderError(
-                    "Local gnomAD tabix returned a VCF record with a non-integer POS"
-                ) from exc
-            if record_position < 0:
-                raise GnomADProviderError(
-                    "Local gnomAD tabix returned a VCF record with a negative POS"
-                )
-            if record_chrom.removeprefix("chr") != variant.chromosome.removeprefix("chr"):
-                continue
-            if record_position != variant.position or ref.upper() != variant.reference.upper():
-                continue
-            alts = alt.split(",")
-            if variant.alternate.upper() not in [a.upper() for a in alts]:
-                continue
-            alt_index = [a.upper() for a in alts].index(variant.alternate.upper())
-            info = _parse_info(info_s)
-            if best is not None:
-                raise GnomADProviderError(
-                    "Local gnomAD tabix returned multiple records matching the same normalized allele"
-                )
-            best = {"info": info, "alt_index": alt_index, "variant_id": f"{record_chrom}:{pos_s}:{ref}:{alt}"}
-
-        if best is None:
-            return [
-                PopulationObservationData(
-                    population_level=level,
-                    population_code=code,
-                    population_label=label,
-                    allele_count=None,
-                    allele_number=None,
-                    allele_frequency=None,
-                    homozygote_count=None,
-                    availability="NOT_FOUND",
-                    quality_status="NO_MATCH",
-                    request_fingerprint=request_fingerprint,
-                    response_sha256=response_sha256,
-                    request_metadata=request_metadata,
-                    observed_at=observed_at,
-                )
-                for level, code, label in (
-                    ("GLOBAL", "GLOBAL", "Global"),
-                    ("ANCESTRY", "MID", "Middle Eastern"),
-                )
-            ]
-
-        observations: list[PopulationObservationData] = []
-        info = best["info"]
-        for code, label in (("GLOBAL", "Global"), ("MID", "Middle Eastern")):
-            suffix = "" if code == "GLOBAL" else "_mid"
-            ac = _array_count(
-                info.get(f"AC{suffix}"),
-                best["alt_index"],
-                field=f"AC{suffix}",
-            )
-            an = _nonnegative_count(info.get(f"AN{suffix}"), field=f"AN{suffix}")
-            af_text = _array_text(info.get(f"AF{suffix}"), best["alt_index"])
-            af = _array_float(info.get(f"AF{suffix}"), best["alt_index"])
-            hom = _array_count(
-                info.get(f"nhomalt{suffix}"),
-                best["alt_index"],
-                field=f"nhomalt{suffix}",
-            )
-            if ac is not None and an is not None and ac > an:
-                raise GnomADProviderError(
-                    f"Local gnomAD {suffix or 'global'} allele count exceeds allele number"
-                )
-            # A source AF is not interpretable without a callable denominator.
-            # Never expose it as a frequency when AN is missing or zero.
-            if not _frequency_available(ac, an):
-                af = None
-            else:
-                if af_text is not None:
-                    _validate_source_af_matches_counts(
-                        af_text, ac=ac, an=an, context=suffix or "global"
-                    )
-                # AC/AN is the exact frequency represented by these same
-                # gnomAD VCF fields. Store that value rather than a rounded AF.
-                af = _af(ac, an)
-            availability = "AVAILABLE" if _frequency_available(ac, an) else "NOT_AVAILABLE"
-            observations.append(
-                PopulationObservationData(
-                    population_level="GLOBAL" if code == "GLOBAL" else "ANCESTRY",
-                    population_code=code,
-                    population_label=label,
-                    allele_count=ac,
-                    allele_number=an,
-                    allele_frequency=af,
-                    homozygote_count=hom,
-                    availability=availability,
-                    source_record_id=best["variant_id"],
-                    request_fingerprint=request_fingerprint,
-                    response_sha256=response_sha256,
-                    request_metadata=request_metadata,
-                    observed_at=observed_at,
-                )
-            )
-        return observations
+        raise GnomADProviderError(
+            "LOCAL_GNOMAD_GOVERNED_EXECUTION_UNAVAILABLE: direct host tabix execution is disabled. "
+            "The indexed VCF and its CSI/TBI sidecar must be routed through a software-qualified "
+            "case-bound OCI tool profile before this provider can be enabled."
+        )
 
 
 def _parse_info(info: str) -> dict[str, str | None]:

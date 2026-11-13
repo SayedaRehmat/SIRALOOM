@@ -51,3 +51,22 @@ def test_successful_graphql_population_observations_preserve_exact_response_byte
         "GLOBAL_GENOMES", "MID_GENOMES",
     }
     assert all(item.raw_response_bytes == raw for item in observations)
+
+
+def test_local_gnomad_tabix_refuses_ungoverned_host_subprocess_execution():
+    provider = gnomad.LocalGnomADTabixProvider("/resources/gnomad.vcf.gz")
+    variant = SimpleNamespace(
+        chromosome="1",
+        position=12345,
+        reference="A",
+        alternate="G",
+        genome_build="GRCh38",
+    )
+
+    import pytest
+
+    with pytest.raises(
+        gnomad.GnomADProviderError,
+        match="LOCAL_GNOMAD_GOVERNED_EXECUTION_UNAVAILABLE",
+    ):
+        provider.query_variant(variant)

@@ -113,7 +113,7 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
             ))
             db.commit()
         with Session(engine) as db:
-            db.add(Case(
+            case = Case(
                 id=case_id,
                 organization_id=organization_id,
                 case_identifier=f"VCF-WORKER-LOSS-{analysis_id}",
@@ -121,7 +121,14 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
                 clinical_context={},
                 language="en",
                 created_by=user_id,
-            ))
+            )
+            db.add(case)
+            db.flush()
+            integration_dir = str(Path(__file__).resolve().parent)
+            if integration_dir not in sys.path:
+                sys.path.insert(0, integration_dir)
+            from execution_environment_fixtures import assign_qualified_container_environment
+            assign_qualified_container_environment(db, case, created_by=user_id)
             db.commit()
         with Session(engine) as db:
             db.add(Analysis(
@@ -280,27 +287,6 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
         if worker_log_handle is not None:
             worker_log_handle.close()
         redis.delete(*marker_keys)
-        with Session(engine) as db:
-            db.query(AuditEvent).filter(
-                AuditEvent.analysis_id == analysis_id
-            ).delete(synchronize_session=False)
-            db.query(WorkflowStep).filter(
-                WorkflowStep.analysis_id == analysis_id
-            ).delete(synchronize_session=False)
-            db.query(Artifact).filter(
-                Artifact.analysis_id == analysis_id
-            ).delete(synchronize_session=False)
-            db.query(Analysis).filter(Analysis.id == analysis_id).delete(
-                synchronize_session=False
-            )
-            db.query(Case).filter(Case.id == case_id).delete(
-                synchronize_session=False
-            )
-            db.query(User).filter(User.id == user_id).delete(
-                synchronize_session=False
-            )
-            db.query(Organization).filter(
-                Organization.id == organization_id
-            ).delete(synchronize_session=False)
-            db.commit()
+        # Execution records are append-only. Preserve the unique case,
+        # registration, analysis and artifact lineage for the durable ledger.
         engine.dispose()

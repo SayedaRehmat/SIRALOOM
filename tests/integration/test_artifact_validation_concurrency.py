@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Barrier
@@ -33,6 +34,7 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
     if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
         pytest.skip("Concurrent artifact validation test requires PostgreSQL")
 
+    import sys
     from backend.app.config import settings
     from backend.app.domain import artifact_validation
 
@@ -57,7 +59,7 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
 
     barrier = Barrier(2)
 
-    def controlled_validate(path: str | Path) -> ValidationResult:
+    def controlled_validate(path: str | Path, **_kwargs) -> ValidationResult:
         barrier.wait(timeout=20)
         if Path(path).name == "valid.vcf":
             return ValidationResult(
@@ -97,7 +99,7 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
                 status="ACTIVE",
             ))
             db.commit()
-            db.add(Case(
+            case = Case(
                 id=case_id,
                 organization_id=organization_id,
                 case_identifier=f"ARTIFACT-CONCURRENCY-{case_id}",
@@ -105,7 +107,14 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
                 clinical_context={},
                 language="en",
                 created_by=user_id,
-            ))
+            )
+            db.add(case)
+            db.flush()
+            integration_dir = str(Path(__file__).resolve().parent)
+            if integration_dir not in sys.path:
+                sys.path.insert(0, integration_dir)
+            from execution_environment_fixtures import assign_qualified_container_environment
+            assign_qualified_container_environment(db, case, created_by=user_id)
             db.commit()
             db.add(Specimen(
                 id=specimen_id,
@@ -163,6 +172,10 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
             db.query(Case).filter(Case.id == case_id).delete(
                 synchronize_session=False
             )
+            from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
+            db.query(ExecutionEnvironmentRegistration).filter(
+                ExecutionEnvironmentRegistration.organization_id == organization_id
+            ).delete(synchronize_session=False)
             db.query(User).filter(User.id == user_id).delete(
                 synchronize_session=False
             )

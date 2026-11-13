@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Literal
+from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
 
@@ -9,6 +10,7 @@ class CaseUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     language: Literal["en", "ar", "bilingual"] | None = None
     clinical_context: dict[str, Any] | None = None
+    execution_environment_registration_id: UUID | None = None
 
 
 class SpecimenCreate(BaseModel):

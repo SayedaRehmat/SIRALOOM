@@ -3,9 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-import os
 import re
-import signal
 import stat
 import subprocess
 import tempfile
@@ -23,6 +21,14 @@ from backend.app.domain.provider_contract import (
 from backend.app.domain.resource_capabilities import ResourceCapability
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.tool_execution import (
+    InputArtifact,
+    OutputArtifact,
+    ScientificResourceBinding,
+    ToolExecutionRequest,
+    ToolIdentity,
+    current_platform_id,
+)
 
 
 class VEPProviderError(RuntimeError):
@@ -62,6 +68,8 @@ class VEPProvider(ScientificResourceProvider):
         self.expected_binary_sha256 = str(toolchain.get("vep_binary_sha256") or "").strip().lower()
         self.extra_args = [str(x) for x in (toolchain.get("extra_args") or [])]
         self._runtime_checks: dict[str, dict[str, Any]] = {}
+        self.persistent_execution_service = None
+        self.persistent_artifact_publisher = None
         self._validate_toolchain()
 
     @classmethod
@@ -137,6 +145,10 @@ class VEPProvider(ScientificResourceProvider):
         build = _canonical_assembly(request.payload.get("genome_build") or self.assembly)
         if not build:
             raise VEPProviderError("VEP execution requires an explicit GRCh37/GRCh38 assembly.")
+        if self.persistent_execution_service is None:
+            raise VEPProviderError(
+                "A case-bound qualified execution environment is required for VEP annotation."
+            )
         with tempfile.TemporaryDirectory(prefix="siraloom-vep-") as tmp:
             input_vcf = Path(tmp) / "input.vcf"
             output_json = Path(tmp) / "output.json"
@@ -179,41 +191,109 @@ class VEPProvider(ScientificResourceProvider):
                 annotation_options.extend(["--hgvs", "--hgvsg"])
             cmd.extend(self.extra_args)
 
-            try:
-                # Start VEP in its own process group so a timeout can terminate
-                # the entire local toolchain, not merely the immediate process.
-                # This prevents an expired workflow lease from leaving a child VEP
-                # process running indefinitely after SIRALOOM has abandoned it.
-                completed = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    start_new_session=True,
+            if self.persistent_execution_service is not None:
+                toolchain = dict(self.contract.toolchain or {})
+                execution_profile_id = str(toolchain.get("execution_profile_id") or "").strip()
+                if not execution_profile_id:
+                    raise VEPProviderError(
+                        "Persistent VEP execution requires an explicit execution_profile_id in the governed toolchain contract."
+                    )
+                from backend.app.domain.tool_execution import sha256_file as tool_sha256_file
+                from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
+                environment_registration = self.persistent_execution_service.db.get(
+                    ExecutionEnvironmentRegistration,
+                    self.persistent_execution_service.environment_registration_id,
+                )
+                if environment_registration is None:
+                    raise VEPProviderError("Persistent VEP execution environment registration is missing.")
+                expected_version = str(toolchain.get("vep_version") or self.contract.provider_version)
+                expected_version_match = _extract_vep_version(expected_version)
+                if not expected_version_match:
+                    raise VEPProviderError("Persistent VEP execution requires a parseable pinned vep_version.")
+                runtime_path = tuple(
+                    item for item in dict.fromkeys((str(Path(self.binary).parent), "/usr/bin", "/bin"))
+                    if Path(item).is_dir()
+                )
+                profile = ToolIdentity(
+                    tool_id="ensembl-vep",
+                    version=expected_version_match,
+                    profile_id=execution_profile_id,
+                    executable=self.binary,
+                    executable_sha256=self.expected_binary_sha256,
+                    platform=current_platform_id(),
+                    qualification_status="SOFTWARE_QUALIFIED",
+                    version_args=("--version",),
+                    version_output_contains=expected_version_match,
+                    supported_operations=("annotate",),
+                    runtime_image_digest=environment_registration.profile_json.get("runtime_image_digest"),
+                    runtime_path=runtime_path,
+                )
+                input_digest = tool_sha256_file(input_vcf)
+                cache_tree_digest = str(
+                    (self._runtime_checks.get(build) or {}).get("cache_tree_sha256") or ""
+                )
+                resource_bindings = (
+                    ScientificResourceBinding(
+                        resource_id=f"ensembl-vep-cache-manifest:{self.species}:{self.cache_version}:{build}",
+                        version=self.cache_version,
+                        sha256=self.cache_manifest_sha256,
+                        assembly=build,
+                        path=self.cache_manifest,
+                    ),
+                )
+                if self.fasta:
+                    resource_bindings += (
+                        ScientificResourceBinding(
+                            resource_id=f"reference-fasta:{build}",
+                            version=build,
+                            sha256=tool_sha256_file(Path(self.fasta)),
+                            assembly=build,
+                            path=self.fasta,
+                        ),
+                    )
+                stable_material = {
+                    "analysis_id": str(self.persistent_execution_service.analysis_id),
+                    "workflow_id": "annotate",
+                    "operation": "annotate",
+                    "provider_version": expected_version_match,
+                    "assembly": build,
+                    "input_sha256": input_digest,
+                    "cache_tree_sha256": cache_tree_digest,
+                    "argv": [
+                        item.replace(str(input_vcf), "$INPUT:vep-input.vcf")
+                        .replace(str(output_json), "$OUTPUT:vep-output.json")
+                        for item in cmd[1:]
+                    ],
+                }
+                execution_id = hashlib.sha256(
+                    json.dumps(stable_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                ).hexdigest()[:32]
+                tool_request = ToolExecutionRequest(
+                    execution_id=execution_id,
+                    organization_id=str(self.persistent_execution_service.organization_id),
+                    workflow_id="annotate",
+                    operation="annotate",
+                    argv=tuple(cmd[1:]),
+                    workspace=tmp,
+                    inputs=(InputArtifact(name="vep-input.vcf", path=str(input_vcf), sha256=input_digest),),
+                    outputs=(OutputArtifact(name="vep-output.json", path=str(output_json)),),
+                    resources=resource_bindings,
+                    timeout_seconds=300,
                 )
                 try:
-                    stdout, stderr = completed.communicate(timeout=300)
-                except subprocess.TimeoutExpired as exc:
-                    try:
-                        os.killpg(completed.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
-                    completed.wait()
-                    raise VEPProviderError("VEP execution timed out and its process group was terminated.", retryable=True) from exc
-            except FileNotFoundError as exc:
-                raise VEPProviderError(
-                    f"VEP executable was not found: {self.binary}",
-                    retryable=False,
-                ) from exc
-            except subprocess.TimeoutExpired as exc:
-                raise VEPProviderError("VEP execution timed out.", retryable=True) from exc
-
-            if completed.returncode != 0:
-                message = (stderr or stdout or "VEP failed").strip()[-4000:]
-                raise VEPProviderError(
-                    f"VEP exited with code {completed.returncode}: {message}",
-                    retryable=completed.returncode in {137, 143},
-                )
+                    persistent_result = self.persistent_execution_service.execute(
+                        profile,
+                        tool_request,
+                        artifact_publisher=self.persistent_artifact_publisher,
+                    )
+                except Exception as exc:
+                    raise VEPProviderError(
+                        f"Persistent VEP execution failed: {exc}",
+                        retryable=bool(getattr(exc, "retryable", False)),
+                    ) from exc
+                stdout = persistent_result.result.stdout
+                stderr = persistent_result.result.stderr
+                execution_record_id = str(persistent_result.record_id)
 
             if not output_json.exists():
                 raise VEPProviderError("VEP completed without producing its governed JSON output.")
@@ -249,6 +329,7 @@ class VEPProvider(ScientificResourceProvider):
                     # provider transport and is removed before checkpoint storage.
                     "raw_response_base64": base64.b64encode(raw_response_bytes).decode("ascii"),
                     "raw_response_media_type": "application/x-ndjson",
+                    "tool_execution_record_id": execution_record_id,
                 },
             )
 
@@ -324,6 +405,7 @@ class VEPProvider(ScientificResourceProvider):
                     "cache_version": self.cache_version,
                     "annotation_options": result.metadata.get("annotation_options", []),
                     "runtime_check": result.metadata.get("runtime_check"),
+                    "tool_execution_record_id": result.metadata.get("tool_execution_record_id"),
                 },
             })
 
@@ -386,6 +468,82 @@ class VEPProvider(ScientificResourceProvider):
         normalized = self.normalize_result(raw, inputs=request.payload)
         return list(normalized.observations)
 
+    def _run_runtime_check_command(
+        self,
+        command: list[str],
+        *,
+        assembly: str,
+        operation_label: str,
+        timeout_seconds: int,
+        resources: tuple[ScientificResourceBinding, ...] = (),
+    ):
+        """Run VEP runtime/cache attestation through the mandatory durable executor."""
+        if self.persistent_execution_service is None:
+            raise VEPProviderError(
+                "A case-bound qualified execution environment is required for VEP runtime checks."
+            )
+
+        from uuid import uuid4
+        from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
+
+        toolchain = self.contract.toolchain or {}
+        expected_version = str(toolchain.get("vep_version") or self.contract.provider_version)
+        expected_version_match = _extract_vep_version(expected_version)
+        execution_profile_id = str(toolchain.get("execution_profile_id") or "")
+        if not expected_version_match or not execution_profile_id:
+            raise VEPProviderError(
+                "Persistent VEP runtime checks require pinned vep_version and execution_profile_id."
+            )
+        registration = self.persistent_execution_service.db.get(
+            ExecutionEnvironmentRegistration,
+            self.persistent_execution_service.environment_registration_id,
+        )
+        if registration is None:
+            raise VEPProviderError("Persistent VEP execution environment registration is missing.")
+        runtime_path = tuple(
+            item for item in dict.fromkeys((str(Path(self.binary).parent), "/usr/bin", "/bin"))
+            if Path(item).is_dir()
+        )
+        profile = ToolIdentity(
+            tool_id="ensembl-vep",
+            version=expected_version_match,
+            profile_id=execution_profile_id,
+            executable=self.binary,
+            executable_sha256=self.expected_binary_sha256,
+            platform=current_platform_id(),
+            qualification_status="SOFTWARE_QUALIFIED",
+            version_args=("--version",),
+            version_output_contains=expected_version_match,
+            supported_operations=("validate", "annotate"),
+            runtime_image_digest=registration.profile_json.get("runtime_image_digest"),
+            runtime_path=runtime_path,
+        )
+        with tempfile.TemporaryDirectory(prefix="siraloom-vep-preflight-") as workspace:
+            request = ToolExecutionRequest(
+                execution_id=f"vep-{operation_label}-{uuid4().hex}",
+                organization_id=str(self.persistent_execution_service.organization_id),
+                workflow_id="annotate",
+                operation="validate",
+                argv=tuple(command[1:]),
+                workspace=workspace,
+                resources=resources,
+                timeout_seconds=timeout_seconds,
+            )
+            try:
+                persistent = self.persistent_execution_service.execute(profile, request)
+            except Exception as exc:
+                raise VEPProviderError(
+                    f"Persistent VEP {operation_label} check failed: {exc}",
+                    retryable=bool(getattr(exc, "retryable", False)),
+                ) from exc
+        provenance = persistent.result.provenance
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=provenance.exit_code,
+            stdout=persistent.result.stdout,
+            stderr=persistent.result.stderr,
+        )
+
     def verify_local_runtime(self, genome_build: str | None) -> dict[str, Any]:
         """Verify the configured VEP binary and cache before scientific execution.
 
@@ -413,13 +571,21 @@ class VEPProvider(ScientificResourceProvider):
         if binary_sha256_before != self.expected_binary_sha256:
             raise VEPProviderError("VEP binary SHA-256 does not match the governed execution contract.")
 
+        expected_version = str(
+            (self.contract.toolchain or {}).get("vep_version")
+            or self.contract.provider_version
+        ).strip()
+        expected_full_version = _extract_vep_version(expected_version)
+        if not expected_full_version:
+            raise VEPProviderError(
+                "VEP execution contract must pin a parseable tool version in provider_version or toolchain.vep_version."
+            )
         try:
-            version_result = subprocess.run(
+            version_result = self._run_runtime_check_command(
                 [self.binary, "--version"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=30,
+                assembly=assembly,
+                operation_label="version",
+                timeout_seconds=30,
             )
         except subprocess.TimeoutExpired as exc:
             raise VEPProviderError("VEP version check timed out.", retryable=True) from exc
@@ -432,10 +598,6 @@ class VEPProvider(ScientificResourceProvider):
             )
         version_output = "\n".join((version_result.stdout or "", version_result.stderr or "")).strip()
         actual_version = _extract_vep_version(version_output)
-        expected_version = str(
-            (self.contract.toolchain or {}).get("vep_version")
-            or self.contract.provider_version
-        ).strip()
         expected_release = _version_release(expected_version)
         if expected_release is None:
             raise VEPProviderError(
@@ -468,13 +630,22 @@ class VEPProvider(ScientificResourceProvider):
             assembly,
             "--show_cache_info",
         ]
+        cache_resources = (
+            ScientificResourceBinding(
+                resource_id=f"ensembl-vep-cache-manifest:{self.species}:{self.cache_version}:{assembly}",
+                version=self.cache_version,
+                sha256=self.cache_manifest_sha256,
+                assembly=assembly,
+                path=self.cache_manifest,
+            ),
+        )
         try:
-            cache_result = subprocess.run(
+            cache_result = self._run_runtime_check_command(
                 cache_command,
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=120,
+                assembly=assembly,
+                operation_label="cache",
+                timeout_seconds=120,
+                resources=cache_resources,
             )
         except subprocess.TimeoutExpired as exc:
             raise VEPProviderError(

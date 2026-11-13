@@ -104,7 +104,7 @@ def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_onc
             ))
             db.commit()
         with Session(engine) as db:
-            db.add(Case(
+            case = Case(
                 id=case_id,
                 organization_id=organization_id,
                 case_identifier=f"ARTIFACT-WORKER-LOSS-{dispatch_id}",
@@ -112,7 +112,14 @@ def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_onc
                 clinical_context={},
                 language="en",
                 created_by=user_id,
-            ))
+            )
+            db.add(case)
+            db.flush()
+            integration_dir = str(Path(__file__).resolve().parent)
+            if integration_dir not in sys.path:
+                sys.path.insert(0, integration_dir)
+            from execution_environment_fixtures import assign_qualified_container_environment
+            assign_qualified_container_environment(db, case, created_by=user_id)
             db.commit()
 
         store = ArtifactStore(artifact_root)
@@ -262,26 +269,8 @@ def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_onc
         if worker_log_handle is not None:
             worker_log_handle.close()
         redis.delete(*marker_keys)
-        with Session(engine) as db:
-            db.query(AuditEvent).filter(AuditEvent.case_id == case_id).delete(
-                synchronize_session=False
-            )
-            db.query(ArtifactValidationDispatch).filter(
-                ArtifactValidationDispatch.id == dispatch_id
-            ).delete(synchronize_session=False)
-            db.query(Artifact).filter(Artifact.id == artifact_id).delete(
-                synchronize_session=False
-            )
-            db.query(Case).filter(Case.id == case_id).delete(
-                synchronize_session=False
-            )
-            db.query(User).filter(User.id == user_id).delete(
-                synchronize_session=False
-            )
-            db.query(Organization).filter(
-                Organization.id == organization_id
-            ).delete(synchronize_session=False)
-            db.commit()
+        # Execution records are append-only. Preserve this unique case,
+        # registration and organization lineage for the durable ledger.
         shutil.rmtree(artifact_root, ignore_errors=True)
         shutil.rmtree(scratch_root, ignore_errors=True)
         engine.dispose()

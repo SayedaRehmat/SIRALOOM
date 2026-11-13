@@ -162,6 +162,13 @@ class Case(Base):
     __tablename__ = "cases"
     id: Mapped[UUID] = mapped_column(primary_key=True)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"))
+    execution_environment_registration_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey(
+            "execution_environment_registrations.id",
+            name="fk_cases_execution_environment_registration",
+        ),
+        nullable=True,
+    )
     case_identifier: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
     accession_reconciliation_status: Mapped[str] = mapped_column(
@@ -1417,3 +1424,108 @@ class WorkflowDecisionRecord(Base):
     fallback_resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"))
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class ExecutionEnvironmentRegistration(Base):
+    """Append-only, tenant-scoped snapshot of one registered execution environment version."""
+    __tablename__ = "execution_environment_registrations"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID | None] = mapped_column(ForeignKey("organizations.id"))
+    owner_scope: Mapped[str] = mapped_column(Text, nullable=False)
+    environment_id: Mapped[str] = mapped_column(Text, nullable=False)
+    profile_version: Mapped[str] = mapped_column(Text, nullable=False)
+    profile_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    profile_json: Mapped[dict] = mapped_column(JSON, nullable=False)
+    qualification_status: Mapped[str] = mapped_column(Text, nullable=False)
+    created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        CheckConstraint(
+            "(owner_scope = 'LABORATORY' AND organization_id IS NOT NULL) OR "
+            "(owner_scope = 'SIRALOOM' AND organization_id IS NULL)",
+            name="ck_execution_environment_owner_scope",
+        ),
+        CheckConstraint(
+            "qualification_status IN ('DISCOVERED', 'STAGED', 'QUALIFICATION_PENDING', "
+            "'ENVIRONMENT_QUALIFIED', 'SUSPENDED', 'RETIRED')",
+            name="ck_execution_environment_qualification_status",
+        ),
+        Index(
+            "uq_execution_environment_lab_version",
+            "organization_id", "environment_id", "profile_version",
+            unique=True,
+            postgresql_where=text("organization_id IS NOT NULL"),
+            sqlite_where=text("organization_id IS NOT NULL"),
+        ),
+        Index(
+            "uq_execution_environment_global_version",
+            "environment_id", "profile_version",
+            unique=True,
+            postgresql_where=text("organization_id IS NULL"),
+            sqlite_where=text("organization_id IS NULL"),
+        ),
+    )
+
+
+class ToolExecutionRecord(Base):
+    """Durable lifecycle and provenance ledger for one common-executor invocation."""
+    __tablename__ = "tool_execution_records"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    execution_id: Mapped[str] = mapped_column(Text, nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    analysis_id: Mapped[UUID | None] = mapped_column(ForeignKey("analyses.id"))
+    environment_registration_id: Mapped[UUID] = mapped_column(
+        ForeignKey("execution_environment_registrations.id"), nullable=False
+    )
+    tool_id: Mapped[str] = mapped_column(Text, nullable=False)
+    tool_version: Mapped[str] = mapped_column(Text, nullable=False)
+    tool_profile_id: Mapped[str] = mapped_column(Text, nullable=False)
+    executable_sha256: Mapped[str] = mapped_column(Text, nullable=False)
+    platform: Mapped[str] = mapped_column(Text, nullable=False)
+    operation: Mapped[str] = mapped_column(Text, nullable=False)
+    request_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
+    environment_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
+    input_manifest: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    output_manifest: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    provenance: Mapped[dict | None] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    lease_owner: Mapped[str | None] = mapped_column(Text)
+    lease_token: Mapped[str | None] = mapped_column(Text)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    exit_code: Mapped[int | None] = mapped_column(Integer)
+    stdout_sha256: Mapped[str | None] = mapped_column(Text)
+    stderr_sha256: Mapped[str | None] = mapped_column(Text)
+    error_code: Mapped[str | None] = mapped_column(Text)
+    error_message: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "execution_id", name="uq_tool_execution_org_execution"),
+        UniqueConstraint("organization_id", "idempotency_key", name="uq_tool_execution_org_idempotency"),
+        CheckConstraint(
+            "status IN ('PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'INTERRUPTED')",
+            name="ck_tool_execution_status",
+        ),
+        CheckConstraint(
+            "length(executable_sha256) = 64",
+            name="ck_tool_execution_executable_sha256_length",
+        ),
+        CheckConstraint(
+            "(status = 'RUNNING' AND lease_owner IS NOT NULL AND lease_token IS NOT NULL "
+            "AND lease_expires_at IS NOT NULL) OR status != 'RUNNING'",
+            name="ck_tool_execution_running_lease",
+        ),
+        CheckConstraint(
+            "status != 'SUCCEEDED' OR "
+            "(provenance IS NOT NULL AND exit_code = 0 AND completed_at IS NOT NULL)",
+            name="ck_tool_execution_success_has_provenance",
+        ),
+        Index("ix_tool_execution_case_created", "case_id", "created_at"),
+        Index("ix_tool_execution_analysis_created", "analysis_id", "created_at"),
+        Index("ix_tool_execution_org_status_created", "organization_id", "status", "created_at"),
+    )

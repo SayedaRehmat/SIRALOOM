@@ -52,6 +52,7 @@ from backend.app.domain.normalization import (
     UnsupportedVariantError,
     iter_normalized_vcf,
 )
+from backend.app.domain.persistent_tool_executor import PersistentToolExecutionService
 from backend.app.domain.profile_runtime_resources import (
     ProfileRuntimeResourceError,
     resolve_profile_runtime_resource,
@@ -110,6 +111,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     Classification,
     Evidence,
+    ExecutionEnvironmentRegistration,
     PopulationObservation,
     Report,
     ReportabilityDecision,
@@ -148,6 +150,36 @@ class WorkflowContext:
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _persistent_tool_execution_service(
+    db: Session,
+    *,
+    analysis: Analysis,
+    organization_id: UUID,
+    worker_id: str,
+) -> PersistentToolExecutionService:
+    """Resolve the mandatory case-bound qualified environment for an analysis."""
+    from backend.app.domain.execution_context import persistent_execution_for_case
+
+    case = db.get(Case, analysis.case_id)
+    if case is None or case.organization_id != organization_id:
+        raise ResourceConsumptionError(
+            "EXECUTION_CASE_IDENTITY_INVALID",
+            "The analysis case is missing or does not match its organization.",
+        )
+    try:
+        return persistent_execution_for_case(
+            db,
+            case=case,
+            analysis_id=analysis.id,
+            worker_id=worker_id,
+        )
+    except RuntimeError as exc:
+        raise ResourceConsumptionError(
+            "EXECUTION_ENVIRONMENT_ASSIGNMENT_REQUIRED",
+            str(exc),
+        ) from exc
 
 
 class TransientWorkflowError(RuntimeError):
@@ -630,6 +662,7 @@ def _persist_annotation_response_checkpoint(
                 "resource_version": resource.version,
                 "request_fingerprint": provenance["request_fingerprint"],
                 "response_sha256": provenance["response_sha256"],
+                "tool_execution_record_id": provenance.get("tool_execution_record_id"),
             },
         )
         _save_batch_checkpoint(
@@ -2375,12 +2408,26 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
 
                 try:
+                    analysis_case = db.get(Case, analysis.case_id)
+                    if analysis_case is None:
+                        raise ResourceConsumptionError(
+                            "CASE_NOT_FOUND",
+                            "Analysis case was not found before normalization execution.",
+                        )
+                    persistent_execution = _persistent_tool_execution_service(
+                        db,
+                        analysis=analysis,
+                        organization_id=analysis_case.organization_id,
+                        worker_id=f"workflow:{analysis.id}:normalize",
+                    )
                     normalization_stats = normalize_vcf_with_bcftools(
                         routing["sequence_path"],
                         temp_path,
                         reference_fasta=reference_fasta_path,
                         expected_bcftools_version=settings.bcftools_version,
                         source_only_format_fields=package_profile.get("base_modification_format_fields", []),
+                        persistent_execution=persistent_execution,
+                        workflow_id="normalize",
                     )
                     response_sha256 = sha256_file(temp_path)
                     complete_resource_execution(
@@ -2435,6 +2482,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "normalization_tool_version": normalization_stats["tool_version"],
                         "normalization_expected_tool_version": normalization_stats["expected_tool_version"],
                         "normalization_command": normalization_stats["command"],
+                        "tool_execution_record_ids": normalization_stats.get("tool_execution_record_ids", []),
                         "source_only_format_fields": normalization_stats.get("source_only_format_fields", []),
                         "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"),
                         "compression": normalization_stats["compression"],
@@ -2460,6 +2508,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "source_only_format_fields": normalization_stats.get("source_only_format_fields", []),
                         "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"),
                         "reference_package_checksum": reference_package["package_checksum"],
+                        "tool_execution_record_ids": normalization_stats.get("tool_execution_record_ids", []),
                     },
                 )
                 normalized_artifact.paired_artifact_id = index_artifact.id
@@ -2926,6 +2975,42 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             temporary_paths=temporary_artifact_paths,
                         )
                         if payloads is None:
+                            if provider.provider_id == "VEP":
+                                provider.persistent_execution_service = _persistent_tool_execution_service(
+                                    db,
+                                    analysis=analysis,
+                                    organization_id=case.organization_id,
+                                    worker_id=f"workflow:{analysis.id}:annotate:{key}",
+                                )
+                                if provider.persistent_execution_service is not None:
+                                    def publish_vep_tool_outputs(request, result, execution_record_id):
+                                        published = {}
+                                        for output in request.outputs:
+                                            output_path = Path(output.path)
+                                            artifact = artifacts.put_file(
+                                                db=db,
+                                                case_id=analysis.case_id,
+                                                analysis_id=analysis.id,
+                                                source_path=output_path,
+                                                filename=f"vep-execution-{start}-{end}-{output_path.name}",
+                                                artifact_type="TOOL_EXECUTION_OUTPUT",
+                                                media_type="application/json",
+                                                genome_build=analysis.reference_build,
+                                                validation_status="VALIDATED",
+                                                metadata={
+                                                    "tool_execution_record_id": str(execution_record_id),
+                                                    "workflow_step": "annotate",
+                                                    "batch_key": key,
+                                                    "tool_id": "ensembl-vep",
+                                                    "tool_profile_id": str(
+                                                        (provider.contract.toolchain or {}).get("execution_profile_id") or ""
+                                                    ),
+                                                },
+                                            )
+                                            published[output.name] = artifact.id
+                                        return published
+
+                                    provider.persistent_artifact_publisher = publish_vep_tool_outputs
                             payloads = provider.annotate(batch, {"genome": genome})
                             scheduler.heartbeat(partition.id, worker_id, lease_token)
                             _ensure_annotation_request_fingerprint(
