@@ -199,6 +199,25 @@ jobs:
           profile["status"] = "SOFTWARE_QUALIFIED"
           profile["qualification_scope"] = "Disposable ARM64 image qualification context only; production registry remains CANDIDATE until reviewed evidence is committed."
           json.dump(payload, open(path, "w", encoding="utf-8"), indent=2)
+
+          # The runtime resolver reads the scientific-tool registry, not the
+          # build-matrix registry above. Promote the candidate only in this
+          # disposable build context so the image can attest its own profile;
+          # the checked-in production registry remains CANDIDATE.
+          scientific_path = "configs/bioinformatics/scientific-tool-profiles.v1.json"
+          scientific = json.load(open(scientific_path, encoding="utf-8"))
+          matches = [item for item in scientific["profiles"] if item["id"] == profile_id]
+          if len(matches) != 1:
+              raise SystemExit(f"scientific tool registry must contain exactly one profile: {profile_id}")
+          tool_profile = matches[0]
+          if tool_profile.get("status") != "CANDIDATE":
+              raise SystemExit("only an ARM64 candidate may be promoted in disposable image context")
+          tool_profile["status"] = "SOFTWARE_QUALIFIED"
+          tool_profile["qualification"]["status"] = "SOFTWARE_QUALIFIED"
+          tool_profile["qualification"]["scope"] = (
+              "Disposable ARM64 image qualification context only; production registry remains CANDIDATE."
+          )
+          json.dump(scientific, open(scientific_path, "w", encoding="utf-8"), indent=2)
           PY
           docker buildx build --platform linux/arm64 --load \
             --build-arg BCFTOOLS_BUILD_LOCK_FILE=${{ matrix.lock_file }} \
