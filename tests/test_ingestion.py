@@ -277,7 +277,7 @@ def test_bcftools_validation_failure_is_not_misclassified_as_invalid_vcf(
 
     monkeypatch.setattr(ingestion.subprocess, "run", fail_to_run)
 
-    with pytest.raises(ingestion.VCFValidationUnavailable, match="bcftools/htslib"):
+    with pytest.raises(ingestion.VCFValidationUnavailable, match="BCFtools/HTSlib"):
         ingestion.validate_vcf(path)
 
 
