@@ -38,26 +38,6 @@ jobs:
         run: |
           uv lock --check
           uv sync --locked --extra dev
-      - name: Build and pin the OCI image used by governed execution integration tests
-        run: |
-          set -euo pipefail
-          for attempt in $(seq 1 30); do
-            if curl -fsS http://localhost:5000/v2/ >/dev/null; then break; fi
-            sleep 1
-          done
-          curl -fsS http://localhost:5000/v2/ >/dev/null
-          docker build --file docker/backend.Dockerfile --tag localhost:5000/siraloom/backend:ci .
-          docker push localhost:5000/siraloom/backend:ci
-          digest="$(curl -fsSI \
-            -H 'Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json' \
-            http://localhost:5000/v2/siraloom/backend/manifests/ci \
-            | awk 'BEGIN{IGNORECASE=1} /^Docker-Content-Digest:/ {gsub("\\r","",$2); print $2}')"
-          test -n "$digest"
-          image="localhost:5000/siraloom/backend@$digest"
-          docker pull "$image"
-          echo "SIRALOOM_QUALIFICATION_IMAGE=$image" >> "$GITHUB_ENV"
-          echo "SIRALOOM_QUALIFICATION_RUNTIME=DOCKER" >> "$GITHUB_ENV"
-          echo "BCFTOOLS_EXECUTABLE=/opt/conda/bin/bcftools" >> "$GITHUB_ENV"
       - name: Verify installed Redis client is accepted by the selected Kombu transport
         run: uv run --locked python -c "import redis, kombu; import kombu.transport.redis; print(f'redis-py={redis.__version__}, kombu={kombu.__version__}')"
       - name: Backend tests
@@ -207,6 +187,26 @@ jobs:
         run: |
           uv lock --check
           uv sync --locked --extra dev
+      - name: Build and pin the OCI image used by governed execution integration tests
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:5000/v2/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:5000/v2/ >/dev/null
+          docker build --file docker/backend.Dockerfile --tag localhost:5000/siraloom/backend:ci .
+          docker push localhost:5000/siraloom/backend:ci
+          digest="$(curl -fsSI \
+            -H 'Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json' \
+            http://localhost:5000/v2/siraloom/backend/manifests/ci \
+            | awk 'BEGIN{IGNORECASE=1} /^Docker-Content-Digest:/ {gsub("\\r","",$2); print $2}')"
+          test -n "$digest"
+          image="localhost:5000/siraloom/backend@$digest"
+          docker pull "$image"
+          echo "SIRALOOM_QUALIFICATION_IMAGE=$image" >> "$GITHUB_ENV"
+          echo "SIRALOOM_QUALIFICATION_RUNTIME=DOCKER" >> "$GITHUB_ENV"
+          echo "BCFTOOLS_EXECUTABLE=/opt/conda/bin/bcftools" >> "$GITHUB_ENV"
       - name: Verify installed Redis client is accepted by the selected Kombu transport
         run: uv run --locked python -c "import redis, kombu; import kombu.transport.redis; print(f'redis-py={redis.__version__}, kombu={kombu.__version__}')"
       - name: Apply database migrations
