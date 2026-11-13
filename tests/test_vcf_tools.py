@@ -793,7 +793,7 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
 
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
     result = vcf_tools._validate_vcf_index_record_counts(
-        staged_vcf, bcftools_executable="bcftools", timeout_seconds=30
+        staged_vcf, bcftools_executable=settings.bcftools_executable, timeout_seconds=30
     )
 
     assert result == {
@@ -828,7 +828,7 @@ def test_csi_index_record_counts_reject_mismatch_with_sequential_bgzf_scan(
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
     with pytest.raises(VCFToolError, match="record counts disagree by contig"):
         vcf_tools._validate_vcf_index_record_counts(
-            staged_vcf, bcftools_executable="bcftools", timeout_seconds=30
+            staged_vcf, bcftools_executable=settings.bcftools_executable, timeout_seconds=30
         )
 
 
@@ -862,7 +862,7 @@ def test_csi_index_validation_compares_indexed_record_streams_with_sequential_bg
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     result = _validate_vcf_index_record_counts(
-        vcf, bcftools_executable="bcftools", timeout_seconds=10
+        vcf, bcftools_executable=settings.bcftools_executable, timeout_seconds=10
     )
     assert result["method"] == "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN"
     assert result["records"] == 3
@@ -895,7 +895,7 @@ def test_csi_index_validation_rejects_same_count_but_different_indexed_records(
     monkeypatch.setattr(subprocess, "run", fake_run)
     with pytest.raises(VCFToolError, match="records disagree with the sequential VCF stream"):
         _validate_vcf_index_record_counts(
-            vcf, bcftools_executable="bcftools", timeout_seconds=10
+            vcf, bcftools_executable=settings.bcftools_executable, timeout_seconds=10
         )
 
 
