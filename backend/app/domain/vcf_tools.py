@@ -761,7 +761,14 @@ def _run_bcftools_command(
         ),
         supported_operations=("validate", "normalize", "sort", "index", "convert", "split_multiallelic"),
         runtime_image_digest=environment.runtime_image_digest,
-        runtime_path=("/opt/conda/bin", "/usr/bin", "/bin"),
+        runtime_path=(
+            ("/opt/conda/bin", "/usr/bin", "/bin")
+            if environment.runtime_image_digest is not None
+            else tuple(
+                item for item in dict.fromkeys((str(Path(executable).parent), "/usr/bin", "/bin"))
+                if Path(item).is_dir()
+            )
+        ),
     )
     inputs = tuple(
         InputArtifact(
