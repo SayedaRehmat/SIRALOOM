@@ -220,7 +220,7 @@ def test_worker_persists_caller_review_gate_without_marking_structural_vcf_inval
     monkeypatch.setattr(
         validation,
         "validate_vcf",
-        lambda _path: ValidationResult(
+        lambda _path, **_kwargs: ValidationResult(
             status="VALID",
             file_kind="VCF",
             record_count=1,
