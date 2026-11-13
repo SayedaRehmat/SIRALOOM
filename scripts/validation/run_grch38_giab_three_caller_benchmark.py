@@ -581,6 +581,41 @@ def main() -> int:
         report["reference"]["rtg_sdf_path"] = str(sdf)
         report["reference"]["rtg_sdf_status"] = "PASS"
         callsets = smoke.download_callsets(root / "caller_vcfs")
+
+        # Persist source identity and checksums immediately after acquisition,
+        # before reference validation or any caller-specific processing can fail.
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        acquisition_manifest = {
+            "schema_version": 1,
+            "acquisition_status": "COMPLETE",
+            "callsets": [
+                {
+                    key: value for key, value in item.items()
+                    if key != "local_path"
+                } | {"local_path": str(Path(item["local_path"]).name)}
+                for item in callsets
+            ],
+        }
+        (args.report.parent / "caller-acquisition-manifest.json").write_text(
+            json.dumps(acquisition_manifest, indent=2, sort_keys=True) + "\\n",
+            encoding="utf-8",
+        )
+        report["caller_acquisition_manifest"] = acquisition_manifest
+
+        diagnostic_path = Path(__file__).with_name(
+            "inspect_grch38_callset_reference_provenance.py"
+        )
+        diagnostic_spec = importlib.util.spec_from_file_location(
+            "siraloom_grch38_reference_diagnostics", diagnostic_path
+        )
+        if diagnostic_spec is None or diagnostic_spec.loader is None:
+            raise RuntimeError("Could not load caller reference provenance diagnostics")
+        diagnostic_module = importlib.util.module_from_spec(diagnostic_spec)
+        sys.modules[diagnostic_spec.name] = diagnostic_module
+        diagnostic_spec.loader.exec_module(diagnostic_module)
+        report["caller_reference_provenance"] = diagnostic_module.inspect_callsets(
+            callsets, fasta, args.report.parent / "caller-reference-provenance"
+        )
         truth_normalized = root / "giab.hg002.normalized.vcf.gz"
         run(["bcftools", "norm", "-f", str(fasta), "-c", "e", "-m", "-any", "-Oz", "-o", str(truth_normalized), report["giab"]["truth_vcf"]["path"]], timeout=7200)
         run(["bcftools", "index", "-f", str(truth_normalized)])
