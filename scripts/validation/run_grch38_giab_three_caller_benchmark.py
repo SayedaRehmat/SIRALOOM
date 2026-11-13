@@ -34,7 +34,7 @@ GIAB_VCF = f"{GIAB_BASE}/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz"
 GIAB_BED = f"{GIAB_BASE}/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed"
 GIAB_TBI = f"{GIAB_VCF}.tbi"
 STRAT_URL = (
-    "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/ftp/release/"
+    "https://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/release/"
     "genome-stratifications/v3.6/genome-stratifications-GRCh38@all.tar.gz"
 )
 STRAT_MD5_URL = f"{STRAT_URL}.md5"
