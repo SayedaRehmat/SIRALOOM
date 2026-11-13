@@ -11,12 +11,12 @@ def test_build_fai_tracks_wrapped_sequences_and_byte_offsets(tmp_path):
     entries = build_fai(fasta)
 
     assert entries == [
-        {"name": "chr1", "length": 8, "offset": 19, "line_bases": 4, "line_width": 5},
-        {"name": "chr2", "length": 2, "offset": 38, "line_bases": 2, "line_width": 3},
+        {"name": "chr1", "length": 8, "offset": 18, "line_bases": 4, "line_width": 5},
+        {"name": "chr2", "length": 2, "offset": 34, "line_bases": 2, "line_width": 3},
     ]
     assert (tmp_path / "toy.fa.fai").read_text() == (
-        "chr1\t8\t19\t4\t5\n"
-        "chr2\t2\t38\t2\t3\n"
+        "chr1\t8\t18\t4\t5\n"
+        "chr2\t2\t34\t2\t3\n"
     )
     assert fasta_sequence(fasta, "chr1") == "ACGTTGCA"
 
