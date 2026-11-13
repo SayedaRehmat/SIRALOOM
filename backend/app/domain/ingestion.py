@@ -198,7 +198,7 @@ def _bcftools_validate_in_workspace(
             workflow_id=workflow_id,
             operation="validate",
             workspace=workspace,
-            input_paths=[path],
+            input_paths=_htslib_input_paths(path),
             output_paths=[],
             timeout_seconds=120,
             execution_id_override=f"bcftools-intake-validate-{uuid4().hex}",
