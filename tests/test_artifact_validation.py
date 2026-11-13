@@ -90,7 +90,7 @@ def test_worker_validates_persisted_vcf_and_records_site_only_eligibility(
     monkeypatch.setattr(
         validation,
         "validate_vcf",
-        lambda path: (
+        lambda path, **_kwargs: (
             calls.append(Path(path).read_bytes())
             or ValidationResult(
                 status="VALID",
