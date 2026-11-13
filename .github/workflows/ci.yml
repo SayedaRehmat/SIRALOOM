@@ -263,6 +263,9 @@ jobs:
             artifacts/dataset-manifest.json
             artifacts/caller-acquisition-manifest.json
             artifacts/caller-reference-provenance/
+            /tmp/siraloom-grch38-giab/*_reference_projection/*.vcf
+            /tmp/siraloom-grch38-giab/*.grch38.normalized.vcf.gz
+            /tmp/siraloom-grch38-giab/*.grch38.normalized.vcf.gz.csi
             artifacts/rtg-raw-comparison-outputs.tar.gz
           if-no-files-found: warn
           retention-days: 30
