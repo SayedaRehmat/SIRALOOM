@@ -772,7 +772,7 @@ def _run_bcftools_command(
     )
     inputs = tuple(
         InputArtifact(
-            name=f"input-{index}:{path.name}",
+            name=path.name,
             path=str(path.resolve(strict=True)),
             sha256=sha256_file(path),
         )
@@ -917,6 +917,12 @@ def _validate_vcf_index_record_counts(
         raise VCFToolError("A case-bound qualified execution environment is required for VCF index validation.")
 
     execution_workspace = workspace or vcf_path.parent
+    sidecar_candidates = (Path(str(vcf_path) + ".csi"), Path(str(vcf_path) + ".tbi"))
+    sidecars = [candidate for candidate in sidecar_candidates if candidate.is_file()]
+    if len(sidecars) != 1:
+        raise VCFToolError("VCF index validation requires exactly one adjacent CSI or TBI sidecar.")
+    index_input = sidecars[0]
+    index_inputs = [vcf_path, index_input]
     try:
         stats = _run_bcftools_command(
             [bcftools_executable, "index", "--stats", str(vcf_path)],
@@ -924,7 +930,7 @@ def _validate_vcf_index_record_counts(
             workflow_id=workflow_id,
             operation="validate",
             workspace=execution_workspace,
-            input_paths=[vcf_path],
+            input_paths=index_inputs,
             output_paths=[],
             timeout_seconds=max(1, int(timeout_seconds)),
         )
@@ -1001,7 +1007,7 @@ def _validate_vcf_index_record_counts(
                     workflow_id=workflow_id,
                     operation="validate",
                     workspace=Path(query_dir),
-                    input_paths=[vcf_path],
+                    input_paths=index_inputs,
                     output_paths=[query_path],
                     timeout_seconds=max(1, int(timeout_seconds)),
                 )
