@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Barrier
@@ -109,6 +110,9 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
             )
             db.add(case)
             db.flush()
+            integration_dir = str(Path(__file__).resolve().parent)
+            if integration_dir not in sys.path:
+                sys.path.insert(0, integration_dir)
             from execution_environment_fixtures import assign_qualified_container_environment
             assign_qualified_container_environment(db, case, created_by=user_id)
             db.commit()
