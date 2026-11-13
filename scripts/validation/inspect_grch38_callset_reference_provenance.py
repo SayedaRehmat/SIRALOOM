@@ -14,6 +14,11 @@ from pathlib import Path
 from typing import Any
 
 TARGET_CONTIGS = {"hs38d1", "chrEBV"}
+EXPECTED_SOURCE_FILES = {
+    "GATK_HAPLOTYPECALLER": "HG002_GATK_BWA_SNV.vcf.gz",
+    "DEEPVARIANT": "HG002_DV_BWA_SNV.vcf.gz",
+    "DRAGEN": "HG002_35x.hard-filtered.vcf.gz",
+}
 ZENODO_RECORDS = {
     "GATK_HAPLOTYPECALLER": "https://zenodo.org/records/10428664",
     "DEEPVARIANT": "https://zenodo.org/records/10428664",
@@ -204,6 +209,11 @@ def inspect_callsets(
     }
     for callset in callsets:
         caller = callset["caller"]
+        if callset.get("filename") != EXPECTED_SOURCE_FILES.get(caller):
+            raise RuntimeError(
+                f"Unexpected source file for {caller}: {callset.get('filename')!r}; "
+                f"expected {EXPECTED_SOURCE_FILES.get(caller)!r}"
+            )
         vcf = Path(callset["local_path"])
         header = run(["bcftools", "view", "-h", str(vcf)])
         header_path = output_dir / f"{caller.lower()}.header.vcf.txt"
@@ -298,7 +308,7 @@ def inspect_callsets(
                 run(["bcftools", "view", "-R", str(bed), "-Oz", "-o", str(output_dir / f"{caller.lower()}.canonical-projection.vcf.gz"), str(vcf)])
                 projection = output_dir / f"{caller.lower()}.canonical-projection.vcf.gz"
                 run(["bcftools", "index", "-f", str(projection)])
-                run(["bcftools", "norm", "-f", str(fasta), "-c", "e", "-N", "-Ou", str(projection)])
+                run(["bcftools", "norm", "-f", str(fasta), "-c", "e", "-N", "-Ou", "-o", "/dev/null", str(projection)])
                 ref_status = "PASS_ON_CANONICAL_CONTIG_PROJECTION"
             else:
                 ref_status = "NOT_EVALUABLE_NO_SHARED_CANONICAL_CONTIGS"
