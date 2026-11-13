@@ -131,7 +131,7 @@ def _bcftools_validate(
             timeout_seconds=15,
             execution_id_override=f"bcftools-intake-version-{uuid4().hex}",
         )
-    except (VCFToolError, VCFToolUnavailable, OSError) as exc:
+    except (VCFToolError, VCFToolUnavailable, OSError, subprocess.TimeoutExpired) as exc:
         raise VCFValidationUnavailable(
             f"Unable to attest the configured BCFtools/HTSlib runtime through governed execution: {exc}"
         ) from exc
