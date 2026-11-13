@@ -50,6 +50,10 @@ def assign_qualified_container_environment(db, case, *, created_by):
     )
     executable_digest = digest_result.stdout.split()[0]
     profile_id = settings.bcftools_profile_id
+    container_uid = os.getuid()
+    container_gid = os.getgid()
+    if container_uid == 0:
+        raise RuntimeError("PostgreSQL OCI integration tests must not execute containers as root.")
     profile = ExecutionEnvironmentProfile(
         environment_id=f"ci-docker-{uuid4().hex}",
         profile_version="ci-1",
@@ -75,7 +79,7 @@ def assign_qualified_container_environment(db, case, *, created_by):
             cpu_cores=1,
             memory_bytes=2 * 1024**3,
             pids_limit=256,
-            container_user="10001:10001",
+            container_user=f"{container_uid}:{container_gid}",
         ),
         workspace_root="/tmp",
         storage_profile_ids=("ci-local-artifact-store",),
