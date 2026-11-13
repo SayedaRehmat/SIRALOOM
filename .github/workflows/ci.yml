@@ -196,11 +196,9 @@ jobs:
           done
           curl -fsS http://localhost:5000/v2/ >/dev/null
           docker build --file docker/backend.Dockerfile --tag localhost:5000/siraloom/backend:ci .
-          docker push localhost:5000/siraloom/backend:ci
-          digest="$(curl -fsSI \
-            -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json' \
-            http://localhost:5000/v2/siraloom/backend/manifests/ci \
-            | sed -n 's/^[Dd]ocker-[Cc]ontent-[Dd]igest: //p' | tr -d '\\r')"
+          push_output="$(docker push localhost:5000/siraloom/backend:ci 2>&1)"
+          printf '%s\\n' "$push_output"
+          digest="$(printf '%s\\n' "$push_output" | sed -n 's/^ci: digest: \\(sha256:[0-9a-f]\\{64\\}\\) size:.*/\\1/p' | tail -n 1)"
           test -n "$digest"
           image="localhost:5000/siraloom/backend@$digest"
           docker pull "$image"
