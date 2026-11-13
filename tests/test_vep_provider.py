@@ -300,11 +300,15 @@ def test_vep_annotation_verifies_pinned_binary_and_offline_cache(monkeypatch, tm
     ],
 )
 def test_vep_execution_requests_and_records_versioned_transcript_annotations(
-    monkeypatch, assembly, with_fasta, expected_options
+    monkeypatch, tmp_path, assembly, with_fasta, expected_options
 ):
     toolchain = dict(_contract().toolchain)
     toolchain["assembly"] = assembly
-    if not with_fasta:
+    if with_fasta:
+        fasta = tmp_path / f"{assembly}.fa"
+        fasta.write_text(">1\\n" + "A" * 200 + "\\n", encoding="utf-8")
+        toolchain["fasta"] = str(fasta)
+    else:
         toolchain.pop("fasta")
     provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
     calls = []
