@@ -845,12 +845,8 @@ def split_multiallelic_vcf(
         raise VCFToolError("A case-bound qualified execution environment is required for multiallelic splitting.")
     from backend.app.config import settings
     executable = settings.bcftools_executable
-    if not bcftools_available(executable):
-        raise VCFToolError(
-            "bcftools is required to split multiallelic VCF records in the deployed "
-            "normalization pipeline."
-        )
-
+    # Availability and executable-byte attestation happen inside the pinned
+    # OCI image in _run_bcftools_command; host PATH is not authoritative.
     input_path = Path(input_path)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
