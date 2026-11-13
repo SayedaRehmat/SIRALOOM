@@ -111,12 +111,13 @@ def test_execution_environment_and_tool_ledger_migration_creates_tables_and_guar
     assert case_columns["execution_environment_registration_id"]["nullable"] is True
     case_model_column = Case.__table__.c.execution_environment_registration_id
     assert case_model_column.nullable is True
-    case_foreign_keys = {
-        item["name"]: item for item in inspector.get_foreign_keys("cases")
-    }
-    assert case_foreign_keys["fk_cases_execution_environment_registration"][
-        "referred_table"
-    ] == "execution_environment_registrations"
+    case_foreign_keys = inspector.get_foreign_keys("cases")
+    assert any(
+        item["referred_table"] == "execution_environment_registrations"
+        and item["constrained_columns"] == ["execution_environment_registration_id"]
+        and item["referred_columns"] == ["id"]
+        for item in case_foreign_keys
+    )
 
     environment_indexes = {item["name"] for item in inspector.get_indexes("execution_environment_registrations")}
     assert {"uq_execution_environment_lab_version", "uq_execution_environment_global_version"} <= environment_indexes
