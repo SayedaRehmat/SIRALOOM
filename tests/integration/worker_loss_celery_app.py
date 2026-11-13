@@ -213,14 +213,31 @@ def vcf_normalization_worker_loss(
     original_workflow = workflow_module.run_variant_analysis
 
     def normalize_to(output_path: str) -> dict:
-        return normalize_vcf_with_bcftools(
-            Path(source_vcf),
-            Path(output_path),
-            reference_fasta=Path(reference_fasta),
-            expected_bcftools_version=settings.bcftools_version,
-            source_only_format_fields=[],
-            bcftools_executable=bcftools_executable,
-        )
+        from backend.app.infrastructure.db.models import Analysis, Case
+        from backend.app.domain.execution_context import persistent_execution_for_case
+
+        with SessionLocal() as db:
+            analysis = db.get(Analysis, analysis_uuid)
+            if analysis is None:
+                raise RuntimeError("Worker-loss integration analysis disappeared before normalization.")
+            case = db.get(Case, analysis.case_id)
+            if case is None:
+                raise RuntimeError("Worker-loss integration case disappeared before normalization.")
+            persistent_execution = persistent_execution_for_case(
+                db,
+                case=case,
+                worker_id=f"worker-loss-{self.request.id}",
+                analysis_id=analysis_uuid,
+            )
+            return normalize_vcf_with_bcftools(
+                Path(source_vcf),
+                Path(output_path),
+                reference_fasta=Path(reference_fasta),
+                expected_bcftools_version=settings.bcftools_version,
+                source_only_format_fields=[],
+                bcftools_executable=bcftools_executable,
+                persistent_execution=persistent_execution,
+            )
 
     def artifact_metadata(stats: dict, output_path: str) -> dict:
         reference_artifacts = stats["reference_identity"]["artifacts"]
