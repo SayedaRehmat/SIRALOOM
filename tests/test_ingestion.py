@@ -575,7 +575,7 @@ def test_bgzf_validator_checks_every_concatenated_block(tmp_path: Path, monkeypa
     monkeypatch.setattr(
         ingestion,
         "_bcftools_validate",
-        lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version),
+        lambda _path, **_kwargs: (None, f"bcftools {settings.bcftools_version}", settings.htslib_version),
     )
     path = tmp_path / "multi-block.vcf.gz"
     content = VALID_VCF.encode("utf-8")
@@ -625,7 +625,7 @@ def test_bgzf_without_terminal_empty_block_is_accepted_with_warning(tmp_path: Pa
     monkeypatch.setattr(
         ingestion,
         "_bcftools_validate",
-        lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version),
+        lambda _path, **_kwargs: (None, f"bcftools {settings.bcftools_version}", settings.htslib_version),
     )
     path = tmp_path / "bgzf-without-eof.vcf.gz"
     _write_bgzf(path, VALID_VCF.encode("utf-8"))
