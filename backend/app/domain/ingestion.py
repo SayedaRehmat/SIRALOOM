@@ -108,11 +108,14 @@ def _bcftools_validate(
         raise VCFValidationUnavailable(
             "A case-bound qualified execution environment is required for BCFtools VCF intake."
         )
-    executable = shutil.which(settings.bcftools_executable)
-    if executable is None:
+    # The executable is resolved inside the qualified OCI image by the
+    # persistent executor. Looking it up on the API/worker host would make a
+    # valid customer-owned Lab Server image unusable when BCFtools is not
+    # installed on the host (and would reintroduce a host-runtime dependency).
+    executable = settings.bcftools_executable
+    if not executable or not str(executable).strip():
         raise VCFValidationUnavailable(
-            "bcftools/htslib is required to validate VCF input, but the executable was not found. "
-            "The VCF was not accepted; restore the configured laboratory toolchain and retry."
+            "The qualified BCFtools/HTSlib profile does not declare an executable."
         )
     from backend.app.domain.vcf_tools import _run_bcftools_command, VCFToolError, VCFToolUnavailable
 
