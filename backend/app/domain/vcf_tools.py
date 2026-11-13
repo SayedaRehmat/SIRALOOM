@@ -741,7 +741,7 @@ def _run_bcftools_command(
     if registration is None:
         raise VCFToolError("Persistent BCFtools execution environment registration is missing.")
     environment = execution_environment_profile_from_snapshot(registration.profile_json)
-    executable = str(settings.bcftools_executable)
+    executable = str(command[0])
     if not Path(executable).is_absolute():
         raise VCFToolError("The registered BCFtools executable must be an absolute in-image path.")
     approved_digest = dict(environment.tool_executable_sha256).get(settings.bcftools_profile_id)
@@ -1086,9 +1086,11 @@ def validate_vcf_index_concordance(
 
     from backend.app.config import settings
     configured_executable = bcftools_executable or settings.bcftools_executable
-    executable = shutil.which(configured_executable)
-    if executable is None:
-        raise VCFToolUnavailable("bcftools is required to verify an uploaded VCF index.")
+    executable = str(configured_executable)
+    if not executable or not Path(executable).is_absolute():
+        raise VCFToolUnavailable(
+            "The qualified BCFtools profile must declare an absolute in-image executable for VCF index verification."
+        )
     try:
         version_result = _run_bcftools_command(
             [executable, "--version"],
