@@ -371,6 +371,61 @@ def observed_contigs(vcf: Path) -> set[str]:
     return names
 
 
+def project_vcf_by_reference_contigs(
+    source: Path,
+    projection_path: Path,
+    auxiliary_path: Path,
+    allowed_contigs: set[str],
+) -> dict[str, Any]:
+    """Create an explicit benchmark projection without discarding source records.
+
+    Records on contigs absent from the benchmark FASTA are retained verbatim in
+    a separate auxiliary VCF. They are not declared invalid; they are outside
+    this UCSC-reference-coordinate benchmark until their source sequence
+    identity has been independently established.
+    """
+    opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
+    projection_path.parent.mkdir(parents=True, exist_ok=True)
+    auxiliary_path.parent.mkdir(parents=True, exist_ok=True)
+    auxiliary_counts: dict[str, int] = {}
+    projection_count = 0
+    auxiliary_count = 0
+    header_lines = 0
+    with opener(source, "rt", encoding="utf-8-sig") as input_handle, \
+         projection_path.open("w", encoding="utf-8", newline="\\n") as projection, \
+         auxiliary_path.open("w", encoding="utf-8", newline="\\n") as auxiliary:
+        for raw in input_handle:
+            if raw.startswith("#"):
+                projection.write(raw)
+                auxiliary.write(raw)
+                header_lines += 1
+                continue
+            line = raw.rstrip("\\r\\n")
+            fields = line.split("\\t", 2)
+            if len(fields) < 2:
+                raise RuntimeError(f"Malformed source VCF row while projecting benchmark contigs: {line[:200]!r}")
+            chrom = fields[0]
+            if chrom in allowed_contigs:
+                projection.write(raw)
+                projection_count += 1
+            else:
+                auxiliary.write(raw)
+                auxiliary_count += 1
+                auxiliary_counts[chrom] = auxiliary_counts.get(chrom, 0) + 1
+    if projection_count == 0:
+        raise RuntimeError(f"No records overlap the pinned benchmark reference contigs in {source}")
+    return {
+        "projection_path": str(projection_path),
+        "projection_record_count": projection_count,
+        "auxiliary_path": str(auxiliary_path),
+        "auxiliary_record_count": auxiliary_count,
+        "auxiliary_records_by_contig": dict(sorted(auxiliary_counts.items())),
+        "header_line_count": header_lines,
+        "source_record_count": projection_count + auxiliary_count,
+        "disposition": "CANONICAL_REFERENCE_PROJECTION_WITH_AUXILIARY_RECORDS_PRESERVED",
+    }
+
+
 def run_reference_pipeline(callset: dict[str, Any], fasta: Path, lengths: dict[str, int], root: Path, smoke):
     caller = callset["caller"]
     source = Path(callset["local_path"])
@@ -391,10 +446,17 @@ def run_reference_pipeline(callset: dict[str, Any], fasta: Path, lengths: dict[s
         )
     present_contigs = observed_contigs(source)
     unknown = sorted(present_contigs - set(lengths))
-    if unknown:
-        raise RuntimeError(f"{caller} has records on contigs absent from pinned UCSC reference: {unknown[:30]}")
+    projection_dir = root / f"{caller.lower()}_reference_projection"
+    projection = project_vcf_by_reference_contigs(
+        source,
+        projection_dir / "canonical-reference-projection.vcf",
+        projection_dir / "auxiliary-noncanonical-records.vcf",
+        set(lengths),
+    )
     routed_dir = root / f"{caller.lower()}_full_reference_routed"
-    routed = smoke.route_vcf_records(source, routed_dir, reference_contig_lengths=lengths)
+    routed = smoke.route_vcf_records(
+        projection["projection_path"], routed_dir, reference_contig_lengths=lengths
+    )
     sequence_path = routed.get("sequence_path")
     if not sequence_path or int(routed.get("sequence_records", 0)) <= 0:
         raise RuntimeError(f"{caller}: no sequence-resolved SNV/indel records available for full-reference check")
@@ -417,12 +479,19 @@ def run_reference_pipeline(callset: dict[str, Any], fasta: Path, lengths: dict[s
         },
         "caller_provenance": provenance,
         "reference_contigs_observed_in_vcf": sorted(present_contigs),
-        "unknown_record_contigs": [],
+        "unknown_record_contigs": unknown,
+        "benchmark_reference_projection": projection,
+        "original_reference_identity_status": "UNRESOLVED_SOURCE_REFERENCE_IDENTITY",
+        "auxiliary_contigs_excluded_from_giab_comparison_not_discarded": True,
         "routing": routed,
         "full_reference_ref_check": {
-            "status": "PASS",
-            "method": "SIRALOOM sequence-resolved routing followed by BCFtools 1.25 normalization with full UCSC GRCh38 FASTA and REF check -c e",
+            "status": "PASS_ON_CANONICAL_REFERENCE_PROJECTION",
+            "method": "SIRALOOM sequence-resolved routing of the explicit canonical-contig projection followed by BCFtools 1.25 normalization with full UCSC GRCh38 FASTA and REF check -c e; noncanonical source records are preserved separately and excluded from this benchmark",
             "normalized_records": normalized_strict["records"],
+            "source_reference_identity": "UNRESOLVED_SOURCE_REFERENCE_IDENTITY",
+            "projection_record_count": projection["projection_record_count"],
+            "auxiliary_record_count": projection["auxiliary_record_count"],
+            "auxiliary_records_by_contig": projection["auxiliary_records_by_contig"],
             "output_path": str(normalized), "output_bytes": normalized.stat().st_size,
             "output_sha256": sha256(normalized),
             "source_child_reconciliation": norm.get("source_child_reconciliation"),
@@ -660,7 +729,7 @@ def main() -> int:
                 }
                 report["failures"].append(f"{caller}: {type(error).__name__}: {error}")
         for caller, result in report["callers"].items():
-            if result.get("full_reference_ref_check", {}).get("status") != "PASS":
+            if result.get("full_reference_ref_check", {}).get("status") != "PASS_ON_CANONICAL_REFERENCE_PROJECTION":
                 report["failures"].append(f"{caller}: full-reference REF validation not PASS")
             if result.get("semantic_review_required"):
                 report["failures"].append(f"{caller}: caller semantic deviation remains review-required")
