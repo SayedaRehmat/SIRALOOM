@@ -77,7 +77,7 @@ def assign_qualified_container_environment(db, case, *, created_by):
             pids_limit=256,
             container_user="10001:10001",
         ),
-        workspace_root="/tmp/siraloom-ci-execution",
+        workspace_root="/tmp",
         storage_profile_ids=("ci-local-artifact-store",),
         supported_tool_profile_ids=(profile_id,),
         tool_executable_sha256=((profile_id, executable_digest),),
