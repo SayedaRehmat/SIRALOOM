@@ -774,6 +774,8 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
             "2\t4\t.\tG\tA\t.\tPASS\t.\n"
         )
 
+    Path(str(staged_vcf) + ".csi").write_bytes(b"fixture-index")
+
     records = [
         "1\t1\t.\tA\tG\t.\tPASS\t.\n",
         "1\t2\t.\tC\tT\t.\tPASS\t.\n",
@@ -820,6 +822,8 @@ def test_csi_index_record_counts_reject_mismatch_with_sequential_bgzf_scan(
             "1\t2\t.\tC\tT\t.\tPASS\t.\n"
         )
 
+    Path(str(staged_vcf) + ".csi").write_bytes(b"fixture-index")
+
     def fake_run(command, **kwargs):
         return subprocess.CompletedProcess(
             command, 0, stdout="1\t7\t1\n", stderr=""
@@ -850,6 +854,8 @@ def test_csi_index_validation_compares_indexed_record_streams_with_sequential_bg
     with gzip.open(vcf, "wt", encoding="utf-8", newline="") as handle:
         handle.write("##fileformat=VCFv4.3\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
         handle.writelines(records)
+
+    Path(str(vcf) + ".csi").write_bytes(b"fixture-index")
 
     def fake_run(command, **kwargs):
         if command[1:3] == ["index", "--stats"]:
@@ -885,6 +891,8 @@ def test_csi_index_validation_rejects_same_count_but_different_indexed_records(
     with gzip.open(vcf, "wt", encoding="utf-8", newline="") as handle:
         handle.write("##fileformat=VCFv4.3\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
         handle.write(sequential_record)
+
+    Path(str(vcf) + ".csi").write_bytes(b"fixture-index")
 
     def fake_run(command, **kwargs):
         if command[1:3] == ["index", "--stats"]:
