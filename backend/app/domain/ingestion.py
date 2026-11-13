@@ -4,6 +4,7 @@ import gzip
 import re
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
@@ -104,6 +105,24 @@ def _bcftools_validate(
     persistent_execution,
     workflow_id: str,
 ) -> tuple[str | None, str, str]:
+    # Keep the writable execution workspace separate from the immutable
+    # uploaded VCF. The container executor mounts the input read-only.
+    with tempfile.TemporaryDirectory(prefix="siraloom-vcf-intake-") as workspace_dir:
+        return _bcftools_validate_in_workspace(
+            path,
+            persistent_execution=persistent_execution,
+            workflow_id=workflow_id,
+            workspace=Path(workspace_dir),
+        )
+
+
+def _bcftools_validate_in_workspace(
+    path: Path,
+    *,
+    persistent_execution,
+    workflow_id: str,
+    workspace: Path,
+) -> tuple[str | None, str, str]:
     if persistent_execution is None:
         raise VCFValidationUnavailable(
             "A case-bound qualified execution environment is required for BCFtools VCF intake."
@@ -125,7 +144,7 @@ def _bcftools_validate(
             persistent_execution=persistent_execution,
             workflow_id=workflow_id,
             operation="validate",
-            workspace=path.parent,
+            workspace=workspace,
             input_paths=[],
             output_paths=[],
             timeout_seconds=15,
@@ -178,7 +197,7 @@ def _bcftools_validate(
             persistent_execution=persistent_execution,
             workflow_id=workflow_id,
             operation="validate",
-            workspace=path.parent,
+            workspace=workspace,
             input_paths=[path],
             output_paths=[],
             timeout_seconds=120,
