@@ -197,8 +197,8 @@ jobs:
           curl -fsS http://localhost:5000/v2/ >/dev/null
           docker build --file docker/backend.Dockerfile --tag localhost:5000/siraloom/backend:ci .
           push_output="$(docker push localhost:5000/siraloom/backend:ci 2>&1)"
-          printf '%s\\n' "$push_output"
-          digest="$(printf '%s\\n' "$push_output" | sed -n 's/^ci: digest: \\(sha256:[0-9a-f]\\{64\\}\\) size:.*/\\1/p' | tail -n 1)"
+          printf '%s' "$push_output"
+          digest="$(printf '%s' "$push_output" | grep -oE 'sha256:[0-9a-f]{64}' | tail -n 1)"
           test -n "$digest"
           image="localhost:5000/siraloom/backend@$digest"
           docker pull "$image"
