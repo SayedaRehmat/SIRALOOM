@@ -343,6 +343,18 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
         }
         if not strict_passed:
             return result
+    except Exception as error:
+        result["whole_file_intake_validation"] = {
+            "status": "ERROR",
+            "error_type": type(error).__name__,
+            "errors": [str(error)],
+        }
+        result["whole_file_strict_validation"] = {
+            "status": "FAIL",
+            "error_type": type(error).__name__,
+            "error": str(error),
+        }
+        return result
 
     subset, contig = project_chr20(source, root, reference_length)
     subset_attestation = dragen_gp_attestation(callset, subset)
