@@ -37,8 +37,8 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
             )
             return "FAIDX OK"
         if command[0] == "java":
-            fasta_path = Path(command[2].split("=", 1)[1])
-            dictionary_path = Path(command[3].split("=", 1)[1])
+            fasta_path = Path(command[4].split("=", 1)[1])
+            dictionary_path = Path(command[5].split("=", 1)[1])
             identity = inspect_fasta_sequence_identity(fasta_path)
             dictionary_path.write_text(
                 "@HD\tVN:1.6\tSO:unsorted\n"
