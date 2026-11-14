@@ -28,7 +28,12 @@ def _version_token(value: str) -> str | None:
     return match.group(1) if match else None
 
 
-def _run(command: list[str], *, timeout: int = 180) -> dict[str, Any]:
+def _run(
+    command: list[str],
+    *,
+    timeout: int = 180,
+    stdout_limit: int | None = 4000,
+) -> dict[str, Any]:
     result = subprocess.run(
         command,
         check=False,
@@ -36,10 +41,11 @@ def _run(command: list[str], *, timeout: int = 180) -> dict[str, Any]:
         text=True,
         timeout=timeout,
     )
+    stdout = result.stdout if stdout_limit is None else result.stdout[-stdout_limit:]
     return {
         "command": command,
         "returncode": result.returncode,
-        "stdout": result.stdout[-4000:],
+        "stdout": stdout,
         "stderr": result.stderr[-4000:],
     }
 
@@ -195,6 +201,7 @@ def execute_bcftools_reference_check(
             query = _run(
                 [samtools, "faidx", str(fasta), f"{contig}:1-{query_end}"],
                 timeout=120,
+                stdout_limit=None,
             )
             sequence_query_attempts.append({
                 "contig": contig,
