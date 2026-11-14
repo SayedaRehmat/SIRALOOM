@@ -211,13 +211,13 @@ jobs:
           uv run --locked python scripts/validation/run_real_caller_vcf_smoke.py \
             --work-dir /tmp/siraloom-real-caller-vcfs \
             --report artifacts/real-caller-vcf-report.json
-      - name: Export exact combined BCFtools and EBI runtime lock
+      - name: Export exact standalone EBI runtime lock
         if: always()
         run: |
           mkdir -p artifacts
           micromamba list --explicit --md5 --prefix "$EBI_VCF_VALIDATOR_PREFIX" > artifacts/ebi-vcf-validator-0.10.2-linux-64.lock
           grep -q "vcf-validator-0.10.2-h7a61d87_0" artifacts/ebi-vcf-validator-0.10.2-linux-64.lock
-      - name: Preserve real caller VCF validation report and generated runtime lock
+      - name: Preserve real caller VCF validation report and EBI runtime lock
         if: always()
         uses: actions/upload-artifact@v4
         with:
