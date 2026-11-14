@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+import scripts.validation.run_grch38_giab_three_caller_benchmark as benchmark
 from scripts.validation.run_grch38_giab_three_caller_benchmark import (
     GIAB_BASE,
     GIAB_BED,
@@ -9,6 +10,7 @@ from scripts.validation.run_grch38_giab_three_caller_benchmark import (
     GIAB_VCF,
     STRAT_URL,
     build_fai,
+    create_tabix_index,
     fasta_sequence,
     http_error_context,
     project_vcf_by_reference_contigs,
@@ -120,4 +122,70 @@ def test_project_vcf_fails_when_no_records_match_reference_contigs(tmp_path):
     with pytest.raises(RuntimeError, match="No records overlap"):
         project_vcf_by_reference_contigs(
             source, tmp_path / "projection.vcf", tmp_path / "auxiliary.vcf", {"chr1"}
+        )
+
+
+
+def test_create_tabix_index_requests_tbi_and_validates_it(tmp_path, monkeypatch):
+    vcf = tmp_path / "calls.vcf.gz"
+    vcf.write_bytes(b"compressed-vcf")
+    commands = []
+
+    def fake_run(command, **kwargs):
+        commands.append(command)
+        if "--tbi" in command:
+            (tmp_path / "calls.vcf.gz.tbi").write_bytes(b"tabix-index")
+        return "1"
+
+    monkeypatch.setattr(benchmark, "run", fake_run)
+    index = create_tabix_index(vcf)
+
+    assert index == tmp_path / "calls.vcf.gz.tbi"
+    assert index.read_bytes() == b"tabix-index"
+    assert commands[0] == [
+        "bcftools", "index", "--force", "--tbi", str(vcf)
+    ]
+    assert commands[1] == ["bcftools", "index", "--nrecords", str(vcf)]
+
+
+def test_create_tabix_index_fails_if_bcftools_does_not_create_index(tmp_path, monkeypatch):
+    vcf = tmp_path / "calls.vcf.gz"
+    vcf.write_bytes(b"compressed-vcf")
+    monkeypatch.setattr(benchmark, "run", lambda command, **kwargs: "1")
+
+    with pytest.raises(RuntimeError, match="required RTG Tabix index"):
+        create_tabix_index(vcf)
+
+
+def test_split_variant_types_creates_tabix_indexes_for_both_outputs(tmp_path, monkeypatch):
+    source = tmp_path / "normalized.vcf.gz"
+    source.write_bytes(b"source")
+    commands = []
+
+    def fake_run(command, **kwargs):
+        commands.append(command)
+        if command[1] == "view":
+            Path(command[command.index("-o") + 1]).write_bytes(b"split-vcf")
+        elif "--tbi" in command:
+            Path(command[-1] + ".tbi").write_bytes(b"tabix-index")
+        return "1"
+
+    from pathlib import Path
+
+    monkeypatch.setattr(benchmark, "run", fake_run)
+    outputs = benchmark.split_variant_types(source, tmp_path, "TEST_CALLER")
+
+    assert set(outputs) == {"snv", "indel"}
+    for output in outputs.values():
+        assert Path(str(output) + ".tbi").is_file()
+    assert sum("--tbi" in command for command in commands) == 2
+
+
+def test_rtg_eval_fails_early_with_actionable_message_when_tbi_missing(tmp_path):
+    truth = tmp_path / "truth.vcf.gz"
+    query = tmp_path / "query.vcf.gz"
+    with pytest.raises(RuntimeError, match="requires a readable Tabix index"):
+        benchmark.rtg_eval(
+            "rtg", tmp_path / "reference.sdf", truth, query,
+            tmp_path / "regions.bed", tmp_path / "out",
         )
