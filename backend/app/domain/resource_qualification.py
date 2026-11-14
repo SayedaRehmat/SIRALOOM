@@ -96,7 +96,7 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
         return
     checks["bcftools_version"] = version
     checks["bcftools_tool"] = "bcftools"
-    checks["bcftools_execution"] = "GOVERNED"
+    checks["bcftools_execution"] = "DECLARED_NOT_EXECUTED"
 
 
 def _qualify_vep_runtime(execution: Any, blockers: list[str], checks: dict[str, Any]) -> None:
