@@ -154,6 +154,20 @@ def test_reference_candidate_must_pass_full_package_validation(tmp_path):
     assert result.checks["reference_package"]["contig_count"] == 2
     assert result.checks["checksum_match"] is True
     assert result.checks["staging_expected_checksum_match"] is True
+    assert result.checks["staging_observed_checksum_match"] is True
+    assert result.checks["staging_expected_size_match"] is True
+    assert result.checks["staging_observed_size_match"] is True
+
+
+
+def test_reference_candidate_requires_expected_staging_size(tmp_path):
+    resource, staging = _reference_candidate(tmp_path)
+    staging.expected_size_bytes = None
+
+    result = qualify_resource(resource, staging=staging)
+
+    assert result.passed is False
+    assert "STAGING_EXPECTED_SIZE_MISSING" in result.blockers
 
 
 def test_reference_candidate_is_blocked_when_fasta_bytes_change(tmp_path):
