@@ -46,7 +46,8 @@ def verify_publisher_checksum_evidence(
     algorithm = str(evidence.get("algorithm") or "").lower()
     expected = str(evidence.get("expected_digest") or "").lower()
     evidence_path = Path(str(evidence.get("evidence_file_path") or ""))
-    artifact = Path(artifact_path)
+    package_fasta = Path(artifact_path)
+    artifact = Path(str(evidence.get("verified_artifact_path") or package_fasta))
     artifact_filename = str(evidence.get("artifact_filename") or "")
     artifact_url = str(source_contract.get("artifact_url") or "")
     url_filename = Path(urlparse(artifact_url).path).name
@@ -63,7 +64,7 @@ def verify_publisher_checksum_evidence(
             "publisher checksum evidence URL must be HTTPS",
             code="PUBLISHER_EVIDENCE_URL_INVALID",
         )
-    if not evidence_path.is_file() or not artifact.is_file():
+    if not evidence_path.is_file() or not artifact.is_file() or not package_fasta.is_file():
         raise PublisherChecksumError(
             "publisher checksum evidence file or downloaded artifact is missing",
             code="PUBLISHER_EVIDENCE_FILE_MISSING",
@@ -110,4 +111,7 @@ def verify_publisher_checksum_evidence(
         "evidence_file_url": evidence_url,
         "artifact_url": artifact_url,
         "artifact_filename": artifact_filename,
+        "publisher_artifact_sha256": _digest_file(artifact, "sha256"),
+        "publisher_artifact_size_bytes": artifact.stat().st_size,
+        "qualified_fasta_path": str(package_fasta),
     }
