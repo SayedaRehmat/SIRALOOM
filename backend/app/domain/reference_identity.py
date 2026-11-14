@@ -158,10 +158,10 @@ def validate_sequence_dictionary(
         if line.startswith("@HD"):
             saw_header = True
             continue
-        if not line.startswith("@SQ\\t"):
+        if not line.startswith("@SQ\t"):
             continue
         fields: dict[str, str] = {}
-        for item in line.split("\\t")[1:]:
+        for item in line.split("\t")[1:]:
             if ":" in item:
                 key, value = item.split(":", 1)
                 fields[key] = value
