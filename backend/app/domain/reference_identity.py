@@ -53,13 +53,18 @@ def seqcol_digest(names: list[str], lengths: list[int], sequences: list[str]) ->
         "names": names,
         "sequences": sequences,
     }
+
+    def _seqcol_attribute_digest(value: Any) -> str:
+        digest = hashlib.sha512(_canonical_json(value)).digest()[:24]
+        return base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
+
     level_one = {
-        key: ga4gh_digest_bytes(_canonical_json(value))
+        key: _seqcol_attribute_digest(value)
         for key, value in attributes.items()
     }
     # The approved minimal schema marks names and sequences as inherent.
     inherent = {"names": level_one["names"], "sequences": level_one["sequences"]}
-    return ga4gh_digest_bytes(_canonical_json(inherent))
+    return _seqcol_attribute_digest(inherent)
 
 
 def inspect_fasta_sequence_identity(fasta_path: str | Path) -> dict[str, Any]:
