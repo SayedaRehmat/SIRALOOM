@@ -36,7 +36,7 @@ def _reference_candidate(tmp_path: Path):
         fai_sha256=fai_sha,
         contigs_sha256=contigs_sha,
         assembly_name="GRCh38",
-        assembly_accession="GCF_000001405.40",
+        assembly_accession="GCF_TEST_GRCH38_FIXTURE",
         reference_source="NCBI_REFSEQ",
         sequence_scope="FULL_GENOMIC_FASTA",
     )
@@ -56,7 +56,7 @@ def _reference_candidate(tmp_path: Path):
         metadata_json={
             "schema_version": REFERENCE_PACKAGE_SCHEMA_VERSION,
             "assembly_name": "GRCh38",
-            "assembly_accession": "GCF_000001405.40",
+            "assembly_accession": "GCF_TEST_GRCH38_FIXTURE",
             "reference_source": "NCBI_REFSEQ",
             "sequence_scope": "FULL_GENOMIC_FASTA",
             "contig_policy": "EXACT",
@@ -113,7 +113,7 @@ def test_reference_candidate_must_pass_full_package_validation(tmp_path):
 
     assert result.passed is True
     assert result.checks["reference_package"]["status"] == "VERIFIED"
-    assert result.checks["reference_package"]["assembly_accession"] == "GCF_000001405.40"
+    assert result.checks["reference_package"]["assembly_accession"] == "GCF_TEST_GRCH38_FIXTURE"
     assert result.checks["reference_package"]["contig_count"] == 2
     assert result.checks["checksum_match"] is True
     assert result.checks["staging_expected_checksum_match"] is True
