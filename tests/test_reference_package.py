@@ -515,8 +515,8 @@ def test_reference_package_rejects_dictionary_with_wrong_m5_even_if_dictionary_c
     resource, _fasta, _fai = make_package(tmp_path)
     dictionary = Path(resource.metadata_json["dictionary_path"])
     dictionary.write_text(
-        "@HD\\tVN:1.6\\tSO:unsorted\\n"
-        "@SQ\\tSN:1\\tLN:7\\tM5:00000000000000000000000000000000\\n",
+        "@HD\tVN:1.6\tSO:unsorted\n"
+        "@SQ\tSN:1\tLN:7\tM5:00000000000000000000000000000000\n",
         encoding="ascii",
     )
     resource.metadata_json["dictionary_sha256"] = sha256_file(dictionary)
