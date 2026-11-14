@@ -17,6 +17,7 @@ from backend.app.domain.reference_registry import (
     validate_reference_registration,
 )
 from backend.app.domain.resource_qualification import qualify_resource
+from backend.app.domain.reference_identity import inspect_fasta_sequence_identity
 
 
 def _reference_candidate(tmp_path: Path):
