@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.domain.local_uri import local_path_from_uri
-from backend.app.domain.reference_package import ReferencePackageError, validate_reference_package\nfrom backend.app.domain.reference_provenance import PublisherChecksumError, verify_publisher_checksum_evidence
+from backend.app.domain.reference_package import ReferencePackageError, validate_reference_package
+from backend.app.domain.reference_provenance import PublisherChecksumError, verify_publisher_checksum_evidence
 from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
     validate_execution_contract,
