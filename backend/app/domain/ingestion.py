@@ -210,6 +210,7 @@ def validate_vcf(
     bcftools_version: str | None = None
     htslib_version: str | None = None
     ebi_validation: dict | None = None
+    ebi_error_code: str | None = None
     try:
         try:
             caller_evidence = inspect_caller_provenance(p)
@@ -219,9 +220,15 @@ def validate_vcf(
                 profile_id=settings.ebi_vcf_validator_profile_id,
                 caller_provenance=caller_evidence,
             )
+            fileformat = ebi_validation.get("vcf_version")
         except EBIValidatorUnavailable as exc:
             raise VCFValidationUnavailable(str(exc)) from exc
         if ebi_validation.get("status") != "PASS":
+            ebi_error_code = (
+                "EBI_VCF_VERSION_NOT_SUPPORTED"
+                if ebi_validation.get("status") == "NOT_SUPPORTED"
+                else "EBI_VCF_VALIDATION_FAILED"
+            )
             reason = ebi_validation.get("reason") or (
                 "EBI vcf-validator rejected the VCF "
                 f"(exit_code={ebi_validation.get('exit_code')})."
@@ -430,7 +437,10 @@ def validate_vcf(
         return ValidationResult(
             "INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat,
             failure_metadata,
-            exc.code if isinstance(exc, StrictVCFValidationError) else None,
+            (
+                ebi_error_code
+                or (exc.code if isinstance(exc, StrictVCFValidationError) else None)
+            ),
         )
 
 
