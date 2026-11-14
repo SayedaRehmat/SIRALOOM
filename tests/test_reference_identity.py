@@ -34,7 +34,7 @@ def test_fasta_sequence_identity_is_per_contig_and_ordered(tmp_path: Path):
     assert [entry["name"] for entry in identity["sequences"]] == ["chr1", "chrM"]
     assert identity["sequences"][0]["ga4gh"] == identity["sequences"][1]["ga4gh"]
     assert identity["sequences"][0]["md5"] == identity["sequences"][1]["md5"]
-    assert identity["sequence_collection_digest"].startswith("")
+    assert len(identity["sequence_collection_digest"]) == 32
 
 
 def test_sequence_dictionary_must_match_order_length_and_md5(tmp_path: Path):
