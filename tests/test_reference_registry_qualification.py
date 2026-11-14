@@ -157,6 +157,7 @@ def test_reference_registration_rejects_implicit_contig_alias_policy(tmp_path):
         validate_reference_registration(
             manifest,
             genome_build="GRCh38",
+            package_version=resource.version,
             package_checksum=resource.checksum,
         )
     assert exc.value.code == "REFERENCE_CONTIG_POLICY_INVALID"
@@ -172,6 +173,7 @@ def test_reference_registration_rejects_build_and_assembly_name_disagreement(tmp
         validate_reference_registration(
             manifest,
             genome_build="GRCh37",
+            package_version=resource.version,
             package_checksum=resource.checksum,
         )
     assert exc.value.code == "REFERENCE_BUILD_IDENTITY_MISMATCH"
@@ -188,6 +190,7 @@ def test_reference_registration_requires_ordered_contig_manifest(tmp_path):
         validate_reference_registration(
             manifest,
             genome_build="GRCh38",
+            package_version=resource.version,
             package_checksum=resource.checksum,
         )
     assert exc.value.code == "REFERENCE_CONTIG_MANIFEST_INVALID"
