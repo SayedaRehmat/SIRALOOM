@@ -432,3 +432,32 @@ def test_database_lifecycle_supersedes_only_after_new_release_qualifies_and_acti
         assert db.get(ResourceQualification, first_qualification.id).status == "QUALIFIED"
         assert db.get(ResourceQualification, second_qualification.id).status == "QUALIFIED"
     engine.dispose()
+
+
+
+def test_reference_qualification_blocks_tampered_publisher_checksum_manifest(tmp_path):
+    resource, staging = _reference_candidate(tmp_path)
+    evidence_path = Path(
+        resource.metadata_json["source_contract"]["publisher_checksum_evidence"]["evidence_file_path"]
+    )
+    evidence_path.write_text("0" * 32 + "  GRCh38.fa\n", encoding="ascii")
+
+    result = qualify_resource(resource, staging=staging)
+
+    assert result.passed is False
+    assert "PUBLISHER_EVIDENCE_FILE_CHECKSUM_MISMATCH" in result.blockers
+    assert result.checks["publisher_checksum_evidence"]["status"] == "BLOCKED"
+
+
+def test_reference_qualification_blocks_artifact_digest_not_in_publisher_manifest(tmp_path):
+    resource, staging = _reference_candidate(tmp_path)
+    evidence = resource.metadata_json["source_contract"]["publisher_checksum_evidence"]
+    evidence["expected_digest"] = "0" * 32
+    evidence_path = Path(evidence["evidence_file_path"])
+    evidence_path.write_text("0" * 32 + "  GRCh38.fa\n", encoding="ascii")
+    evidence["evidence_file_sha256"] = sha256_file(evidence_path)
+
+    result = qualify_resource(resource, staging=staging)
+
+    assert result.passed is False
+    assert "PUBLISHER_ARTIFACT_CHECKSUM_MISMATCH" in result.blockers
