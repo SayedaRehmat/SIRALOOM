@@ -59,11 +59,12 @@ jobs:
             --bcftools "$(command -v bcftools)" \
             --picard-jar "${{ steps.picard.outputs.jar }}"
 
-      - name: Execute SIRALOOM reference package qualification
+      - name: Register and persist SIRALOOM qualification in disposable SQLite registry
         shell: bash -el {0}
         run: |
-          uv run python scripts/reference/qualify_reference_package_manifest.py \
+          uv run python scripts/reference/register_and_qualify_reference_package.py \
             --manifest "$RUNNER_TEMP/grch38-full-plus-hs38d1/reference-package.json" \
+            --database-url "sqlite+pysqlite:///$RUNNER_TEMP/grch38-reference-registry.sqlite" \
             --report "$RUNNER_TEMP/grch38-full-plus-hs38d1/qualification-report.json"
 
       - name: Upload package manifest and qualification evidence
