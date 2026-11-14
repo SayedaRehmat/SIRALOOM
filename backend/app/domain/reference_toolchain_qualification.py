@@ -206,6 +206,7 @@ def execute_bcftools_reference_check(
             sequence_query_attempts.append({
                 "contig": contig,
                 "region": f"{contig}:1-{query_end}",
+                "command": query["command"],
                 "returncode": query["returncode"],
                 "stderr": query["stderr"],
             })
@@ -296,9 +297,15 @@ def execute_bcftools_reference_check(
                 ),
                 None,
             )
-            snv_passed = valid_result["returncode"] == 0 and normalized_snv is not None
+            output_record_count = len(output_records)
+            snv_passed = (
+                valid_result["returncode"] == 0
+                and output_record_count == 2
+                and normalized_snv is not None
+            )
             indel_left_aligned = bool(
                 valid_result["returncode"] == 0
+                and output_record_count == 2
                 and normalized_indel is not None
                 and int(normalized_indel[1]) < insertion_position
             )
@@ -306,6 +313,7 @@ def execute_bcftools_reference_check(
                 "status": "PASS" if snv_passed else "FAIL",
                 "command": valid_command,
                 "returncode": valid_result["returncode"],
+                "output_record_count": output_record_count,
                 "record": normalized_snv,
                 "stderr": valid_result["stderr"],
             }
@@ -313,6 +321,7 @@ def execute_bcftools_reference_check(
                 "status": "PASS" if indel_left_aligned else "FAIL",
                 "command": valid_command,
                 "returncode": valid_result["returncode"],
+                "output_record_count": output_record_count,
                 "input_position": insertion_position,
                 "normalized_position": int(normalized_indel[1]) if normalized_indel else None,
                 "left_aligned": indel_left_aligned,
