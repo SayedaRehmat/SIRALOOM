@@ -31,7 +31,7 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
         if command[0] == "samtools" and command[1] == "faidx":
             fasta_path = Path(command[2])
             data = fasta_path.read_bytes()
-            first_offset = data.index(b"ACGT")
+            first_offset = data.index(b"ACAAAAGT")
             second_offset = data.index(b"TGCA")
             Path(str(fasta_path) + ".fai").write_text(
                 f"chr1\t4\t{first_offset}\t4\t5\n"
