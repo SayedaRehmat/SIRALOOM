@@ -27,9 +27,14 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
-      - name: Install pinned EBI VCF validator package build
-        run: micromamba install --yes --name bcftools --channel conda-forge --channel bioconda "vcf-validator=0.10.2=h7a61d87_0"
-      - name: Verify EBI VCF validator and assembly checker
+      - name: Create isolated pinned EBI VCF validator runtime
+        run: |
+          prefix="$RUNNER_TEMP/ebi-vcf-validator-0.10.2"
+          micromamba create --yes --prefix "$prefix" --channel conda-forge --channel bioconda "vcf-validator=0.10.2=h7a61d87_0"
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          echo "EBI_VCF_VALIDATOR_PREFIX=$prefix" >> "$GITHUB_ENV"
+          echo "EBI_VCF_VALIDATOR_EXECUTABLE=$prefix/bin/vcf_validator" >> "$GITHUB_ENV"
+      - name: Verify isolated EBI VCF validator and assembly checker
         run: |
           test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
           test -x "$(command -v vcf_assembly_checker)"
@@ -125,9 +130,14 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
-      - name: Install pinned EBI VCF validator package build
-        run: micromamba install --yes --name bcftools --channel conda-forge --channel bioconda "vcf-validator=0.10.2=h7a61d87_0"
-      - name: Verify EBI VCF validator and assembly checker
+      - name: Create isolated pinned EBI VCF validator runtime
+        run: |
+          prefix="$RUNNER_TEMP/ebi-vcf-validator-0.10.2"
+          micromamba create --yes --prefix "$prefix" --channel conda-forge --channel bioconda "vcf-validator=0.10.2=h7a61d87_0"
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          echo "EBI_VCF_VALIDATOR_PREFIX=$prefix" >> "$GITHUB_ENV"
+          echo "EBI_VCF_VALIDATOR_EXECUTABLE=$prefix/bin/vcf_validator" >> "$GITHUB_ENV"
+      - name: Verify isolated EBI VCF validator and assembly checker
         run: |
           test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
           test -x "$(command -v vcf_assembly_checker)"
@@ -173,9 +183,14 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
-      - name: Install pinned EBI VCF validator package build
-        run: micromamba install --yes --name bcftools --channel conda-forge --channel bioconda "vcf-validator=0.10.2=h7a61d87_0"
-      - name: Verify EBI VCF validator and assembly checker
+      - name: Create isolated pinned EBI VCF validator runtime
+        run: |
+          prefix="$RUNNER_TEMP/ebi-vcf-validator-0.10.2"
+          micromamba create --yes --prefix "$prefix" --channel conda-forge --channel bioconda "vcf-validator=0.10.2=h7a61d87_0"
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          echo "EBI_VCF_VALIDATOR_PREFIX=$prefix" >> "$GITHUB_ENV"
+          echo "EBI_VCF_VALIDATOR_EXECUTABLE=$prefix/bin/vcf_validator" >> "$GITHUB_ENV"
+      - name: Verify isolated EBI VCF validator and assembly checker
         run: |
           test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
           test -x "$(command -v vcf_assembly_checker)"
@@ -200,8 +215,8 @@ jobs:
         if: always()
         run: |
           mkdir -p artifacts
-          micromamba list --explicit --md5 --name bcftools > artifacts/bcftools-ebi-vcf-validator-linux-64.lock
-          grep -q "vcf-validator-0.10.2-h7a61d87_0" artifacts/bcftools-ebi-vcf-validator-linux-64.lock
+          micromamba list --explicit --md5 --prefix "$EBI_VCF_VALIDATOR_PREFIX" > artifacts/ebi-vcf-validator-0.10.2-linux-64.lock
+          grep -q "vcf-validator-0.10.2-h7a61d87_0" artifacts/ebi-vcf-validator-0.10.2-linux-64.lock
       - name: Preserve real caller VCF validation report and generated runtime lock
         if: always()
         uses: actions/upload-artifact@v4
@@ -209,7 +224,7 @@ jobs:
           name: real-caller-vcf-validation-evidence
           path: |
             artifacts/real-caller-vcf-report.json
-            artifacts/bcftools-ebi-vcf-validator-linux-64.lock
+            artifacts/ebi-vcf-validator-0.10.2-linux-64.lock
           if-no-files-found: warn
 
   frontend:
