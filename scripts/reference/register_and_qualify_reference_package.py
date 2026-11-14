@@ -5,14 +5,16 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from uuid import uuid4
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from backend.app.domain.reference_registry import (
     qualify_reference_package_resource,
     register_reference_package,
+)
+from backend.app.domain.resource_staging import (
+    create_staging_candidate,
+    verify_existing_local_artifact,
 )
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceStaging
@@ -25,10 +27,15 @@ def register_and_qualify(manifest_path: Path, database_url: str) -> dict:
             "use the governed application service and approved database migration path for production"
         )
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    required = ("package_version", "package_checksum", "assembly_name", "fasta_path", "fasta_sha256")
-    missing = [key for key in required if not manifest.get(key)]
+    required = (
+        "package_version", "package_checksum", "assembly_name",
+        "fasta_path", "fasta_sha256", "fasta_size_bytes",
+    )
+    missing = [key for key in required if manifest.get(key) is None or manifest.get(key) == ""]
     if missing:
         raise ValueError("package manifest missing required fields: " + ", ".join(missing))
+    if not isinstance(manifest["fasta_size_bytes"], int) or manifest["fasta_size_bytes"] <= 0:
+        raise ValueError("package manifest fasta_size_bytes must be a positive integer")
 
     engine = create_engine(database_url, pool_pre_ping=True)
     try:
@@ -52,28 +59,23 @@ def register_and_qualify(manifest_path: Path, database_url: str) -> dict:
                 source_contract=manifest["source_contract"],
                 execution_contract=manifest["execution"],
             )
-            staging = ResourceStaging(
-                id=uuid4(),
-                resource_id=resource.id,
-                resource_version=resource.version,
-                staging_key=f"ncbi:{resource.version}",
+            staging = create_staging_candidate(
+                db,
+                resource=resource,
                 source_uri=manifest["source_contract"]["artifact_url"],
                 destination_uri=str(manifest["fasta_path"]),
                 storage_backend="LOCAL_FILESYSTEM",
-                status="STAGED",
                 expected_sha256=str(manifest["fasta_sha256"]),
-                observed_sha256=str(manifest["fasta_sha256"]),
-                expected_size_bytes=Path(manifest["fasta_path"]).stat().st_size,
-                observed_size_bytes=Path(manifest["fasta_path"]).stat().st_size,
-                metadata_json={
+                expected_size_bytes=int(manifest["fasta_size_bytes"]),
+                staging_key=f"ncbi:{resource.version}",
+                metadata={
                     "publisher_artifact_url": manifest["source_contract"]["artifact_url"],
                     "publisher_evidence_file_sha256": manifest["source_contract"][
                         "publisher_checksum_evidence"
                     ]["evidence_file_sha256"],
                 },
             )
-            db.add(staging)
-            db.flush()
+            staging = verify_existing_local_artifact(db, staging)
             result, qualification = qualify_reference_package_resource(
                 db,
                 resource_id=resource.id,
