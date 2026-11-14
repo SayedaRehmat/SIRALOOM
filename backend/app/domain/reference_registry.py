@@ -175,7 +175,7 @@ def validate_reference_registration(
             or sequence.get("name") != contig["name"]
             or sequence.get("length") != contig["length"]
             or not re.fullmatch(r"[0-9a-f]{32}", str(sequence.get("md5") or "").lower())
-            or not re.fullmatch(r"SQ\\.[A-Za-z0-9_-]{32}", str(sequence.get("ga4gh") or ""))
+            or not re.fullmatch(r"SQ\.[A-Za-z0-9_-]{32}", str(sequence.get("ga4gh") or ""))
         ):
             raise ReferenceRegistryError(
                 f"sequence_manifest entry {index} is not a valid Refget sequence identity",
