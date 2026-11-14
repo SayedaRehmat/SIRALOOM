@@ -73,6 +73,7 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
     assert manifest["schema_version"] == "1.2"
     assert manifest["package_version"].startswith("ncbi-GCA_000001405.15")
     assert manifest["execution"]["toolchain"]["bcftools"]["version"] == "bcftools 1.21"
+    assert manifest["fasta_size_bytes"] == Path(manifest["fasta_path"]).stat().st_size
     assert manifest["qualification_preview"]["publisher_checksum"] == "VERIFIED"
 
     source_contract = manifest["source_contract"]
