@@ -67,7 +67,7 @@ def _find_indel_test_sequence(sequence: str) -> tuple[int, int, int] | None:
         end = index + 2
         while end < len(sequence) and sequence[end] == base:
             end += 1
-        if end - start >= 3 and end < len(sequence):
+        if start >= 1 and end - start >= 3 and end < len(sequence):
             snv_index = next(
                 (
                     candidate
