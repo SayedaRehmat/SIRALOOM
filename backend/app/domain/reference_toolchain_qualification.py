@@ -72,7 +72,7 @@ def _find_indel_test_sequence(sequence: str) -> tuple[int, int, int] | None:
                 (
                     candidate
                     for candidate, observed in enumerate(sequence)
-                    if observed in canonical and not start <= candidate < end
+                    if observed in canonical and not start - 1 <= candidate <= end
                 ),
                 None,
             )
