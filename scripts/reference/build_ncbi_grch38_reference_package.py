@@ -208,7 +208,10 @@ def build_package(output_dir: Path, *, samtools: str, picard_jar: Path, bcftools
             "execution_scope": "SIRALOOM_MANAGED",
             "toolchain": {
                 "samtools": samtools_version.splitlines()[0] if samtools_version else "EXECUTED",
-                "samtools_faidx": "EXECUTED",
+                "samtools_faidx": {
+                    "status": "EXECUTED",
+                    "output": samtools_output[-1000:],
+                },
                 "bcftools": {"version": bcftools_version.splitlines()[0] if bcftools_version else "UNKNOWN"},
                 "picard": picard_output.splitlines()[0] if picard_output else "EXECUTED",
             },
