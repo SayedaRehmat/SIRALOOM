@@ -19,6 +19,11 @@ from backend.app.infrastructure.db.models import Resource, ResourceQualification
 
 
 def register_and_qualify(manifest_path: Path, database_url: str) -> dict:
+    if not database_url.startswith(("sqlite+pysqlite:///", "sqlite:///")):
+        raise ValueError(
+            "this qualification harness is restricted to disposable SQLite databases; "
+            "use the governed application service and approved database migration path for production"
+        )
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     required = ("package_version", "package_checksum", "assembly_name", "fasta_path", "fasta_sha256")
     missing = [key for key in required if not manifest.get(key)]
