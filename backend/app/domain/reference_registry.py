@@ -126,6 +126,23 @@ def validate_reference_registration(
             "package checksum does not bind the supplied manifest and version",
             code="REFERENCE_PACKAGE_CHECKSUM_MISMATCH",
         )
+    if not _SHA256.fullmatch(str(manifest.get("dictionary_sha256") or "").lower()):
+        raise ReferenceRegistryError(
+            "dictionary_sha256 must be a 64-character SHA-256 digest",
+            code="REFERENCE_MANIFEST_DIGEST_INVALID",
+        )
+    seqcol = str(manifest.get("sequence_collection_digest") or "")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{32}", seqcol):
+        raise ReferenceRegistryError(
+            "sequence_collection_digest must be a GA4GH Seqcol v1.0 digest",
+            code="REFERENCE_SEQUENCE_COLLECTION_DIGEST_INVALID",
+        )
+    sequence_manifest = manifest.get("sequence_manifest")
+    if not isinstance(sequence_manifest, list) or not sequence_manifest:
+        raise ReferenceRegistryError(
+            "sequence_manifest must be a non-empty ordered list",
+            code="REFERENCE_SEQUENCE_IDENTITY_MANIFEST_INVALID",
+        )
     contigs = manifest.get("contigs")
     if not isinstance(contigs, list) or not contigs:
         raise ReferenceRegistryError(
@@ -147,6 +164,23 @@ def validate_reference_registration(
                 code="REFERENCE_CONTIG_MANIFEST_INVALID",
             )
         seen.add(name)
+    if len(sequence_manifest) != len(contigs):
+        raise ReferenceRegistryError(
+            "sequence_manifest and contigs must have identical cardinality",
+            code="REFERENCE_SEQUENCE_IDENTITY_MANIFEST_INVALID",
+        )
+    for index, (sequence, contig) in enumerate(zip(sequence_manifest, contigs)):
+        if (
+            not isinstance(sequence, dict)
+            or sequence.get("name") != contig["name"]
+            or sequence.get("length") != contig["length"]
+            or not re.fullmatch(r"[0-9a-f]{32}", str(sequence.get("md5") or "").lower())
+            or not re.fullmatch(r"SQ\\.[A-Za-z0-9_-]{32}", str(sequence.get("ga4gh") or ""))
+        ):
+            raise ReferenceRegistryError(
+                f"sequence_manifest entry {index} is not a valid Refget sequence identity",
+                code="REFERENCE_SEQUENCE_IDENTITY_MANIFEST_INVALID",
+            )
     if schema in {REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION, "1.1"}:
         if not manifest.get("gzi_path") or not _SHA256.fullmatch(str(manifest.get("gzi_sha256") or "").lower()):
             raise ReferenceRegistryError(
