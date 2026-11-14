@@ -135,11 +135,21 @@ uv run python scripts/reference/build_ncbi_grch38_reference_package.py \
   --picard-jar /opt/picard/picard.jar
 ```
 
-The builder deliberately reports `BUILT_NOT_REGISTERED`. The manifest must
-then be registered as a `CANDIDATE`, staged in the target environment, run
-through persisted qualification, reviewed, and explicitly activated. This PR
-does not claim that the full NCBI genome has already been downloaded or
-activated in the SIRALOOM production database. The NCBI source set is an
+The builder deliberately reports `BUILT_NOT_REGISTERED`. The manual workflow
+then calls `scripts/reference/register_and_qualify_reference_package.py` to
+register the package as `CANDIDATE`, stage the exact FASTA artifact, execute
+the same qualification engine, and persist the resource, staging record, and
+qualification in a disposable SQLite registry. The SQLite database and
+qualification report are retained as CI artifacts. Activation is deliberately
+not requested by this workflow.
+
+This disposable registry run proves the complete acquisition-to-persisted-
+qualification path against the real NCBI bytes. It does not register or activate
+the package in a SIRALOOM production/laboratory database. Production registration
+must use the deployed application's governed database service, storage backend,
+and migration state; production activation remains a separate governance
+decision. The real NCBI acquisition workflow must be run before claiming that
+the selected package has passed full-genome qualification. The NCBI source set is an
 assembly-analysis collection based on GCA_000001405.15; it must not be
 mislabelled as RefSeq `GCF_000001405.40` or as a DRAGEN multigenome bundle.
 
@@ -170,8 +180,10 @@ Run the focused package and registry tests:
 
 ```bash
 uv run --locked pytest -q \
+  tests/test_reference_identity.py \
   tests/test_reference_package.py \
   tests/test_reference_registry_qualification.py \
+  tests/test_ncbi_reference_builder.py \
   tests/test_reference_resource_registry.py \
   tests/test_resource_qualification.py
 ```
