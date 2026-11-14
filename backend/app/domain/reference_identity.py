@@ -39,7 +39,11 @@ def _canonical_json(value: Any) -> bytes:
 
 
 def seqcol_digest(names: list[str], lengths: list[int], sequences: list[str]) -> str:
-    """Compute the GA4GH Refget Sequence Collections v1.0 minimal-schema digest."""
+    """Compute the GA4GH Refget Sequence Collections v1.0 minimal-schema digest.
+
+    Seqcol digests are unprefixed; the ``SQ.`` prefix is reserved for individual
+    Refget sequence identifiers.
+    """
     if not names or not (len(names) == len(lengths) == len(sequences)):
         raise ReferenceIdentityError("sequence collection arrays must be non-empty and collated")
     if any(not isinstance(n, str) or not n for n in names):
