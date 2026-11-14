@@ -21,6 +21,7 @@ from backend.app.domain.reference_registry import (
     validate_reference_registration,
 )
 from backend.app.domain.resource_qualification import qualify_resource
+from backend.app.domain.resources import ResourceRegistryError
 from backend.app.domain.reference_identity import inspect_fasta_sequence_identity
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceStaging
@@ -367,7 +368,7 @@ def test_database_lifecycle_persists_failed_qualification_and_blocks_activation(
     engine = _reference_db_engine()
     with Session(engine) as db:
         resource, staging = _register_and_stage_reference(db, fixture)
-        Path(resource.location).write_text(">chr1\\nTTTTTTTT\\n>chrM\\nACGT\\n", encoding="ascii")
+        Path(resource.location).write_text(">chr1\nTTTTTTTT\n>chrM\nACGT\n", encoding="ascii")
 
         result, persisted = qualify_reference_package_resource(
             db,
