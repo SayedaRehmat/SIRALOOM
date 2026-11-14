@@ -24,7 +24,7 @@ def _stub_ebi_validator_for_siraloom_unit_tests(monkeypatch: pytest.MonkeyPatch)
     """Keep ingestion unit tests focused on SIRALOOM rules, not the native EBI binary."""
     def fake_validator(path, **kwargs):
         source = Path(path)
-        with (gzip.open(source, "rt", encoding="utf-8") if source.name.endswith(".gz") else source.open("rt", encoding="utf-8")) as handle:
+        with (gzip.open(source, "rt", encoding="utf-8") if source.name.lower().endswith((".gz", ".bgz")) else source.open("rt", encoding="utf-8")) as handle:
             fileformat = next(
                 (line.rstrip("\\r\\n").split("=", 1)[1] for line in handle if line.startswith("##fileformat=")),
                 None,
