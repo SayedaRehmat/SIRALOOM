@@ -13,6 +13,7 @@ from backend.app.domain.reference_package import (
 )
 from backend.app.domain.reference_registry import (
     ReferenceRegistryError,
+    register_reference_package,
     validate_reference_registration,
 )
 from backend.app.domain.resource_qualification import qualify_resource
@@ -190,3 +191,55 @@ def test_reference_registration_requires_ordered_contig_manifest(tmp_path):
             package_checksum=resource.checksum,
         )
     assert exc.value.code == "REFERENCE_CONTIG_MANIFEST_INVALID"
+
+
+
+class _RegistryDB:
+    def __init__(self):
+        self.rows = []
+
+    def scalar(self, _query):
+        return None
+
+    def scalars(self, _query):
+        class _Rows:
+            @staticmethod
+            def all():
+                return []
+        return _Rows()
+
+    def add(self, row):
+        self.rows.append(row)
+
+    def flush(self):
+        return None
+
+
+def test_reference_registration_creates_candidate_in_existing_resource_registry(tmp_path):
+    resource, _staging = _reference_candidate(tmp_path)
+    metadata = resource.metadata_json
+    manifest = {
+        key: value for key, value in metadata.items()
+        if key not in {"source_contract", "execution"}
+    }
+    db = _RegistryDB()
+
+    registered, created = register_reference_package(
+        db,
+        name=resource.name,
+        provider=resource.provider,
+        version=resource.version,
+        genome_build=resource.genome_build,
+        manifest=manifest,
+        package_checksum=resource.checksum,
+        source_contract=metadata["source_contract"],
+        execution_contract=metadata["execution"],
+    )
+
+    assert created is True
+    assert registered.resource_type == "REFERENCE_PACKAGE"
+    assert registered.status == "CANDIDATE"
+    assert registered.checksum == resource.checksum
+    assert registered.location == metadata["fasta_path"]
+    assert registered.metadata_json["registry_contract"] == "siraloom.reference-registry.v1"
+    assert registered in db.rows
