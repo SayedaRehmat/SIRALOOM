@@ -7,6 +7,7 @@ from backend.app.domain.reference_identity import inspect_fasta_sequence_identit
 from backend.app.domain.reference_package import validate_reference_package
 from backend.app.domain.reference_provenance import verify_publisher_checksum_evidence
 from scripts.reference import build_ncbi_grch38_reference_package as builder
+from scripts.reference.register_and_qualify_reference_package import register_and_qualify
 
 
 def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifest(tmp_path, monkeypatch):
@@ -98,3 +99,12 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
     )
     assert package["sequence_collection_digest"] == manifest["sequence_collection_digest"]
     assert package["dictionary_identity"]["status"] == "VERIFIED"
+
+    registry_report = register_and_qualify(
+        tmp_path / "built" / "reference-package.json",
+        f"sqlite+pysqlite:///{tmp_path / 'registry.sqlite'}",
+    )
+    assert registry_report["passed"] is True
+    assert registry_report["resource_status"] == "QUALIFIED"
+    assert registry_report["qualification_status"] == "QUALIFIED"
+    assert registry_report["activation"] == "NOT_REQUESTED_REQUIRES_SEPARATE_GOVERNANCE_APPROVAL"
