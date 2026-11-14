@@ -20,7 +20,8 @@ from backend.app.domain.reference_package import (
     validate_fasta_index_consistency,
     validate_reference_package,
 )
-from backend.app.domain.reference_identity import inspect_fasta_sequence_identity\nfrom backend.app.domain.vcf_validation import (
+from backend.app.domain.reference_identity import inspect_fasta_sequence_identity
+from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
