@@ -46,6 +46,7 @@ def run_ebi_vcf_validator(
     *,
     expected_version: str = "0.10.2",
     profile_id: str = "ebi-vcf-validator-0.10.2-linux-64",
+    caller_provenance: dict | None = None,
     timeout_seconds: int = 3600,
 ) -> dict:
     """Run EBI syntax/semantic validation and return immutable run evidence.
@@ -62,6 +63,14 @@ def run_ebi_vcf_validator(
         "validator_profile_id": profile_id,
         "artifact_sha256": _sha256(source),
         "vcf_version": fileformat,
+        "caller": (
+            (caller_provenance or {}).get("caller_profile_id")
+            or (caller_provenance or {}).get("caller")
+            or "UNKNOWN"
+        ),
+        "caller_version": (caller_provenance or {}).get("caller_version"),
+        "caller_identity_status": (caller_provenance or {}).get("identity_status", "UNKNOWN"),
+        "caller_provenance": caller_provenance or {"identity_status": "UNKNOWN"},
         "started_at": started_at,
         "supported_vcf_versions": sorted(SUPPORTED_VCF_VERSIONS),
     }
