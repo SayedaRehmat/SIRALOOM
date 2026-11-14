@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -38,6 +39,12 @@ def qualify_manifest(manifest_path: Path) -> dict:
         metadata_json=manifest,
     )
     fasta = Path(manifest["fasta_path"])
+    observed_digest = hashlib.sha256()
+    with fasta.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            observed_digest.update(chunk)
+    observed_sha256 = observed_digest.hexdigest()
+    observed_size_bytes = fasta.stat().st_size
     staging = SimpleNamespace(
         id=uuid4(),
         resource_id=resource_id,
@@ -48,9 +55,9 @@ def qualify_manifest(manifest_path: Path) -> dict:
         storage_backend="LOCAL_FILESYSTEM",
         status="STAGED",
         expected_sha256=manifest["fasta_sha256"],
-        observed_sha256=manifest["fasta_sha256"],
-        expected_size_bytes=fasta.stat().st_size,
-        observed_size_bytes=fasta.stat().st_size,
+        observed_sha256=observed_sha256,
+        expected_size_bytes=int(manifest.get("fasta_size_bytes", observed_size_bytes)),
+        observed_size_bytes=observed_size_bytes,
     )
     result = qualify_resource(
         resource,
