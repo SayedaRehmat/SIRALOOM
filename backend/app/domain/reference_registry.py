@@ -288,6 +288,15 @@ def qualify_reference_package_resource(
             f"reference package cannot be qualified from status {resource.status!r}",
             code="REFERENCE_PACKAGE_STATE_INVALID",
         )
+    if (
+        staging.resource_id != resource.id
+        or staging.resource_version != resource.version
+        or staging.destination_uri != resource.location
+    ):
+        raise ReferenceRegistryError(
+            "staging record must bind the exact reference resource ID, version, and registered artifact location",
+            code="REFERENCE_STAGING_BINDING_MISMATCH",
+        )
     result = qualify_resource(
         resource,
         staging=staging,
