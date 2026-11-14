@@ -28,6 +28,17 @@ def _reference_candidate(tmp_path: Path):
     fasta_sha = sha256_file(fasta)
     fai_sha = sha256_file(fai)
     contigs_sha = contig_manifest_sha256(contigs)
+    sequence_identity = inspect_fasta_sequence_identity(fasta)
+    dictionary = tmp_path / "GRCh38.dict"
+    dictionary.write_text(
+        "@HD\\tVN:1.6\\tSO:unsorted\\n"
+        + "".join(
+            f"@SQ\\tSN:{item['name']}\\tLN:{item['length']}\\tM5:{item['md5']}\\n"
+            for item in sequence_identity["sequences"]
+        ),
+        encoding="ascii",
+    )
+    dictionary_sha = sha256_file(dictionary)
     version = "GRCh38-refseq-test.1"
     checksum = package_checksum(
         genome_build="GRCh38",
@@ -39,6 +50,8 @@ def _reference_candidate(tmp_path: Path):
         assembly_accession="GCF_TEST_GRCH38_FIXTURE",
         reference_source="NCBI_REFSEQ",
         sequence_scope="FULL_GENOMIC_FASTA",
+        dictionary_sha256=dictionary_sha,
+        sequence_collection_digest=sequence_identity["sequence_collection_digest"],
     )
     resource_id = uuid4()
     resource = SimpleNamespace(
@@ -62,6 +75,10 @@ def _reference_candidate(tmp_path: Path):
             "contig_policy": "EXACT",
             "fasta_path": str(fasta),
             "fai_path": str(fai),
+            "dictionary_path": str(dictionary),
+            "dictionary_sha256": dictionary_sha,
+            "sequence_manifest": sequence_identity["sequences"],
+            "sequence_collection_digest": sequence_identity["sequence_collection_digest"],
             "fasta_sha256": fasta_sha,
             "fai_sha256": fai_sha,
             "contigs_sha256": contigs_sha,
@@ -74,6 +91,15 @@ def _reference_candidate(tmp_path: Path):
                 "access_mode": "PUBLIC",
                 "license_status": "NOT_REQUIRED",
                 "checksum_status": "PUBLISHED_AND_VERIFIED",
+                "publisher_checksum_evidence": {
+                    "algorithm": "md5",
+                    "expected_digest": __import__("hashlib").md5(fasta.read_bytes(), usedforsecurity=False).hexdigest(),
+                    "evidence_file_path": str(tmp_path / "publisher.md5"),
+                    "evidence_file_url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/test/md5checksums.txt",
+                    "evidence_file_sha256": "",
+                    "artifact_filename": fasta.name,
+                    "verified_artifact_path": str(fasta),
+                },
                 "authority_evidence_url": "https://www.ncbi.nlm.nih.gov/datasets/docs/",
             },
             "execution": {
@@ -85,6 +111,10 @@ def _reference_candidate(tmp_path: Path):
             },
         },
     )
+    publisher_evidence = Path(resource.metadata_json["source_contract"]["publisher_checksum_evidence"]["evidence_file_path"])
+    expected_md5 = resource.metadata_json["source_contract"]["publisher_checksum_evidence"]["expected_digest"]
+    publisher_evidence.write_text(f"{expected_md5}  {fasta.name}\\n", encoding="ascii")
+    resource.metadata_json["source_contract"]["publisher_checksum_evidence"]["evidence_file_sha256"] = sha256_file(publisher_evidence)
     staging = SimpleNamespace(
         id=uuid4(),
         resource_id=resource_id,
