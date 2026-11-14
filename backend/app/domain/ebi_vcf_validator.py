@@ -93,6 +93,9 @@ def run_ebi_vcf_validator(
             "Pinned EBI vcf_validator executable is unavailable; VCF intake is blocked."
         )
     executable_path = Path(executable).resolve()
+    runtime_env = os.environ.copy()
+    ebi_library_dir = str(executable_path.parent.parent / "lib")
+    runtime_env["LD_LIBRARY_PATH"] = ebi_library_dir
     try:
         version_result = subprocess.run(
             [str(executable_path), "--version"],
@@ -106,9 +109,6 @@ def run_ebi_vcf_validator(
         raise EBIValidatorUnavailable(
             f"Unable to attest EBI vcf_validator executable: {exc}"
         ) from exc
-    runtime_env = os.environ.copy()
-    ebi_library_dir = str(executable_path.parent.parent / "lib")
-    runtime_env["LD_LIBRARY_PATH"] = ebi_library_dir
     version_output = (version_result.stdout or version_result.stderr).strip()
     expected_banner = f"vcf_validator version {expected_version}"
     if version_result.returncode != 0 or expected_banner not in version_output:
