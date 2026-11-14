@@ -98,3 +98,62 @@ def test_nonzero_exit_is_fail_and_preserves_error_report(
     assert result["exit_code"] == 1
     assert "VCF is invalid" in result["stderr"]
     assert "Invalid INFO field" in result["reports"][0]["content"]
+
+
+def test_assembly_checker_captures_reference_and_projection_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    vcf = _vcf(tmp_path / "chr20.vcf")
+    fasta = tmp_path / "chr20.fa"
+    fasta.write_text(">chr20\\nACGTACGT\\n", encoding="ascii")
+    Path(str(fasta) + ".fai").write_text("chr20\\t8\\t7\\t8\\t9\\n", encoding="ascii")
+    executable = tmp_path / "vcf_assembly_checker"
+    executable.write_text("#!/bin/sh\\nexit 0\\n", encoding="utf-8")
+    executable.chmod(0o755)
+    monkeypatch.setattr(ebi.shutil, "which", lambda _name: str(executable))
+
+    def fake_run(command, **kwargs):
+        if command[-1] == "--version":
+            return subprocess.CompletedProcess(
+                command, 0, "vcf-assembly-checker version 0.10.2\\n", ""
+            )
+        report_dir = Path(command[command.index("-o") + 1])
+        (report_dir / "chr20.text_assembly_report.1.txt").write_text(
+            "8 of 8 records match reference\\n", encoding="utf-8"
+        )
+        return subprocess.CompletedProcess(command, 0, "All records match\\n", "")
+
+    monkeypatch.setattr(ebi.subprocess, "run", fake_run)
+    source_sha = hashlib.sha256(b"original-whole-artifact").hexdigest()
+    result = ebi.run_ebi_vcf_assembly_checker(
+        vcf,
+        fasta,
+        source_artifact_sha256=source_sha,
+        caller_provenance={"caller_profile_id": "gatk_haplotypecaller", "identity_status": "DECLARED"},
+    )
+
+    assert result["status"] == "PASS"
+    assert result["validator"] == "EBI_VCF_ASSEMBLY_CHECKER"
+    assert result["validator_version_expected"] == "0.10.2"
+    assert result["source_artifact_sha256"] == source_sha
+    assert result["vcf_version"] == "VCFv4.2"
+    assert result["reference_build"] == "GRCh38"
+    assert result["validation_input_scope"] == "CHR20_PROJECTION_ONLY"
+    assert result["caller"] == "gatk_haplotypecaller"
+    assert result["reference_fasta_sha256"] == hashlib.sha256(fasta.read_bytes()).hexdigest()
+    assert result["reference_fai_sha256"] == hashlib.sha256(Path(str(fasta) + ".fai").read_bytes()).hexdigest()
+    assert "8 of 8 records" in result["reports"][0]["content"]
+
+
+def test_assembly_checker_requires_reference_fai(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    vcf = _vcf(tmp_path / "chr20.vcf")
+    fasta = tmp_path / "chr20.fa"
+    fasta.write_text(">chr20\\nACGT\\n", encoding="ascii")
+    monkeypatch.setattr(ebi.shutil, "which", lambda _name: pytest.fail("tool must not run"))
+
+    with pytest.raises(ebi.EBIValidatorUnavailable, match="FASTA and its .fai"):
+        ebi.run_ebi_vcf_assembly_checker(
+            vcf,
+            fasta,
+            source_artifact_sha256=hashlib.sha256(b"original").hexdigest(),
+        )
