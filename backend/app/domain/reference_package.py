@@ -275,6 +275,7 @@ def validate_reference_package(
     *,
     expected_genome_build: str,
     allow_approved_qualified: bool = False,
+    allow_candidate_for_qualification: bool = False,
 ) -> dict:
     if resource.resource_type != REFERENCE_PACKAGE_RESOURCE_TYPE:
         raise ReferencePackageError(
@@ -284,6 +285,8 @@ def validate_reference_package(
     allowed_statuses = {"ACTIVE", "SUPERSEDED"}
     if allow_approved_qualified:
         allowed_statuses.add("QUALIFIED")
+    if allow_candidate_for_qualification:
+        allowed_statuses.add("CANDIDATE")
     if resource.status not in allowed_statuses:
         raise ReferencePackageError(
             f"Reference package {resource.name!r} is not consumable (status={resource.status!r}).",
