@@ -16,6 +16,7 @@ from backend.app.domain.reference_package import (
     REFERENCE_PACKAGE_RESOURCE_TYPE,
     REFERENCE_PACKAGE_SCHEMA_VERSION,
     SUPPORTED_REFERENCE_PACKAGE_SCHEMA_VERSIONS,
+    package_checksum as calculate_package_checksum,
 )
 from backend.app.domain.resource_qualification import QualificationResult, qualify_resource
 from backend.app.domain.resources import (
@@ -53,6 +54,7 @@ def validate_reference_registration(
     manifest: dict[str, Any],
     *,
     genome_build: str,
+    package_version: str,
     package_checksum: str,
 ) -> dict[str, Any]:
     """Validate the immutable package identity before it enters the registry.
@@ -94,6 +96,29 @@ def validate_reference_registration(
         raise ReferenceRegistryError(
             "package_checksum must be a 64-character SHA-256 digest",
             code="REFERENCE_PACKAGE_CHECKSUM_INVALID",
+        )
+    if not package_version.strip():
+        raise ReferenceRegistryError(
+            "package_version is required",
+            code="REFERENCE_PACKAGE_VERSION_REQUIRED",
+        )
+    expected_package_checksum = calculate_package_checksum(
+        genome_build=genome_build,
+        version=package_version,
+        fasta_sha256=str(manifest["fasta_sha256"]),
+        fai_sha256=str(manifest["fai_sha256"]),
+        contigs_sha256=str(manifest["contigs_sha256"]),
+        assembly_name=str(manifest["assembly_name"]),
+        assembly_accession=str(manifest["assembly_accession"]),
+        reference_source=str(manifest["reference_source"]),
+        sequence_scope=str(manifest["sequence_scope"]),
+        schema_version=schema,
+        gzi_sha256=str(manifest.get("gzi_sha256") or "") or None,
+    )
+    if expected_package_checksum != package_checksum.lower():
+        raise ReferenceRegistryError(
+            "package checksum does not bind the supplied manifest and version",
+            code="REFERENCE_PACKAGE_CHECKSUM_MISMATCH",
         )
     contigs = manifest.get("contigs")
     if not isinstance(contigs, list) or not contigs:
@@ -147,6 +172,7 @@ def register_reference_package(
     identity = validate_reference_registration(
         manifest,
         genome_build=genome_build,
+        package_version=version,
         package_checksum=package_checksum,
     )
     if not isinstance(source_contract, dict) or not isinstance(execution_contract, dict):
