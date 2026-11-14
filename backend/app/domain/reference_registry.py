@@ -39,6 +39,10 @@ _REQUIRED_MANIFEST_FIELDS = (
     "fai_sha256",
     "contigs_sha256",
     "contigs",
+    "dictionary_path",
+    "dictionary_sha256",
+    "sequence_manifest",
+    "sequence_collection_digest",
 )
 
 
@@ -114,6 +118,8 @@ def validate_reference_registration(
         sequence_scope=str(manifest["sequence_scope"]),
         schema_version=schema,
         gzi_sha256=str(manifest.get("gzi_sha256") or "") or None,
+        dictionary_sha256=str(manifest.get("dictionary_sha256") or ""),
+        sequence_collection_digest=str(manifest.get("sequence_collection_digest") or ""),
     )
     if expected_package_checksum != package_checksum.lower():
         raise ReferenceRegistryError(
@@ -141,13 +147,13 @@ def validate_reference_registration(
                 code="REFERENCE_CONTIG_MANIFEST_INVALID",
             )
         seen.add(name)
-    if schema == REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION:
+    if schema in {REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION, "1.1"}:
         if not manifest.get("gzi_path") or not _SHA256.fullmatch(str(manifest.get("gzi_sha256") or "").lower()):
             raise ReferenceRegistryError(
                 "BGZF reference packages require a GZI path and SHA-256 digest",
                 code="REFERENCE_GZI_REQUIRED",
             )
-    if schema == REFERENCE_PACKAGE_SCHEMA_VERSION and (manifest.get("gzi_path") or manifest.get("gzi_sha256")):
+    if schema in {REFERENCE_PACKAGE_SCHEMA_VERSION, "1.0"} and (manifest.get("gzi_path") or manifest.get("gzi_sha256")):
         raise ReferenceRegistryError(
             "plain FASTA package schema 1.0 must not declare BGZF GZI assets",
             code="REFERENCE_PACKAGE_SCHEMA_INVALID",
@@ -179,6 +185,25 @@ def register_reference_package(
         raise ReferenceRegistryError(
             "source_contract and execution_contract must be objects",
             code="REFERENCE_PROVENANCE_REQUIRED",
+        )
+    publisher_evidence = source_contract.get("publisher_checksum_evidence")
+    if not isinstance(publisher_evidence, dict):
+        raise ReferenceRegistryError(
+            "publisher checksum evidence must be supplied for reference packages",
+            code="PUBLISHER_CHECKSUM_EVIDENCE_MISSING",
+        )
+    required_evidence = (
+        "algorithm", "expected_digest", "evidence_file_path",
+        "evidence_file_url", "evidence_file_sha256", "artifact_filename",
+    )
+    missing_evidence = [
+        key for key in required_evidence
+        if not str(publisher_evidence.get(key) or "").strip()
+    ]
+    if missing_evidence:
+        raise ReferenceRegistryError(
+            "publisher checksum evidence is incomplete: " + ", ".join(missing_evidence),
+            code="PUBLISHER_CHECKSUM_EVIDENCE_INCOMPLETE",
         )
     metadata = {
         **identity,
