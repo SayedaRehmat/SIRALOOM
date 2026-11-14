@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.domain.local_uri import local_path_from_uri
+from backend.app.domain.reference_package import ReferencePackageError, validate_reference_package
 from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
     validate_execution_contract,
@@ -182,6 +183,31 @@ def qualify_resource(
     }
     if resource.resource_type == "REFERENCE_PACKAGE":
         _qualify_reference_toolchain(resource, execution, blockers, checks)
+        try:
+            package_identity = validate_reference_package(
+                resource,
+                expected_genome_build=str(resource.genome_build or ""),
+                allow_approved_qualified=True,
+                allow_candidate_for_qualification=True,
+            )
+            checks["reference_package"] = {
+                "status": "VERIFIED",
+                "package_checksum": package_identity["package_checksum"],
+                "assembly_accession": package_identity["assembly_accession"],
+                "sequence_scope": package_identity["sequence_scope"],
+                "contig_count": len(package_identity["contigs"]),
+                "contigs_sha256": package_identity["contigs_sha256"],
+                "fasta_sha256": package_identity["fasta_sha256"],
+                "fai_sha256": package_identity["fai_sha256"],
+                "gzi_sha256": package_identity["gzi_sha256"],
+            }
+        except ReferencePackageError as exc:
+            blockers.append("REFERENCE_PACKAGE_VALIDATION_FAILED")
+            checks["reference_package"] = {
+                "status": "BLOCKED",
+                "error_code": exc.code,
+                "error": str(exc)[:2000],
+            }
     path = _local_path(resource)
     if (
         staging is not None
@@ -195,10 +221,22 @@ def qualify_resource(
         checks["staging"] = "PRESENT"
         checks["staged_sha256"] = actual
         checks["staged_size_bytes"] = path.stat().st_size
-        if resource.checksum:
-            checks["checksum_match"] = actual == resource.checksum.lower()
+        expected_artifact_sha256 = (
+            str((resource.metadata_json or {}).get("fasta_sha256") or "").lower()
+            if resource.resource_type == "REFERENCE_PACKAGE"
+            else str(resource.checksum or "").lower()
+        )
+        checks["expected_artifact_sha256"] = expected_artifact_sha256 or None
+        if expected_artifact_sha256:
+            checks["checksum_match"] = actual == expected_artifact_sha256
             if not checks["checksum_match"]:
                 blockers.append("CHECKSUM_MISMATCH")
+        if staging.expected_sha256:
+            checks["staging_expected_checksum_match"] = (
+                actual == str(staging.expected_sha256).lower()
+            )
+            if not checks["staging_expected_checksum_match"]:
+                blockers.append("STAGING_CHECKSUM_MISMATCH")
         elif contract.checksum_status == "PUBLISHED_AND_VERIFIED":
             blockers.append("PUBLISHED_CHECKSUM_MISSING")
     elif staging is None:
