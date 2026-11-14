@@ -75,5 +75,6 @@ jobs:
             ${{ runner.temp }}/grch38-full-plus-hs38d1/reference-package.json
             ${{ runner.temp }}/grch38-full-plus-hs38d1/qualification-report.json
             ${{ runner.temp }}/grch38-full-plus-hs38d1/source/md5checksums.txt
+            ${{ runner.temp }}/grch38-reference-registry.sqlite
           if-no-files-found: error
           retention-days: 30
