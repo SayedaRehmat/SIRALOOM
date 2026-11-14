@@ -88,7 +88,7 @@ def _run(command: Sequence[str], *, timeout: int = 3600) -> str:
     return (result.stdout + "\n" + result.stderr).strip()
 
 
-def build_package(output_dir: Path, *, samtools: str, picard_jar: Path) -> dict:
+def build_package(output_dir: Path, *, samtools: str, picard_jar: Path, bcftools: str = "bcftools") -> dict:
     output_dir.mkdir(parents=True, exist_ok=True)
     source_fasta = output_dir / "source" / FASTA_FILENAME
     checksum_file = output_dir / "source" / CHECKSUM_FILENAME
@@ -121,6 +121,8 @@ def build_package(output_dir: Path, *, samtools: str, picard_jar: Path) -> dict:
         raise
 
     samtools_output = _run([samtools, "faidx", str(fasta_path)], timeout=3600)
+    samtools_version = _run([samtools, "--version"])
+    bcftools_version = _run([bcftools, "--version"])
     picard_output = _run(
         ["java", "-jar", str(picard_jar), "CreateSequenceDictionary",
          f"R={fasta_path}", f"O={dictionary_path}"],
@@ -161,6 +163,7 @@ def build_package(output_dir: Path, *, samtools: str, picard_jar: Path) -> dict:
         sequence_collection_digest=sequence_identity["sequence_collection_digest"],
     )
     manifest = {
+        "package_version": package_version,
         "schema_version": REFERENCE_PACKAGE_SCHEMA_VERSION,
         "assembly_name": "GRCh38",
         "assembly_accession": ASSEMBLY_ACCESSION,
@@ -204,8 +207,10 @@ def build_package(output_dir: Path, *, samtools: str, picard_jar: Path) -> dict:
             "location": str(fasta_path.resolve()),
             "execution_scope": "SIRALOOM_MANAGED",
             "toolchain": {
-                "samtools_faidx": samtools_output.splitlines()[0] if samtools_output else "EXECUTED",
-                "picard_create_sequence_dictionary": picard_output.splitlines()[0] if picard_output else "EXECUTED",
+                "samtools": samtools_version.splitlines()[0] if samtools_version else "EXECUTED",
+                "samtools_faidx": "EXECUTED",
+                "bcftools": {"version": bcftools_version.splitlines()[0] if bcftools_version else "UNKNOWN"},
+                "picard": picard_output.splitlines()[0] if picard_output else "EXECUTED",
             },
         },
         "qualification_preview": {
@@ -226,17 +231,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--samtools", default="samtools")
+    parser.add_argument("--bcftools", default="bcftools")
     parser.add_argument("--picard-jar", type=Path, required=True)
     args = parser.parse_args()
     manifest = build_package(
         args.output_dir,
         samtools=args.samtools,
         picard_jar=args.picard_jar,
+        bcftools=args.bcftools,
     )
     print(json.dumps({
         "status": "BUILT_NOT_REGISTERED",
         "manifest_path": str(args.output_dir / "reference-package.json"),
-        "package_version": manifest["execution"]["provider_version"],
+        "package_version": manifest["package_version"],
         "package_checksum": manifest["package_checksum"],
         "sequence_collection_digest": manifest["sequence_collection_digest"],
         "contig_count": len(manifest["contigs"]),
