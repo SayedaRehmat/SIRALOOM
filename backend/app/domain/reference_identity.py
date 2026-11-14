@@ -102,6 +102,7 @@ def inspect_fasta_sequence_identity(fasta_path: str | Path) -> dict[str, Any]:
                     ).decode("ascii").rstrip("="),
                 })
 
+            valid_dna_iupac = frozenset(b"ACGTRYSWKMBDHVN")
             for raw in handle:
                 if raw.startswith(b">"):
                     finish()
@@ -118,8 +119,11 @@ def inspect_fasta_sequence_identity(fasta_path: str | Path) -> dict[str, Any]:
                 sequence = b"".join(raw.split()).upper()
                 if not sequence:
                     continue
-                if any(byte < 65 or byte > 90 for byte in sequence):
-                    raise ReferenceIdentityError(f"invalid FASTA sequence character in {name}")
+                invalid_base = next((byte for byte in sequence if byte not in valid_dna_iupac), None)
+                if invalid_base is not None:
+                    raise ReferenceIdentityError(
+                        f"invalid DNA IUPAC base 0x{invalid_base:02x} in FASTA sequence {name}"
+                    )
                 md5.update(sequence)
                 sha512.update(sequence)
                 length += len(sequence)
