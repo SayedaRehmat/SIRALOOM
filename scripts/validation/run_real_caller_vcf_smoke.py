@@ -20,10 +20,12 @@ from urllib.parse import quote
 from pathlib import Path
 from typing import Any
 
+from backend.app.config import settings
+from backend.app.domain.ebi_vcf_validator import run_ebi_vcf_assembly_checker
+from backend.app.domain.ingestion import validate_vcf
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 from backend.app.domain.vcf_validation import (
-    StrictVCFValidationError,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
@@ -293,25 +295,63 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
 
     try:
         source_attestation = dragen_gp_attestation(callset, source)
-        strict = validate_vcf_strict(source, caller_attestation=source_attestation)
-        result["whole_file_strict_validation"] = {
-            "status": "PASS",
-            "vcf_version": strict["fileformat"],
-            "records": strict["records"],
-            "sample_count": strict["sample_count"],
-            "alternate_alleles": strict["alternate_allele_count"],
-            "multiallelic_records": strict["multiallelic_records"],
-            "symbolic_records": strict["symbolic_records"],
-            "gvcf_markers": strict["gvcf_markers"],
-            "compression": strict["compression"],
-            "caller_semantic_attestation": strict["caller_semantic_attestation"],
-            "caller_semantic_compatibility_review_required": strict["caller_semantic_compatibility_review_required"],
-            "caller_provenance_semantic_status": strict["caller_provenance"]["caller_semantic_compatibility_status"],
+        intake_validation = validate_vcf(
+            source,
+            caller_attestation=source_attestation,
+            artifact_sha256=callset["sha256"],
+            expected_reference_build="GRCh38",
+        )
+        result["whole_file_intake_validation"] = {
+            "status": intake_validation.status,
+            "error_code": intake_validation.error_code,
+            "errors": intake_validation.errors,
         }
-    except StrictVCFValidationError as error:
+        result["whole_file_ebi_validation"] = (
+            (intake_validation.metadata or {}).get("ebi_vcf_validation")
+            or {"status": "MISSING_EBI_VALIDATION_EVIDENCE"}
+        )
+        intake_metadata = intake_validation.metadata or {}
+        ebi_failed_after_siraloom_pass = (
+            intake_validation.error_code == "EBI_VCF_VALIDATION_FAILED"
+        )
+        strict_passed = intake_validation.status == "VALID" or ebi_failed_after_siraloom_pass
+        result["whole_file_strict_validation"] = {
+            "status": "PASS" if strict_passed else "FAIL",
+            "vcf_version": intake_validation.fileformat,
+            "records": intake_metadata.get("source_record_count"),
+            "sample_count": len(intake_validation.sample_names),
+            "alternate_alleles": intake_metadata.get("alternate_allele_count"),
+            "multiallelic_records": intake_metadata.get("multiallelic_source_record_count"),
+            "symbolic_records": intake_metadata.get("symbolic_source_record_count"),
+            "gvcf_markers": intake_metadata.get("gvcf_marker_count"),
+            "compression": intake_metadata.get("compression"),
+            "caller_semantic_attestation": intake_metadata.get("caller_semantic_attestation"),
+            "caller_semantic_compatibility_review_required": intake_metadata.get(
+                "caller_semantic_compatibility_review_required"
+            ),
+            "caller_provenance_semantic_status": (
+                intake_metadata.get("caller_provenance") or {}
+            ).get("caller_semantic_compatibility_status"),
+            **(
+                {
+                    "error_code": intake_validation.error_code,
+                    "errors": intake_validation.errors,
+                }
+                if not strict_passed
+                else {}
+            ),
+        }
+        if not strict_passed:
+            return result
+    except Exception as error:
+        result["whole_file_intake_validation"] = {
+            "status": "ERROR",
+            "error_type": type(error).__name__,
+            "errors": [str(error)],
+        }
         result["whole_file_strict_validation"] = {
             "status": "FAIL",
-            "error_code": error.code,
+            "error_type": type(error).__name__,
             "error": str(error),
         }
         return result
@@ -329,6 +369,15 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
     selected_reference = reference_for_contig(reference, contig, root)
     reference_result = validate_vcf_reference_alleles(subset, selected_reference)
     result["reference_validation"] = reference_result
+    result["ebi_assembly_validation"] = run_ebi_vcf_assembly_checker(
+        subset,
+        selected_reference,
+        source_artifact_sha256=callset["sha256"],
+        caller_provenance=provenance,
+        expected_version=settings.ebi_vcf_validator_version,
+        profile_id=settings.ebi_vcf_validator_profile_id,
+        executable_name=settings.ebi_vcf_assembly_checker_executable,
+    )
 
     routed_dir = root / f"{caller.lower()}_routed"
     routed = route_vcf_records(subset, routed_dir, reference_contig_lengths={contig: reference_length})
@@ -404,8 +453,14 @@ def main() -> int:
         report["results"].append(result)
         if not result.get("caller_profile_match"):
             failures.append(f"{callset['caller']}: caller profile identity did not match")
+        if (result.get("whole_file_intake_validation") or {}).get("status") != "VALID":
+            failures.append(f"{callset['caller']}: production-path intake validation did not pass")
+        if (result.get("whole_file_ebi_validation") or {}).get("status") != "PASS":
+            failures.append(f"{callset['caller']}: EBI whole-file VCF validation did not pass")
         if (result.get("whole_file_strict_validation") or {}).get("status") != "PASS":
             failures.append(f"{callset['caller']}: whole-file strict VCF validation did not pass")
+        if (result.get("ebi_assembly_validation") or {}).get("status") != "PASS":
+            failures.append(f"{callset['caller']}: EBI chr20 assembly validation did not pass")
         if callset["caller"] == "DRAGEN" and not (result.get("whole_file_strict_validation") or {}).get("caller_semantic_compatibility_review_required"):
             failures.append("DRAGEN: GP semantic deviation was not retained as review-required")
         if (result.get("reference_validation") or {}).get("result") not in {"PASS", "PARTIAL"}:

@@ -9,6 +9,7 @@ from pathlib import Path
 from uuid import UUID
 
 from backend.app.config import settings
+from backend.app.domain.ebi_vcf_validator import EBIValidatorUnavailable, run_ebi_vcf_validator
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
@@ -208,7 +209,39 @@ def validate_vcf(
     fileformat: str | None = None
     bcftools_version: str | None = None
     htslib_version: str | None = None
+    ebi_validation: dict | None = None
+    ebi_error_code: str | None = None
+    ebi_failure_reason: str | None = None
     try:
+        try:
+            caller_evidence = inspect_caller_provenance(p)
+            ebi_validation = run_ebi_vcf_validator(
+                p,
+                expected_version=settings.ebi_vcf_validator_version,
+                profile_id=settings.ebi_vcf_validator_profile_id,
+                executable_name=settings.ebi_vcf_validator_executable,
+                caller_provenance=caller_evidence,
+            )
+            fileformat = ebi_validation.get("vcf_version")
+        except EBIValidatorUnavailable as exc:
+            raise VCFValidationUnavailable(str(exc)) from exc
+        if ebi_validation.get("status") == "FAIL":
+            report_text = "\\n".join(
+                str(report.get("content") or "")
+                for report in ebi_validation.get("reports", [])
+                if isinstance(report, dict)
+            ).strip()
+            ebi_failure_reason = (
+                ebi_validation.get("stderr")
+                or ebi_validation.get("stdout")
+                or report_text
+                or ebi_validation.get("reason")
+                or f"EBI vcf-validator rejected the VCF (exit_code={ebi_validation.get('exit_code')})."
+            )
+        elif ebi_validation.get("status") not in {"PASS", "NOT_SUPPORTED"}:
+            raise VCFValidationUnavailable(
+                "EBI vcf-validator returned an unrecognized validation state; intake is blocked."
+            )
         strict_profile = validate_vcf_strict(
             p,
             caller_attestation=caller_attestation,
@@ -314,6 +347,12 @@ def validate_vcf(
                 "GVCF markers detected. GVCF reference blocks require a genotyping/joint-"
                 "genotyping workflow and are not treated as ordinary Phase 1 variant records."
             )
+        if ebi_validation and ebi_validation.get("status") == "NOT_SUPPORTED":
+            warnings.append(
+                "EBI vcf-validator does not support the declared "
+                f"{ebi_validation.get('vcf_version')!r}; SIRALOOM's independent validator "
+                "still ran, but no EBI conformance result is claimed for this file."
+            )
         caller_provenance = strict_profile["caller_provenance"]
         if caller_provenance.get("caller_semantic_compatibility_review_required"):
             compatibility_status = caller_provenance.get(
@@ -354,6 +393,7 @@ def validate_vcf(
             "breakend_source_record_count": strict_profile["breakend_records"],
             "gvcf_marker_count": strict_profile["gvcf_markers"],
             "caller_provenance": strict_profile["caller_provenance"],
+            "ebi_vcf_validation": ebi_validation,
             "caller_run_attestation": strict_profile.get("caller_run_attestation"),
             "caller_semantic_attestation": strict_profile.get("caller_semantic_attestation"),
             "caller_semantic_compatibility_review_required": strict_profile.get("caller_semantic_compatibility_review_required", False),
@@ -372,6 +412,11 @@ def validate_vcf(
             "compression": compression,
             "warning_codes": strict_profile["warning_codes"],
         }
+        if ebi_failure_reason:
+            ebi_error_code = "EBI_VCF_VALIDATION_FAILED"
+            raise VCFValidationError(
+                "EBI vcf-validator rejected the VCF: " + ebi_failure_reason[:4000]
+            )
         return ValidationResult(
             "VALID",
             "VCF",
@@ -389,6 +434,8 @@ def validate_vcf(
         # provenance for the durable invalid-artifact record without allowing
         # that metadata to alter the structural validation decision.
         failure_metadata: dict | None = {}
+        if ebi_validation is not None:
+            failure_metadata["ebi_vcf_validation"] = ebi_validation
         try:
             caller_provenance = inspect_caller_provenance(p)
             if caller_provenance.get("identity_status") != "UNKNOWN":
@@ -409,7 +456,10 @@ def validate_vcf(
         return ValidationResult(
             "INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat,
             failure_metadata,
-            exc.code if isinstance(exc, StrictVCFValidationError) else None,
+            (
+                ebi_error_code
+                or (exc.code if isinstance(exc, StrictVCFValidationError) else None)
+            ),
         )
 
 
