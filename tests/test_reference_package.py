@@ -499,3 +499,39 @@ def test_fasta_index_consistency_accepts_multiline_crlf_fasta(tmp_path: Path):
     fai.write_text("1\t6\t16\t4\t6\n", encoding="utf-8")
     result = validate_fasta_index_consistency(fasta, fai)
     assert result == [{"name": "1", "length": 6}]
+
+
+
+def test_reference_package_rejects_missing_gatk_sequence_dictionary(tmp_path: Path):
+    resource, _fasta, _fai = make_package(tmp_path)
+    Path(resource.metadata_json["dictionary_path"]).unlink()
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_reference_package(resource, expected_genome_build="GRCh38")
+    assert exc.value.code == "REFERENCE_DICTIONARY_MISSING"
+
+
+def test_reference_package_rejects_dictionary_with_wrong_m5_even_if_dictionary_checksum_is_repinned(tmp_path: Path):
+    resource, _fasta, _fai = make_package(tmp_path)
+    dictionary = Path(resource.metadata_json["dictionary_path"])
+    dictionary.write_text(
+        "@HD\\tVN:1.6\\tSO:unsorted\\n"
+        "@SQ\\tSN:1\\tLN:7\\tM5:00000000000000000000000000000000\\n",
+        encoding="ascii",
+    )
+    resource.metadata_json["dictionary_sha256"] = sha256_file(dictionary)
+    resource.checksum = package_checksum(
+        genome_build=resource.genome_build,
+        version=resource.version,
+        fasta_sha256=resource.metadata_json["fasta_sha256"],
+        fai_sha256=resource.metadata_json["fai_sha256"],
+        contigs_sha256=resource.metadata_json["contigs_sha256"],
+        assembly_name=resource.metadata_json["assembly_name"],
+        assembly_accession=resource.metadata_json["assembly_accession"],
+        reference_source=resource.metadata_json["reference_source"],
+        sequence_scope=resource.metadata_json["sequence_scope"],
+        dictionary_sha256=resource.metadata_json["dictionary_sha256"],
+        sequence_collection_digest=resource.metadata_json["sequence_collection_digest"],
+    )
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_reference_package(resource, expected_genome_build="GRCh38")
+    assert exc.value.code == "REFERENCE_DICTIONARY_MISMATCH"
