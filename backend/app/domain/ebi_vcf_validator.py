@@ -181,6 +181,7 @@ def run_ebi_vcf_assembly_checker(
     reference_fasta: str | Path,
     *,
     source_artifact_sha256: str,
+    reference_build: str = "GRCh38",
     caller_provenance: dict | None = None,
     expected_version: str = "0.10.2",
     profile_id: str = "ebi-vcf-validator-0.10.2-linux-64",
@@ -271,6 +272,7 @@ def run_ebi_vcf_assembly_checker(
                 "started_at": started_at,
                 "finished_at": datetime.now(timezone.utc).isoformat(),
                 "source_artifact_sha256": source_artifact_sha256,
+                "vcf_version": _declared_fileformat(vcf),
                 "validation_input_sha256": _sha256(vcf),
                 "validation_input_scope": "CHR20_PROJECTION_ONLY",
                 "caller": (
@@ -281,6 +283,7 @@ def run_ebi_vcf_assembly_checker(
                 "caller_version": (caller_provenance or {}).get("caller_version"),
                 "caller_identity_status": (caller_provenance or {}).get("identity_status", "UNKNOWN"),
                 "caller_provenance": caller_provenance or {"identity_status": "UNKNOWN"},
+                "reference_build": reference_build,
                 "reference_fasta": str(fasta),
                 "reference_fasta_sha256": _sha256(fasta),
                 "reference_fai_sha256": _sha256(fai),
