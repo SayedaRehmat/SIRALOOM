@@ -211,6 +211,7 @@ def validate_vcf(
     htslib_version: str | None = None
     ebi_validation: dict | None = None
     ebi_error_code: str | None = None
+    ebi_failure_reason: str | None = None
     try:
         try:
             caller_evidence = inspect_caller_provenance(p)
@@ -224,17 +225,23 @@ def validate_vcf(
             fileformat = ebi_validation.get("vcf_version")
         except EBIValidatorUnavailable as exc:
             raise VCFValidationUnavailable(str(exc)) from exc
-        if ebi_validation.get("status") != "PASS":
-            ebi_error_code = (
-                "EBI_VCF_VERSION_NOT_SUPPORTED"
-                if ebi_validation.get("status") == "NOT_SUPPORTED"
-                else "EBI_VCF_VALIDATION_FAILED"
+        if ebi_validation.get("status") == "FAIL":
+            report_text = "\\n".join(
+                str(report.get("content") or "")
+                for report in ebi_validation.get("reports", [])
+                if isinstance(report, dict)
+            ).strip()
+            ebi_failure_reason = (
+                ebi_validation.get("stderr")
+                or ebi_validation.get("stdout")
+                or report_text
+                or ebi_validation.get("reason")
+                or f"EBI vcf-validator rejected the VCF (exit_code={ebi_validation.get('exit_code')})."
             )
-            reason = ebi_validation.get("reason") or (
-                "EBI vcf-validator rejected the VCF "
-                f"(exit_code={ebi_validation.get('exit_code')})."
+        elif ebi_validation.get("status") not in {"PASS", "NOT_SUPPORTED"}:
+            raise VCFValidationUnavailable(
+                "EBI vcf-validator returned an unrecognized validation state; intake is blocked."
             )
-            raise VCFValidationError(reason)
         strict_profile = validate_vcf_strict(
             p,
             caller_attestation=caller_attestation,
@@ -340,6 +347,12 @@ def validate_vcf(
                 "GVCF markers detected. GVCF reference blocks require a genotyping/joint-"
                 "genotyping workflow and are not treated as ordinary Phase 1 variant records."
             )
+        if ebi_validation and ebi_validation.get("status") == "NOT_SUPPORTED":
+            warnings.append(
+                "EBI vcf-validator does not support the declared "
+                f"{ebi_validation.get('vcf_version')!r}; SIRALOOM's independent validator "
+                "still ran, but no EBI conformance result is claimed for this file."
+            )
         caller_provenance = strict_profile["caller_provenance"]
         if caller_provenance.get("caller_semantic_compatibility_review_required"):
             compatibility_status = caller_provenance.get(
@@ -399,6 +412,11 @@ def validate_vcf(
             "compression": compression,
             "warning_codes": strict_profile["warning_codes"],
         }
+        if ebi_failure_reason:
+            ebi_error_code = "EBI_VCF_VALIDATION_FAILED"
+            raise VCFValidationError(
+                "EBI vcf-validator rejected the VCF: " + ebi_failure_reason[:4000]
+            )
         return ValidationResult(
             "VALID",
             "VCF",
