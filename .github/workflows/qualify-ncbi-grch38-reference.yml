@@ -1,0 +1,75 @@
+name: Qualify NCBI GRCh38 full-plus-hs38d1 reference
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ncbi-grch38-reference-qualification
+  cancel-in-progress: false
+
+jobs:
+  acquire-build-qualify:
+    name: Acquire and technically qualify exact NCBI GRCh38 package
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create pinned reference toolchain
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: siraloom-reference
+          create-args: >-
+            python=3.12
+            samtools=1.21
+            bcftools=1.21
+            picard=3.4.0
+            -c conda-forge
+            -c bioconda
+          cache-environment: true
+
+      - name: Install pinned uv
+        run: |
+          python -m pip install uv==0.10.0
+
+      - name: Install locked SIRALOOM backend dependencies
+        run: uv sync --locked --extra dev
+
+      - name: Locate Picard JAR
+        id: picard
+        shell: bash -el {0}
+        run: |
+          PICARD_JAR="$(find "$CONDA_PREFIX" -type f -name 'picard.jar' -print -quit)"
+          test -n "$PICARD_JAR"
+          echo "jar=$PICARD_JAR" >> "$GITHUB_OUTPUT"
+
+      - name: Acquire NCBI FASTA, verify publisher MD5, build FAI and DICT
+        shell: bash -el {0}
+        run: |
+          uv run python scripts/reference/build_ncbi_grch38_reference_package.py \
+            --output-dir "$RUNNER_TEMP/grch38-full-plus-hs38d1" \
+            --samtools "$(command -v samtools)" \
+            --bcftools "$(command -v bcftools)" \
+            --picard-jar "${{ steps.picard.outputs.jar }}"
+
+      - name: Execute SIRALOOM reference package qualification
+        shell: bash -el {0}
+        run: |
+          uv run python scripts/reference/qualify_reference_package_manifest.py \
+            --manifest "$RUNNER_TEMP/grch38-full-plus-hs38d1/reference-package.json" \
+            --report "$RUNNER_TEMP/grch38-full-plus-hs38d1/qualification-report.json"
+
+      - name: Upload package manifest and qualification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncbi-grch38-full-plus-hs38d1-qualification
+          path: |
+            ${{ runner.temp }}/grch38-full-plus-hs38d1/reference-package.json
+            ${{ runner.temp }}/grch38-full-plus-hs38d1/qualification-report.json
+            ${{ runner.temp }}/grch38-full-plus-hs38d1/source/md5checksums.txt
+          if-no-files-found: error
+          retention-days: 30
