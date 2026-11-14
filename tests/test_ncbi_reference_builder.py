@@ -13,7 +13,7 @@ from scripts.reference.register_and_qualify_reference_package import register_an
 
 
 def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifest(tmp_path, monkeypatch):
-    fasta_payload = b">chr1\nACGT\n>chrM\nTGCA\n"
+    fasta_payload = b">chr1\nACAAAAGT\n>chrM\nTGCA\n"
     compressed = gzip.compress(fasta_payload)
     publisher_md5 = hashlib.md5(compressed, usedforsecurity=False).hexdigest()
 
@@ -109,6 +109,8 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
     assert registry_report["passed"] is True
     assert registry_report["resource_status"] == "QUALIFIED"
     assert registry_report["qualification_status"] == "QUALIFIED"
+    assert registry_report["checks"]["bcftools_execution"]["status"] == "VERIFIED"
+    assert registry_report["checks"]["bcftools_execution"]["tests"]["incorrect_ref_rejected"]["reference_mismatch_reported"] is True
     assert registry_report["activation"] == "NOT_REQUESTED_REQUIRES_SEPARATE_GOVERNANCE_APPROVAL"
 
 
