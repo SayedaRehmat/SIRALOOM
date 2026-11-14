@@ -174,6 +174,7 @@ def build_package(output_dir: Path, *, samtools: str, picard_jar: Path, bcftools
         "fai_path": str(fai_path.resolve()),
         "dictionary_path": str(dictionary_path.resolve()),
         "fasta_sha256": fasta_sha,
+        "fasta_size_bytes": fasta_path.stat().st_size,
         "fai_sha256": fai_sha,
         "dictionary_sha256": dictionary_sha,
         "contigs_sha256": contigs_sha,
