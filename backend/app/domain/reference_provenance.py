@@ -109,7 +109,7 @@ def verify_publisher_checksum_evidence(
     # qualification evidence: stream the source payload again and compare its
     # decompressed SHA-256 with the registered FASTA bytes.
     with artifact.open("rb") as probe:
-        is_gzip = probe.read(2) == b"\\x1f\\x8b"
+        is_gzip = probe.read(2) == bytes((31, 139))
     source_opener = gzip.open if is_gzip else open
     transformed_digest = hashlib.sha256()
     transformed_size = 0
