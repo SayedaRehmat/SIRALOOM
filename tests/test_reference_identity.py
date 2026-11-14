@@ -39,7 +39,7 @@ def test_fasta_sequence_identity_is_per_contig_and_ordered(tmp_path: Path):
 
 def test_fasta_sequence_identity_accepts_iupac_ambiguity_codes(tmp_path: Path):
     fasta = tmp_path / "iupac.fa"
-    fasta.write_text(">chr1\\nACGTRYSWKMBDHVN\\n", encoding="ascii")
+    fasta.write_text(">chr1\nACGTRYSWKMBDHVN\n", encoding="ascii")
 
     identity = inspect_fasta_sequence_identity(fasta)
 
@@ -48,7 +48,7 @@ def test_fasta_sequence_identity_accepts_iupac_ambiguity_codes(tmp_path: Path):
 
 def test_fasta_sequence_identity_rejects_non_iupac_symbols(tmp_path: Path):
     fasta = tmp_path / "invalid.fa"
-    fasta.write_text(">chr1\\nACGTX\\n", encoding="ascii")
+    fasta.write_text(">chr1\nACGTX\n", encoding="ascii")
 
     with pytest.raises(ReferenceIdentityError, match="invalid DNA IUPAC base"):
         inspect_fasta_sequence_identity(fasta)
