@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import os
 import shutil
 import subprocess
 import tempfile
@@ -46,6 +47,7 @@ def run_ebi_vcf_validator(
     *,
     expected_version: str = "0.10.2",
     profile_id: str = "ebi-vcf-validator-0.10.2-linux-64",
+    executable_name: str = "vcf_validator",
     caller_provenance: dict | None = None,
     timeout_seconds: int = 3600,
 ) -> dict:
@@ -85,7 +87,7 @@ def run_ebi_vcf_validator(
             ),
         }
 
-    executable = shutil.which("vcf_validator")
+    executable = shutil.which(executable_name)
     if executable is None:
         raise EBIValidatorUnavailable(
             "Pinned EBI vcf_validator executable is unavailable; VCF intake is blocked."
@@ -98,11 +100,15 @@ def run_ebi_vcf_validator(
             text=True,
             timeout=15,
             check=False,
+            env=runtime_env,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise EBIValidatorUnavailable(
             f"Unable to attest EBI vcf_validator executable: {exc}"
         ) from exc
+    runtime_env = os.environ.copy()
+    ebi_library_dir = str(executable_path.parent.parent / "lib")
+    runtime_env["LD_LIBRARY_PATH"] = ebi_library_dir
     version_output = (version_result.stdout or version_result.stderr).strip()
     expected_banner = f"vcf_validator version {expected_version}"
     if version_result.returncode != 0 or expected_banner not in version_output:
@@ -127,6 +133,7 @@ def run_ebi_vcf_validator(
                 text=True,
                 timeout=timeout_seconds,
                 check=False,
+                env=runtime_env,
             )
             report_files = sorted(
                 candidate for candidate in report_dir.rglob("*") if candidate.is_file()
