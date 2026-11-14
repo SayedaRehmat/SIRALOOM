@@ -20,6 +20,9 @@ from backend.app.domain.resource_source_contract import (
     validate_execution_contract,
     validate_source_contract,
 )
+from backend.app.domain.reference_toolchain_qualification import (
+    execute_bcftools_reference_check,
+)
 from backend.app.infrastructure.db.models import Resource, ResourceStaging
 
 
@@ -98,6 +101,28 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
     checks["bcftools_version"] = version
     checks["bcftools_tool"] = "bcftools"
     checks["bcftools_execution"] = "DECLARED_NOT_EXECUTED"
+
+
+def _execute_reference_bcftools(
+    execution: Any,
+    package_identity: dict[str, Any],
+    blockers: list[str],
+    checks: dict[str, Any],
+) -> None:
+    """Run BCFtools against the exact FASTA whose package identity was verified."""
+    toolchain = dict(execution.toolchain or {})
+    bcftools = toolchain.get("bcftools")
+    expected_version = str(bcftools.get("version") or "").strip() if isinstance(bcftools, dict) else ""
+    evidence = execute_bcftools_reference_check(
+        package_identity["fasta_path"],
+        package_identity["contigs"],
+        expected_fasta_sha256=str(package_identity["fasta_sha256"]),
+        expected_bcftools_version=expected_version,
+        expected_samtools_version=str(toolchain.get("samtools") or "").strip() or None,
+    )
+    checks["bcftools_execution"] = evidence
+    if evidence.get("status") != "VERIFIED":
+        blockers.append("BCFTOOLS_REFERENCE_EXECUTION_FAILED")
 
 
 def _qualify_vep_runtime(execution: Any, blockers: list[str], checks: dict[str, Any]) -> None:
@@ -216,6 +241,14 @@ def qualify_resource(
                     "error_code": exc.code,
                     "error": str(exc)[:2000],
                 }
+            if checks.get("publisher_checksum_evidence", {}).get("status") == "VERIFIED":
+                _execute_reference_bcftools(execution, package_identity, blockers, checks)
+            else:
+                checks["bcftools_execution"] = {
+                    "status": "NOT_RUN_PUBLISHER_EVIDENCE_INVALID",
+                    "reason": "publisher checksum evidence must pass before reference-backed normalization",
+                }
+                blockers.append("BCFTOOLS_REFERENCE_EXECUTION_NOT_RUN")
         except ReferencePackageError as exc:
             blockers.append("REFERENCE_PACKAGE_VALIDATION_FAILED")
             checks["reference_package"] = {
