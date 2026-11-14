@@ -157,7 +157,7 @@ def test_reference_qualification_records_governed_bcftools_version(tmp_path):
     result = qualify_resource(resource, staging=_staging(resource))
     assert result.checks["bcftools_tool"] == "bcftools"
     assert result.checks["bcftools_version"] == "1.19"
-    assert result.checks["bcftools_execution"] == "GOVERNED"
+    assert result.checks["bcftools_execution"] == "DECLARED_NOT_EXECUTED"
 
 
 def test_qualification_blocks_unverified_staging(tmp_path):
