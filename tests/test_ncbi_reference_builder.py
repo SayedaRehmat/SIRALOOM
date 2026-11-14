@@ -113,16 +113,16 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
 
 
 
-def test_publisher_verified_source_must_decompress_to_registered_fasta(tmp_path, monkeypatch):
-    source_payload = b">chr1\\nACGT\\n"
+def test_publisher_verified_source_must_decompress_to_registered_fasta(tmp_path):
+    source_payload = b">chr1" + bytes((10,)) + b"ACGT" + bytes((10,))
     compressed = gzip.compress(source_payload)
     source_path = tmp_path / builder.FASTA_FILENAME
     source_path.write_bytes(compressed)
     checksum_path = tmp_path / "md5checksums.txt"
     source_md5 = hashlib.md5(compressed, usedforsecurity=False).hexdigest()
-    checksum_path.write_text(f"{source_md5}  {builder.FASTA_FILENAME}\\n", encoding="ascii")
+    checksum_path.write_text(f"{source_md5}  {builder.FASTA_FILENAME}" + chr(10), encoding="ascii")
     processed_fasta = tmp_path / "processed.fa"
-    processed_fasta.write_bytes(b">chr1\\nTTTT\\n")
+    processed_fasta.write_bytes(b">chr1" + bytes((10,)) + b"TTTT" + bytes((10,)))
     evidence = {
         "publisher_checksum_evidence": {
             "algorithm": "md5",
