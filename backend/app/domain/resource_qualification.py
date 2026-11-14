@@ -254,6 +254,36 @@ def qualify_resource(
                 blockers.append("STAGING_CHECKSUM_MISMATCH")
         elif contract.checksum_status == "PUBLISHED_AND_VERIFIED":
             blockers.append("PUBLISHED_CHECKSUM_MISSING")
+
+        if staging.observed_sha256:
+            checks["staging_observed_checksum_match"] = (
+                actual == str(staging.observed_sha256).lower()
+            )
+            if not checks["staging_observed_checksum_match"]:
+                blockers.append("STAGING_OBSERVED_CHECKSUM_MISMATCH")
+        else:
+            checks["staging_observed_checksum_match"] = False
+            blockers.append("STAGING_OBSERVED_CHECKSUM_MISSING")
+
+        if staging.observed_size_bytes is not None:
+            checks["staging_observed_size_match"] = (
+                path.stat().st_size == int(staging.observed_size_bytes)
+            )
+            if not checks["staging_observed_size_match"]:
+                blockers.append("STAGING_OBSERVED_SIZE_MISMATCH")
+        else:
+            checks["staging_observed_size_match"] = False
+            blockers.append("STAGING_OBSERVED_SIZE_MISSING")
+
+        if staging.expected_size_bytes is not None:
+            checks["staging_expected_size_match"] = (
+                path.stat().st_size == int(staging.expected_size_bytes)
+            )
+            if not checks["staging_expected_size_match"]:
+                blockers.append("STAGING_EXPECTED_SIZE_MISMATCH")
+        elif resource.resource_type == "REFERENCE_PACKAGE":
+            checks["staging_expected_size_match"] = False
+            blockers.append("STAGING_EXPECTED_SIZE_MISSING")
     elif staging is None:
         blockers.append("STAGING_RECORD_REQUIRED")
     elif staging.status != "STAGED":
