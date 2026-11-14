@@ -45,7 +45,9 @@ named `.dict` is not sufficient evidence by itself.
 
 Per-contig Refget sequence identifiers use GA4GH Refget Sequences v2's
 `SQ.` SHA-512/24-byte/base64url digest over normalized sequence characters.
-The collection identifier follows the GA4GH Refget Sequence Collections v1.0
+The Seqcol attribute and top-level digests use the same truncated SHA-512 and
+base64url encoding without the `SQ.` sequence prefix. The collection identifier
+follows the GA4GH Refget Sequence Collections v1.0
 minimal schema: collated `names`, `lengths`, and `sequences` arrays, with
 `names` and `sequences` inherent in the top-level digest. The implementation
 is checked against the GA4GH published ACGT sequence and sequence-collection
