@@ -3,6 +3,8 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from backend.app.domain.reference_package import (
     REFERENCE_PACKAGE_SCHEMA_VERSION,
@@ -13,14 +15,18 @@ from backend.app.domain.reference_package import (
 )
 from backend.app.domain.reference_registry import (
     ReferenceRegistryError,
+    activate_reference_package_resource,
+    qualify_reference_package_resource,
     register_reference_package,
     validate_reference_registration,
 )
 from backend.app.domain.resource_qualification import qualify_resource
 from backend.app.domain.reference_identity import inspect_fasta_sequence_identity
+from backend.app.infrastructure.db.base import Base
+from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceStaging
 
 
-def _reference_candidate(tmp_path: Path):
+def _reference_candidate(tmp_path: Path, *, version: str = "GRCh38-refseq-test.1"):
     fasta = tmp_path / "GRCh38.fa"
     fasta.write_text(">chr1\nACGTACGT\n>chrM\nACGT\n", encoding="ascii")
     fai = tmp_path / "GRCh38.fa.fai"
@@ -40,7 +46,6 @@ def _reference_candidate(tmp_path: Path):
         encoding="ascii",
     )
     dictionary_sha = sha256_file(dictionary)
-    version = "GRCh38-refseq-test.1"
     checksum = package_checksum(
         genome_build="GRCh38",
         version=version,
@@ -277,3 +282,152 @@ def test_reference_registration_creates_candidate_in_existing_resource_registry(
     assert registered.location == metadata["fasta_path"]
     assert registered.metadata_json["registry_contract"] == "siraloom.reference-registry.v1"
     assert registered in db.rows
+
+
+
+def _reference_db_engine():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Resource.__table__,
+            ResourceStaging.__table__,
+            ResourceQualification.__table__,
+        ],
+    )
+    return engine
+
+
+def _register_and_stage_reference(db, resource_fixture):
+    fixture, staging_fixture = resource_fixture
+    metadata = fixture.metadata_json
+    manifest = {
+        key: value for key, value in metadata.items()
+        if key not in {"source_contract", "execution"}
+    }
+    resource, created = register_reference_package(
+        db,
+        name=fixture.name,
+        provider=fixture.provider,
+        version=fixture.version,
+        genome_build=fixture.genome_build,
+        manifest=manifest,
+        package_checksum=fixture.checksum,
+        source_contract=metadata["source_contract"],
+        execution_contract=metadata["execution"],
+    )
+    staging = ResourceStaging(
+        id=staging_fixture.id,
+        resource_id=resource.id,
+        resource_version=resource.version,
+        staging_key=staging_fixture.staging_key,
+        source_uri=staging_fixture.source_uri,
+        destination_uri=staging_fixture.destination_uri,
+        storage_backend=staging_fixture.storage_backend,
+        status="STAGED",
+        expected_sha256=staging_fixture.expected_sha256,
+        observed_sha256=staging_fixture.observed_sha256,
+        expected_size_bytes=staging_fixture.expected_size_bytes,
+        observed_size_bytes=staging_fixture.observed_size_bytes,
+        metadata_json={},
+    )
+    db.add(staging)
+    db.flush()
+    return resource, staging
+
+
+def test_database_lifecycle_persists_qualification_and_activates_exact_release(tmp_path):
+    fixture = _reference_candidate(tmp_path)
+    engine = _reference_db_engine()
+    with Session(engine) as db:
+        resource, staging = _register_and_stage_reference(db, fixture)
+        result, persisted = qualify_reference_package_resource(
+            db,
+            resource_id=resource.id,
+            staging=staging,
+            qualification_version="reference-package-1.2",
+        )
+        assert result.passed is True
+        assert persisted.status == "QUALIFIED"
+        assert db.get(ResourceQualification, persisted.id).checks_json["publisher_checksum_evidence"]["status"] == "VERIFIED"
+        assert resource.status == "QUALIFIED"
+
+        activated = activate_reference_package_resource(
+            db,
+            resource_id=resource.id,
+            qualification_version="reference-package-1.2",
+        )
+        assert activated.status == "ACTIVE"
+        assert db.query(ResourceQualification).filter_by(resource_id=resource.id).count() == 1
+    engine.dispose()
+
+
+def test_database_lifecycle_persists_failed_qualification_and_blocks_activation(tmp_path):
+    fixture = _reference_candidate(tmp_path)
+    engine = _reference_db_engine()
+    with Session(engine) as db:
+        resource, staging = _register_and_stage_reference(db, fixture)
+        Path(resource.location).write_text(">chr1\\nTTTTTTTT\\n>chrM\\nACGT\\n", encoding="ascii")
+
+        result, persisted = qualify_reference_package_resource(
+            db,
+            resource_id=resource.id,
+            staging=staging,
+            qualification_version="reference-package-1.2",
+        )
+        assert result.passed is False
+        assert persisted.status == "BLOCKED"
+        assert resource.status == "CANDIDATE"
+        with pytest.raises(ResourceRegistryError):
+            activate_reference_package_resource(
+                db,
+                resource_id=resource.id,
+                qualification_version="reference-package-1.2",
+            )
+        assert db.query(ResourceQualification).filter_by(resource_id=resource.id).one().status == "BLOCKED"
+    engine.dispose()
+
+
+def test_database_lifecycle_supersedes_only_after_new_release_qualifies_and_activates(tmp_path):
+    engine = _reference_db_engine()
+    with Session(engine) as db:
+        first_dir = tmp_path / "release-1"
+        second_dir = tmp_path / "release-2"
+        first_dir.mkdir()
+        second_dir.mkdir()
+        first_fixture = _reference_candidate(first_dir, version="GRCh38-refseq-test.1")
+        second_fixture = _reference_candidate(second_dir, version="GRCh38-refseq-test.2")
+        first, first_staging = _register_and_stage_reference(db, first_fixture)
+        first_result, first_qualification = qualify_reference_package_resource(
+            db,
+            resource_id=first.id,
+            staging=first_staging,
+            qualification_version="reference-package-1.2",
+        )
+        assert first_result.passed is True
+        activate_reference_package_resource(
+            db,
+            resource_id=first.id,
+            qualification_version="reference-package-1.2",
+        )
+        assert first.status == "ACTIVE"
+
+        second, second_staging = _register_and_stage_reference(db, second_fixture)
+        second_result, second_qualification = qualify_reference_package_resource(
+            db,
+            resource_id=second.id,
+            staging=second_staging,
+            qualification_version="reference-package-1.2",
+        )
+        assert second_result.passed is True
+        assert first.status == "ACTIVE"
+        activate_reference_package_resource(
+            db,
+            resource_id=second.id,
+            qualification_version="reference-package-1.2",
+        )
+        assert second.status == "ACTIVE"
+        assert first.status == "SUPERSEDED"
+        assert db.get(ResourceQualification, first_qualification.id).status == "QUALIFIED"
+        assert db.get(ResourceQualification, second_qualification.id).status == "QUALIFIED"
+    engine.dispose()
