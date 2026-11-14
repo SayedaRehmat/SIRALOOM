@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     htslib_version: str = "1.25"
     # EBI EVA VCF validator is a separate, required specification-conformance layer.
     ebi_vcf_validator_version: str = "0.10.2"
+    ebi_vcf_validator_executable: str = "vcf_validator"
     ebi_vcf_validator_profile_id: str = "ebi-vcf-validator-0.10.2-linux-64"
     # EBI EVA VCF validator is a separate, required specification-conformance layer.
     ebi_vcf_validator_version: str = "0.10.2"
