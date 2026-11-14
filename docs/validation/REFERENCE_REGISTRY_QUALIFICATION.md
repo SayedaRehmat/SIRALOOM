@@ -27,22 +27,37 @@ Keep these identities separate:
 A package must not silently substitute a different assembly accession, source
 collection, decoy set, or contig scope under the same release identity.
 
-## Existing package schemas
+## Reference package schemas and identity
 
-- Schema `1.0`: plain FASTA + matching FAI.
-- Schema `1.1`: BGZF FASTA + matching FAI and GZI.
-- Both schemas require exact contig policy, assembly name/accession, source,
-  sequence scope, ordered contig names/lengths, FASTA/FAI checksums, contig
-  manifest digest, and package identity checksum.
+- Schema `1.0`: legacy plain FASTA + FAI.
+- Schema `1.1`: legacy BGZF FASTA + FAI + GZI.
+- Schema `1.2`: qualified plain FASTA + FAI + SAM/GATK `.dict`, per-contig
+  GA4GH Refget sequence identifiers, and a GA4GH Refget Sequence Collection
+  v1.0 digest.
+- Schema `1.3`: the same qualified identity contract as 1.2, with BGZF FASTA
+  and the additional GZI index.
 
-The package validator checks the complete FASTA sequence stream, IUPAC alphabet,
-FAI identifier/order/length/offset/line geometry, and (for BGZF) block integrity,
-CRC, uncompressed lengths, and exact GZI block boundaries. The package identity
-checksum binds the assembly metadata and artifact/contig digests.
+Schemas 1.0/1.1 remain readable for legacy resources but are not accepted by
+the new reference registration contract. New registry releases must use 1.2 or
+1.3. The SAM sequence dictionary is validated against exact contig order,
+`SN`, `LN`, and `M5` values derived from the FASTA sequence content. A file
+named `.dict` is not sufficient evidence by itself.
 
-The current schemas do not yet require a SAM sequence dictionary or per-contig
-GA4GH Refget identifiers. Those are explicitly tracked as follow-on package
-schema work; their absence must not be misrepresented as already qualified.
+Per-contig Refget sequence identifiers use GA4GH Refget Sequences v2's
+`SQ.` SHA-512/24-byte/base64url digest over normalized sequence characters.
+The collection identifier follows the GA4GH Refget Sequence Collections v1.0
+minimal schema: collated `names`, `lengths`, and `sequences` arrays, with
+`names` and `sequences` inherent in the top-level digest. The implementation
+is checked against the GA4GH published ACGT sequence and sequence-collection
+examples. The sequence collection digest identifies content and ordering; the
+NCBI accession and SIRALOOM release remain separate provenance identities.
+
+The package validator checks the complete FASTA sequence stream, IUPAC
+alphabet, FAI identifier/order/length/offset/line geometry, dictionary M5
+values, per-contig Refget identifiers, sequence-collection digest, artifact
+checksums, and package identity checksum. For BGZF packages it additionally
+checks BGZF block integrity, CRC, uncompressed lengths, and exact GZI block
+boundaries.
 
 ## Registry lifecycle
 
@@ -63,8 +78,11 @@ The registry reuses the shared `resources`, `resource_stagings`, and
 - Superseded releases remain addressable for reproducibility.
 
 The resource-level `checksum` is the package identity checksum. The staging
-checksum is the FASTA artifact SHA-256. These are different digest domains and
-must not be compared as if they were the same value.
+checksum is the processed FASTA artifact SHA-256. The publisher checksum
+(e.g. NCBI MD5) applies to the exact downloaded source artifact, which may be
+the compressed source FASTA rather than the decompressed processing FASTA.
+The downloaded checksum-manifest file is itself SHA-256 pinned. These are
+separate digest domains and must not be compared as if they were interchangeable.
 
 ## Qualification evidence
 
@@ -73,7 +91,9 @@ The qualification engine verifies:
 - resource type, build, package schema, and candidate lifecycle state;
 - assembly accession, reference source, and declared sequence scope;
 - exact contig policy and ordered contig manifest;
-- FASTA, FAI, and optional GZI checksums;
+- FASTA, FAI, required SAM/GATK dictionary, and optional GZI checksums;
+- per-contig Refget sequence digests and the Refget Seqcol collection digest;
+- publisher checksum-manifest SHA-256, exact artifact filename/URL binding, and publisher digest verification against downloaded source bytes;
 - FASTA/FAI sequence and byte-layout consistency;
 - BGZF/GZI block structure and offsets when applicable;
 - package identity checksum;
@@ -84,6 +104,44 @@ The qualification report includes a stable outcome, package checksum,
 assembly accession, sequence scope, contig count, and artifact digests. A
 package is not qualified merely because a path exists or a version string is
 declared.
+
+
+## NCBI GRCh38 acquisition candidate
+
+The reproducible builder `scripts/reference/build_ncbi_grch38_reference_package.py`
+targets the NCBI Genomes FTP GRCh38 full-plus-hs38d1 analysis set:
+
+- Assembly lineage: `GCA_000001405.15` (GRCh38)
+- Sequence collection: `FULL_PLUS_HS38D1_ANALYSIS_SET`
+- Source FASTA:
+  `https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_full_plus_hs38d1_analysis_set.fna.gz`
+- Publisher checksum manifest:
+  `https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/md5checksums.txt`
+
+The builder downloads the FASTA and checksum manifest, requires exactly one
+publisher MD5 entry for the source filename, verifies the compressed source
+bytes, decompresses the FASTA, generates FAI with samtools, creates the
+sequence dictionary with Picard, computes Refget identity, and emits
+`reference-package.json`. The generated dictionary and FAI are derived
+artifacts and are validated against the actual FASTA content.
+
+Example:
+
+```bash
+uv run python scripts/reference/build_ncbi_grch38_reference_package.py \
+  --output-dir /var/lib/siraloom/reference-staging/GRCh38-full-plus-hs38d1 \
+  --samtools samtools \
+  --bcftools bcftools \
+  --picard-jar /opt/picard/picard.jar
+```
+
+The builder deliberately reports `BUILT_NOT_REGISTERED`. The manifest must
+then be registered as a `CANDIDATE`, staged in the target environment, run
+through persisted qualification, reviewed, and explicitly activated. This PR
+does not claim that the full NCBI genome has already been downloaded or
+activated in the SIRALOOM production database. The NCBI source set is an
+assembly-analysis collection based on GCA_000001405.15; it must not be
+mislabelled as RefSeq `GCF_000001405.40` or as a DRAGEN multigenome bundle.
 
 ## Operational boundaries
 
@@ -98,10 +156,10 @@ declared.
   automatically invalid. Their sequence identity and handling policy must be
   established; unresolved records remain visible and must not disappear through
   projection.
-- GATK `.dict`, DeepVariant indexes, DRAGEN hash tables, and aligner indexes
-  are tool-specific derived assets. They must be tied to the same approved
-  sequence collection and pinned tool release, but they do not create different
-  biological reference identities.
+- GATK-compatible `.dict` is a required package asset. DeepVariant indexes,
+  DRAGEN hash tables, and aligner indexes are tool-specific derived assets.
+  They must be tied to the same approved sequence collection and pinned tool
+  release, but they do not create different biological reference identities.
 - A successful package qualification is a resource-integrity gate, not a
   complete laboratory validation or a guarantee of successful clinical
   interpretation.
