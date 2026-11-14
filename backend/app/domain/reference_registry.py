@@ -73,6 +73,11 @@ def validate_reference_registration(
             f"unsupported reference package schema {schema!r}",
             code="REFERENCE_PACKAGE_SCHEMA_UNSUPPORTED",
         )
+    if schema not in {REFERENCE_PACKAGE_SCHEMA_VERSION, REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION}:
+        raise ReferenceRegistryError(
+            f"legacy reference package schema {schema!r} cannot be newly registered; rebuild as schema 1.2 or 1.3",
+            code="REFERENCE_PACKAGE_SCHEMA_LEGACY_REGISTRATION_BLOCKED",
+        )
     missing = [field for field in _REQUIRED_MANIFEST_FIELDS if manifest.get(field) in (None, "", [])]
     if missing:
         raise ReferenceRegistryError(
