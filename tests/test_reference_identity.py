@@ -43,9 +43,9 @@ def test_sequence_dictionary_must_match_order_length_and_md5(tmp_path: Path):
     identity = inspect_fasta_sequence_identity(fasta)
     dictionary = tmp_path / "identity.dict"
     dictionary.write_text(
-        "@HD\\tVN:1.6\\tSO:unsorted\n"
+        "@HD\tVN:1.6\tSO:unsorted\n"
         + "".join(
-            f"@SQ\\tSN:{entry['name']}\\tLN:{entry['length']}\\tM5:{entry['md5']}\\n"
+            f"@SQ\tSN:{entry['name']}\tLN:{entry['length']}\tM5:{entry['md5']}\n"
             for entry in identity["sequences"]
         ),
         encoding="ascii",
@@ -61,8 +61,8 @@ def test_sequence_dictionary_rejects_mismatched_m5(tmp_path: Path):
     identity = inspect_fasta_sequence_identity(fasta)
     dictionary = tmp_path / "identity.dict"
     dictionary.write_text(
-        "@HD\\tVN:1.6\\tSO:unsorted\n"
-        "@SQ\\tSN:chr1\\tLN:4\\tM5:00000000000000000000000000000000\n",
+        "@HD\tVN:1.6\tSO:unsorted\n"
+        "@SQ\tSN:chr1\tLN:4\tM5:00000000000000000000000000000000\n",
         encoding="ascii",
     )
     with pytest.raises(ReferenceIdentityError) as exc:
