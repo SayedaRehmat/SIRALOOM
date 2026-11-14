@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import zlib
 from pathlib import Path
 from urllib.parse import urlparse
 from typing import Any
@@ -118,7 +119,7 @@ def verify_publisher_checksum_evidence(
             for chunk in iter(lambda: source.read(1024 * 1024), b""):
                 transformed_digest.update(chunk)
                 transformed_size += len(chunk)
-    except (OSError, EOFError) as exc:
+    except (OSError, EOFError, zlib.error) as exc:
         raise PublisherChecksumError(
             f"publisher-verified source artifact cannot be decompressed: {exc}",
             code="PUBLISHER_ARTIFACT_TRANSFORM_INVALID",
