@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,31 @@ from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
 FIXTURES = Path(__file__).parent / "fixtures" / "vcf" / "callers"
+
+
+@pytest.fixture(autouse=True)
+def _stub_ebi_validator_for_caller_profile_unit_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise SIRALOOM caller semantics independently of the EBI native executable."""
+    def fake_validator(path, **kwargs):
+        source = Path(path)
+        fileformat = next(
+            (line.rstrip("\\r\\n").split("=", 1)[1] for line in source.read_text(encoding="utf-8").splitlines() if line.startswith("##fileformat=")),
+            None,
+        )
+        return {
+            "validator": "EBI_VCF_VALIDATION_SUITE",
+            "validator_version_expected": "0.10.2",
+            "validator_profile_id": "test-ebi-validator",
+            "artifact_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+            "vcf_version": fileformat,
+            "caller": (kwargs.get("caller_provenance") or {}).get("caller_profile_id", "TEST"),
+            "caller_provenance": kwargs.get("caller_provenance") or {},
+            "status": "PASS",
+            "reports": [],
+            "report_count": 0,
+        }
+
+    monkeypatch.setattr(ingestion, "run_ebi_vcf_validator", fake_validator)
 
 
 @pytest.mark.parametrize(

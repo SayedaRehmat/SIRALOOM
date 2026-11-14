@@ -27,6 +27,20 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
+      - name: Create isolated EBI runtime from committed explicit lock
+        run: |
+          prefix="$RUNNER_TEMP/ebi-vcf-validator-0.10.2"
+          micromamba create --yes --prefix "$prefix" --file configs/bioinformatics/profiles/ebi-vcf-validator-0.10.2-linux-64.lock
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          echo "EBI_VCF_VALIDATOR_PREFIX=$prefix" >> "$GITHUB_ENV"
+          echo "EBI_VCF_VALIDATOR_EXECUTABLE=$prefix/bin/vcf_validator" >> "$GITHUB_ENV"
+      - name: Verify EBI runtime lock and executables
+        run: |
+          diff -u \
+            <(grep '^https://' configs/bioinformatics/profiles/ebi-vcf-validator-0.10.2-linux-64.lock | sort) \
+            <(micromamba list --explicit --md5 --prefix "$EBI_VCF_VALIDATOR_PREFIX" | grep '^https://' | sort)
+          test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
+          test "$(vcf_assembly_checker --version)" = "vcf-assembly-checker version 0.10.2"
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Verify pinned BCFtools/HTSlib
@@ -59,6 +73,9 @@ jobs:
           --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64
           --build-arg BCFTOOLS_VERSION=1.25
           --build-arg HTSLIB_VERSION=1.25
+          --build-arg EBI_VCF_VALIDATOR_LOCK_FILE=configs/bioinformatics/profiles/ebi-vcf-validator-0.10.2-linux-64.lock
+          --build-arg EBI_VCF_VALIDATOR_VERSION=0.10.2
+          --build-arg EBI_VCF_VALIDATOR_PROFILE_ID=ebi-vcf-validator-0.10.2-linux-64
           --file docker/backend.Dockerfile --tag siraloom-backend:ci .
       - name: Verify backend image runs without root privileges
         run: |
@@ -80,6 +97,12 @@ jobs:
         run: |
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '1p')" = "bcftools 1.25"
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '2p')" = "Using htslib 1.25"
+      - name: Verify container EBI validator runtime
+        run: |
+          docker run --rm --entrypoint sh siraloom-backend:ci -c '
+            test "$(LD_LIBRARY_PATH=/opt/ebi/lib /opt/ebi/bin/vcf_validator --version)" = "vcf_validator version 0.10.2"
+            test "$(LD_LIBRARY_PATH=/opt/ebi/lib /opt/ebi/bin/vcf_assembly_checker --version)" = "vcf-assembly-checker version 0.10.2"
+          '
   postgres-integration:
     runs-on: ubuntu-latest
     defaults:
@@ -119,6 +142,20 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
+      - name: Create isolated EBI runtime from committed explicit lock
+        run: |
+          prefix="$RUNNER_TEMP/ebi-vcf-validator-0.10.2"
+          micromamba create --yes --prefix "$prefix" --file configs/bioinformatics/profiles/ebi-vcf-validator-0.10.2-linux-64.lock
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          echo "EBI_VCF_VALIDATOR_PREFIX=$prefix" >> "$GITHUB_ENV"
+          echo "EBI_VCF_VALIDATOR_EXECUTABLE=$prefix/bin/vcf_validator" >> "$GITHUB_ENV"
+      - name: Verify EBI runtime lock and executables
+        run: |
+          diff -u \
+            <(grep '^https://' configs/bioinformatics/profiles/ebi-vcf-validator-0.10.2-linux-64.lock | sort) \
+            <(micromamba list --explicit --md5 --prefix "$EBI_VCF_VALIDATOR_PREFIX" | grep '^https://' | sort)
+          test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
+          test "$(vcf_assembly_checker --version)" = "vcf-assembly-checker version 0.10.2"
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Verify pinned BCFtools/HTSlib for PostgreSQL workflow integration
@@ -161,6 +198,20 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
+      - name: Create isolated EBI runtime from committed explicit lock
+        run: |
+          prefix="$RUNNER_TEMP/ebi-vcf-validator-0.10.2"
+          micromamba create --yes --prefix "$prefix" --file configs/bioinformatics/profiles/ebi-vcf-validator-0.10.2-linux-64.lock
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          echo "EBI_VCF_VALIDATOR_PREFIX=$prefix" >> "$GITHUB_ENV"
+          echo "EBI_VCF_VALIDATOR_EXECUTABLE=$prefix/bin/vcf_validator" >> "$GITHUB_ENV"
+      - name: Verify EBI runtime lock and executables
+        run: |
+          diff -u \
+            <(grep '^https://' configs/bioinformatics/profiles/ebi-vcf-validator-0.10.2-linux-64.lock | sort) \
+            <(micromamba list --explicit --md5 --prefix "$EBI_VCF_VALIDATOR_PREFIX" | grep '^https://' | sort)
+          test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
+          test "$(vcf_assembly_checker --version)" = "vcf-assembly-checker version 0.10.2"
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Install backend from committed lock
