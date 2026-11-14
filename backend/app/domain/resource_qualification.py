@@ -101,6 +101,8 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
     checks["bcftools_version"] = version
     checks["bcftools_tool"] = "bcftools"
     checks["bcftools_execution"] = "DECLARED_NOT_EXECUTED"
+    if not str(toolchain.get("samtools") or "").strip():
+        blockers.append("SAMTOOLS_VERSION_NOT_DECLARED")
 
 
 def _execute_reference_bcftools(
