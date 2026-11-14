@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.domain.local_uri import local_path_from_uri
-from backend.app.domain.reference_package import ReferencePackageError, validate_reference_package
+from backend.app.domain.reference_package import ReferencePackageError, validate_reference_package\nfrom backend.app.domain.reference_provenance import PublisherChecksumError, verify_publisher_checksum_evidence
 from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
     validate_execution_contract,
@@ -200,7 +200,21 @@ def qualify_resource(
                 "fasta_sha256": package_identity["fasta_sha256"],
                 "fai_sha256": package_identity["fai_sha256"],
                 "gzi_sha256": package_identity["gzi_sha256"],
+                "dictionary_sha256": package_identity.get("dictionary_sha256"),
+                "sequence_collection_digest": package_identity.get("sequence_collection_digest"),
             }
+            try:
+                checks["publisher_checksum_evidence"] = verify_publisher_checksum_evidence(
+                    metadata.get("source_contract") or {},
+                    artifact_path=package_identity["fasta_path"],
+                )
+            except PublisherChecksumError as exc:
+                blockers.append(exc.code)
+                checks["publisher_checksum_evidence"] = {
+                    "status": "BLOCKED",
+                    "error_code": exc.code,
+                    "error": str(exc)[:2000],
+                }
         except ReferencePackageError as exc:
             blockers.append("REFERENCE_PACKAGE_VALIDATION_FAILED")
             checks["reference_package"] = {
