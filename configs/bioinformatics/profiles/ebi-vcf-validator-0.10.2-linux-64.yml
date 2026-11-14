@@ -1,0 +1,7 @@
+# Exact Bioconda package build used to bootstrap the combined explicit runtime lock.
+# The committed @EXPLICIT lock records every resolved transitive package URL and MD5.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - vcf-validator=0.10.2=h7a61d87_0
