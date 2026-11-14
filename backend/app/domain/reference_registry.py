@@ -20,7 +20,6 @@ from backend.app.domain.reference_package import (
 )
 from backend.app.domain.resource_qualification import QualificationResult, qualify_resource
 from backend.app.domain.resources import (
-    ResourceRegistryError,
     activate_resource_version,
     qualify_resource_version,
     register_resource_version,
