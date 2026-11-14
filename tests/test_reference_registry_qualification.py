@@ -306,7 +306,7 @@ def _register_and_stage_reference(db, resource_fixture):
         key: value for key, value in metadata.items()
         if key not in {"source_contract", "execution"}
     }
-    resource, created = register_reference_package(
+    resource, _created = register_reference_package(
         db,
         name=fixture.name,
         provider=fixture.provider,
