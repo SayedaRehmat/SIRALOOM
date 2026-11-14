@@ -8,9 +8,17 @@ from uuid import UUID
 from backend.app.domain.reference import ReferenceError, validate_bgzf_gzi_index
 from backend.app.infrastructure.db.models import Resource
 
-REFERENCE_PACKAGE_SCHEMA_VERSION = "1.0"
-REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION = "1.1"
+REFERENCE_PACKAGE_LEGACY_SCHEMA_VERSION = "1.0"
+REFERENCE_PACKAGE_LEGACY_BGZF_SCHEMA_VERSION = "1.1"
+REFERENCE_PACKAGE_SCHEMA_VERSION = "1.2"
+REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION = "1.3"
 SUPPORTED_REFERENCE_PACKAGE_SCHEMA_VERSIONS = {
+    REFERENCE_PACKAGE_LEGACY_SCHEMA_VERSION,
+    REFERENCE_PACKAGE_LEGACY_BGZF_SCHEMA_VERSION,
+    REFERENCE_PACKAGE_SCHEMA_VERSION,
+    REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+}
+REFERENCE_PACKAGE_SEQUENCE_IDENTITY_SCHEMA_VERSIONS = {
     REFERENCE_PACKAGE_SCHEMA_VERSION,
     REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
 }
@@ -250,6 +258,8 @@ def package_checksum(
     sequence_scope: str,
     schema_version: str = REFERENCE_PACKAGE_SCHEMA_VERSION,
     gzi_sha256: str | None = None,
+    dictionary_sha256: str | None = None,
+    sequence_collection_digest: str | None = None,
 ) -> str:
     manifest = {
         "schema_version": schema_version,
@@ -264,8 +274,11 @@ def package_checksum(
         "reference_source": reference_source,
         "sequence_scope": sequence_scope,
     }
-    if schema_version == REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION:
+    if schema_version in {REFERENCE_PACKAGE_LEGACY_BGZF_SCHEMA_VERSION, REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION}:
         manifest["gzi_sha256"] = gzi_sha256
+    if schema_version in REFERENCE_PACKAGE_SEQUENCE_IDENTITY_SCHEMA_VERSIONS:
+        manifest["dictionary_sha256"] = dictionary_sha256
+        manifest["sequence_collection_digest"] = sequence_collection_digest
     payload = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
@@ -275,6 +288,7 @@ def validate_reference_package(
     *,
     expected_genome_build: str,
     allow_approved_qualified: bool = False,
+    allow_candidate_for_qualification: bool = False,
 ) -> dict:
     if resource.resource_type != REFERENCE_PACKAGE_RESOURCE_TYPE:
         raise ReferencePackageError(
@@ -284,6 +298,8 @@ def validate_reference_package(
     allowed_statuses = {"ACTIVE", "SUPERSEDED"}
     if allow_approved_qualified:
         allowed_statuses.add("QUALIFIED")
+    if allow_candidate_for_qualification:
+        allowed_statuses.add("CANDIDATE")
     if resource.status not in allowed_statuses:
         raise ReferencePackageError(
             f"Reference package {resource.name!r} is not consumable (status={resource.status!r}).",
@@ -327,12 +343,13 @@ def validate_reference_package(
             compressed = probe.read(2) == b"\x1f\x8b"
     except OSError:
         compressed = fasta_path.name.lower().endswith((".gz", ".bgz"))
-    if compressed and schema_version != REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION:
+    bgzf_schemas = {REFERENCE_PACKAGE_LEGACY_BGZF_SCHEMA_VERSION, REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION}
+    if compressed and schema_version not in bgzf_schemas:
         raise ReferencePackageError(
             "BGZF reference packages require schema 1.1 with a checksummed GZI index.",
             code="REFERENCE_GZI_REQUIRED",
         )
-    if schema_version == REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION and not compressed:
+    if schema_version in bgzf_schemas and not compressed:
         raise ReferencePackageError(
             "Reference package schema 1.1 is reserved for BGZF FASTA packages.",
             code="REFERENCE_PACKAGE_SCHEMA_INVALID",
@@ -392,6 +409,46 @@ def validate_reference_package(
             code="REFERENCE_CONTIG_MANIFEST_MISMATCH",
         )
 
+    sequence_identity: dict | None = None
+    dictionary_identity: dict | None = None
+    if schema_version in REFERENCE_PACKAGE_SEQUENCE_IDENTITY_SCHEMA_VERSIONS:
+        from backend.app.domain.reference_identity import (
+            ReferenceIdentityError,
+            inspect_fasta_sequence_identity,
+            validate_sequence_dictionary,
+        )
+
+        dictionary_path = Path(str(metadata.get("dictionary_path") or ""))
+        if not dictionary_path.is_file():
+            raise ReferencePackageError(
+                f"GATK/SAM sequence dictionary is missing: {dictionary_path}",
+                code="REFERENCE_DICTIONARY_MISSING",
+            )
+        actual_dictionary_sha = sha256_file(dictionary_path)
+        if actual_dictionary_sha != str(metadata.get("dictionary_sha256") or ""):
+            raise ReferencePackageError(
+                "Reference sequence dictionary checksum mismatch.",
+                code="REFERENCE_CHECKSUM_MISMATCH",
+            )
+        try:
+            sequence_identity = inspect_fasta_sequence_identity(fasta_path)
+            dictionary_identity = validate_sequence_dictionary(
+                dictionary_path,
+                sequence_identity["sequences"],
+            )
+        except ReferenceIdentityError as exc:
+            raise ReferencePackageError(str(exc), code=exc.code) from exc
+        if sequence_identity["sequences"] != metadata.get("sequence_manifest"):
+            raise ReferencePackageError(
+                "Per-contig Refget sequence identity manifest does not match FASTA content.",
+                code="REFERENCE_SEQUENCE_IDENTITY_MISMATCH",
+            )
+        if sequence_identity["sequence_collection_digest"] != metadata.get("sequence_collection_digest"):
+            raise ReferencePackageError(
+                "GA4GH Refget sequence collection digest does not match FASTA content.",
+                code="REFERENCE_SEQUENCE_COLLECTION_MISMATCH",
+            )
+
     expected_package_checksum = package_checksum(
         genome_build=expected_genome_build,
         version=resource.version,
@@ -404,6 +461,16 @@ def validate_reference_package(
         sequence_scope=str(metadata["sequence_scope"]),
         schema_version=str(schema_version),
         gzi_sha256=actual_gzi_sha,
+        dictionary_sha256=(
+            str(metadata.get("dictionary_sha256") or "")
+            if schema_version in REFERENCE_PACKAGE_SEQUENCE_IDENTITY_SCHEMA_VERSIONS
+            else None
+        ),
+        sequence_collection_digest=(
+            str(metadata.get("sequence_collection_digest") or "")
+            if schema_version in REFERENCE_PACKAGE_SEQUENCE_IDENTITY_SCHEMA_VERSIONS
+            else None
+        ),
     )
     if not resource.checksum or resource.checksum != expected_package_checksum:
         raise ReferencePackageError(
@@ -434,6 +501,11 @@ def validate_reference_package(
         "fai_sha256": actual_fai_sha,
         "gzi_path": str(gzi_path) if gzi_path is not None else None,
         "gzi_sha256": actual_gzi_sha,
+        "dictionary_path": str(metadata.get("dictionary_path")) if metadata.get("dictionary_path") else None,
+        "dictionary_sha256": str(metadata.get("dictionary_sha256")) if metadata.get("dictionary_sha256") else None,
+        "dictionary_identity": dictionary_identity,
+        "sequence_manifest": sequence_identity["sequences"] if sequence_identity else None,
+        "sequence_collection_digest": sequence_identity["sequence_collection_digest"] if sequence_identity else None,
         "contigs_sha256": actual_contigs_sha,
         "package_checksum": expected_package_checksum,
         "contig_policy": CONTIG_POLICY_EXACT,

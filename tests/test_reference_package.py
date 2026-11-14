@@ -20,11 +20,23 @@ from backend.app.domain.reference_package import (
     validate_fasta_index_consistency,
     validate_reference_package,
 )
+from backend.app.domain.reference_identity import inspect_fasta_sequence_identity
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
+
+
+def _write_sequence_dictionary(path: Path, identity: dict):
+    path.write_text(
+        "@HD\tVN:1.6\tSO:unsorted\n"
+        + "".join(
+            f"@SQ\tSN:{item['name']}\tLN:{item['length']}\tM5:{item['md5']}\n"
+            for item in identity["sequences"]
+        ),
+        encoding="ascii",
+    )
 
 
 def make_package(tmp_path: Path):
@@ -37,6 +49,10 @@ def make_package(tmp_path: Path):
     fasta_sha = sha256_file(fasta)
     fai_sha = sha256_file(fai)
     contigs_sha = contig_manifest_sha256(contigs)
+    sequence_identity = inspect_fasta_sequence_identity(fasta)
+    dictionary = tmp_path / "GRCh38.dict"
+    _write_sequence_dictionary(dictionary, sequence_identity)
+    dictionary_sha = sha256_file(dictionary)
     checksum = package_checksum(
         genome_build="GRCh38",
         version="test-1",
@@ -47,6 +63,8 @@ def make_package(tmp_path: Path):
         assembly_accession="GCA_TEST_GRCH38",
         reference_source="TEST_FIXTURE",
         sequence_scope="TEST_CONTIG_SET",
+        dictionary_sha256=dictionary_sha,
+        sequence_collection_digest=sequence_identity["sequence_collection_digest"],
     )
     resource = SimpleNamespace(
         id="11111111-1111-1111-1111-111111111111",
@@ -66,6 +84,10 @@ def make_package(tmp_path: Path):
             "contig_policy": CONTIG_POLICY_EXACT,
             "fasta_path": str(fasta),
             "fai_path": str(fai),
+            "dictionary_path": str(dictionary),
+            "dictionary_sha256": dictionary_sha,
+            "sequence_manifest": sequence_identity["sequences"],
+            "sequence_collection_digest": sequence_identity["sequence_collection_digest"],
             "fasta_sha256": fasta_sha,
             "fai_sha256": fai_sha,
             "contigs_sha256": contigs_sha,
@@ -121,9 +143,17 @@ def make_bgzf_package(tmp_path: Path):
     fai_sha = sha256_file(fai)
     gzi_sha = sha256_file(gzi)
     contigs_sha = contig_manifest_sha256(contigs)
+    sequence_identity = inspect_fasta_sequence_identity(fasta)
+    dictionary = tmp_path / "GRCh38-bgzf.dict"
+    _write_sequence_dictionary(dictionary, sequence_identity)
+    dictionary_sha = sha256_file(dictionary)
     metadata = resource.metadata_json
     metadata.update({
         "schema_version": REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+        "dictionary_path": str(dictionary),
+        "dictionary_sha256": dictionary_sha,
+        "sequence_manifest": sequence_identity["sequences"],
+        "sequence_collection_digest": sequence_identity["sequence_collection_digest"],
         "fasta_path": str(fasta),
         "fai_path": str(fai),
         "gzi_path": str(gzi),
@@ -145,6 +175,8 @@ def make_bgzf_package(tmp_path: Path):
         reference_source="TEST_FIXTURE",
         sequence_scope="TEST_CONTIG_SET",
         schema_version=REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+        dictionary_sha256=dictionary_sha,
+        sequence_collection_digest=sequence_identity["sequence_collection_digest"],
     )
     return resource, fasta, fai, gzi
 
@@ -281,6 +313,8 @@ def test_reference_package_supports_explicit_grch37_identity(tmp_path: Path):
         assembly_accession="GCA_TEST_GRCH37",
         reference_source="TEST_FIXTURE",
         sequence_scope="TEST_CONTIG_SET",
+        dictionary_sha256=resource.metadata_json["dictionary_sha256"],
+        sequence_collection_digest=resource.metadata_json["sequence_collection_digest"],
     )
     package = validate_reference_package(resource, expected_genome_build="GRCh37")
     assert package["assembly_name"] == "GRCh37"
@@ -397,7 +431,7 @@ def test_reference_package_rejects_stale_fai_offset(tmp_path: Path):
     resource, _fasta, fai = make_package(tmp_path)
     fields = fai.read_text(encoding="utf-8").strip().split("\t")
     fields[2] = str(int(fields[2]) + 1)
-    fai.write_text("\t".join(fields) + "\\n", encoding="utf-8")
+    fai.write_text("\t".join(fields) + "\n", encoding="utf-8")
     with pytest.raises(ReferencePackageError) as exc:
         validate_reference_package(resource, expected_genome_build="GRCh38")
     assert exc.value.code == "REFERENCE_CHECKSUM_MISMATCH"
@@ -466,3 +500,39 @@ def test_fasta_index_consistency_accepts_multiline_crlf_fasta(tmp_path: Path):
     fai.write_text("1\t6\t16\t4\t6\n", encoding="utf-8")
     result = validate_fasta_index_consistency(fasta, fai)
     assert result == [{"name": "1", "length": 6}]
+
+
+
+def test_reference_package_rejects_missing_gatk_sequence_dictionary(tmp_path: Path):
+    resource, _fasta, _fai = make_package(tmp_path)
+    Path(resource.metadata_json["dictionary_path"]).unlink()
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_reference_package(resource, expected_genome_build="GRCh38")
+    assert exc.value.code == "REFERENCE_DICTIONARY_MISSING"
+
+
+def test_reference_package_rejects_dictionary_with_wrong_m5_even_if_dictionary_checksum_is_repinned(tmp_path: Path):
+    resource, _fasta, _fai = make_package(tmp_path)
+    dictionary = Path(resource.metadata_json["dictionary_path"])
+    dictionary.write_text(
+        "@HD\tVN:1.6\tSO:unsorted\n"
+        "@SQ\tSN:1\tLN:7\tM5:00000000000000000000000000000000\n",
+        encoding="ascii",
+    )
+    resource.metadata_json["dictionary_sha256"] = sha256_file(dictionary)
+    resource.checksum = package_checksum(
+        genome_build=resource.genome_build,
+        version=resource.version,
+        fasta_sha256=resource.metadata_json["fasta_sha256"],
+        fai_sha256=resource.metadata_json["fai_sha256"],
+        contigs_sha256=resource.metadata_json["contigs_sha256"],
+        assembly_name=resource.metadata_json["assembly_name"],
+        assembly_accession=resource.metadata_json["assembly_accession"],
+        reference_source=resource.metadata_json["reference_source"],
+        sequence_scope=resource.metadata_json["sequence_scope"],
+        dictionary_sha256=resource.metadata_json["dictionary_sha256"],
+        sequence_collection_digest=resource.metadata_json["sequence_collection_digest"],
+    )
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_reference_package(resource, expected_genome_build="GRCh38")
+    assert exc.value.code == "REFERENCE_DICTIONARY_MISMATCH"
