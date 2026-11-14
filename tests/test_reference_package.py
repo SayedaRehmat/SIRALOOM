@@ -20,11 +20,22 @@ from backend.app.domain.reference_package import (
     validate_fasta_index_consistency,
     validate_reference_package,
 )
-from backend.app.domain.vcf_validation import (
+from backend.app.domain.reference_identity import inspect_fasta_sequence_identity\nfrom backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
+
+
+def _write_sequence_dictionary(path: Path, identity: dict):
+    path.write_text(
+        "@HD\\tVN:1.6\\tSO:unsorted\\n"
+        + "".join(
+            f"@SQ\\tSN:{item['name']}\\tLN:{item['length']}\\tM5:{item['md5']}\\n"
+            for item in identity["sequences"]
+        ),
+        encoding="ascii",
+    )
 
 
 def make_package(tmp_path: Path):
@@ -37,6 +48,10 @@ def make_package(tmp_path: Path):
     fasta_sha = sha256_file(fasta)
     fai_sha = sha256_file(fai)
     contigs_sha = contig_manifest_sha256(contigs)
+    sequence_identity = inspect_fasta_sequence_identity(fasta)
+    dictionary = tmp_path / "GRCh38.dict"
+    _write_sequence_dictionary(dictionary, sequence_identity)
+    dictionary_sha = sha256_file(dictionary)
     checksum = package_checksum(
         genome_build="GRCh38",
         version="test-1",
@@ -47,6 +62,8 @@ def make_package(tmp_path: Path):
         assembly_accession="GCA_TEST_GRCH38",
         reference_source="TEST_FIXTURE",
         sequence_scope="TEST_CONTIG_SET",
+        dictionary_sha256=dictionary_sha,
+        sequence_collection_digest=sequence_identity["sequence_collection_digest"],
     )
     resource = SimpleNamespace(
         id="11111111-1111-1111-1111-111111111111",
@@ -66,6 +83,10 @@ def make_package(tmp_path: Path):
             "contig_policy": CONTIG_POLICY_EXACT,
             "fasta_path": str(fasta),
             "fai_path": str(fai),
+            "dictionary_path": str(dictionary),
+            "dictionary_sha256": dictionary_sha,
+            "sequence_manifest": sequence_identity["sequences"],
+            "sequence_collection_digest": sequence_identity["sequence_collection_digest"],
             "fasta_sha256": fasta_sha,
             "fai_sha256": fai_sha,
             "contigs_sha256": contigs_sha,
@@ -121,9 +142,17 @@ def make_bgzf_package(tmp_path: Path):
     fai_sha = sha256_file(fai)
     gzi_sha = sha256_file(gzi)
     contigs_sha = contig_manifest_sha256(contigs)
+    sequence_identity = inspect_fasta_sequence_identity(fasta)
+    dictionary = tmp_path / "GRCh38-bgzf.dict"
+    _write_sequence_dictionary(dictionary, sequence_identity)
+    dictionary_sha = sha256_file(dictionary)
     metadata = resource.metadata_json
     metadata.update({
         "schema_version": REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+        "dictionary_path": str(dictionary),
+        "dictionary_sha256": dictionary_sha,
+        "sequence_manifest": sequence_identity["sequences"],
+        "sequence_collection_digest": sequence_identity["sequence_collection_digest"],
         "fasta_path": str(fasta),
         "fai_path": str(fai),
         "gzi_path": str(gzi),
@@ -145,6 +174,8 @@ def make_bgzf_package(tmp_path: Path):
         reference_source="TEST_FIXTURE",
         sequence_scope="TEST_CONTIG_SET",
         schema_version=REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+        dictionary_sha256=dictionary_sha,
+        sequence_collection_digest=sequence_identity["sequence_collection_digest"],
     )
     return resource, fasta, fai, gzi
 
