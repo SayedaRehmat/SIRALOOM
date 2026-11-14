@@ -461,3 +461,21 @@ def test_reference_qualification_blocks_artifact_digest_not_in_publisher_manifes
 
     assert result.passed is False
     assert "PUBLISHER_ARTIFACT_CHECKSUM_MISMATCH" in result.blockers
+
+
+
+def test_reference_registry_refuses_new_registration_of_legacy_schema(tmp_path):
+    resource, _staging = _reference_candidate(tmp_path)
+    manifest = {
+        key: value for key, value in resource.metadata_json.items()
+        if key not in {"source_contract", "execution"}
+    }
+    manifest["schema_version"] = "1.0"
+    with pytest.raises(ReferenceRegistryError) as exc:
+        validate_reference_registration(
+            manifest,
+            genome_build="GRCh38",
+            package_version=resource.version,
+            package_checksum=resource.checksum,
+        )
+    assert exc.value.code == "REFERENCE_PACKAGE_SCHEMA_LEGACY_REGISTRATION_BLOCKED"
