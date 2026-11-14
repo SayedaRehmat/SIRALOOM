@@ -294,6 +294,9 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
     try:
         source_attestation = dragen_gp_attestation(callset, source)
         strict = validate_vcf_strict(source, caller_attestation=source_attestation)
+        # Report the validator-enriched provenance, not the earlier header-only inspection.
+        # In particular, signed/pinned DRAGEN GP deviations must agree at every report level.
+        result["caller_provenance"] = strict["caller_provenance"]
         result["whole_file_strict_validation"] = {
             "status": "PASS",
             "vcf_version": strict["fileformat"],
