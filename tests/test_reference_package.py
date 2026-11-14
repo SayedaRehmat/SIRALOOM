@@ -312,6 +312,8 @@ def test_reference_package_supports_explicit_grch37_identity(tmp_path: Path):
         assembly_accession="GCA_TEST_GRCH37",
         reference_source="TEST_FIXTURE",
         sequence_scope="TEST_CONTIG_SET",
+        dictionary_sha256=resource.metadata_json["dictionary_sha256"],
+        sequence_collection_digest=resource.metadata_json["sequence_collection_digest"],
     )
     package = validate_reference_package(resource, expected_genome_build="GRCh37")
     assert package["assembly_name"] == "GRCh37"
