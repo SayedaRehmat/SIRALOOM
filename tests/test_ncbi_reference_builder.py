@@ -34,7 +34,7 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
             first_offset = data.index(b"ACAAAAGT")
             second_offset = data.index(b"TGCA")
             Path(str(fasta_path) + ".fai").write_text(
-                f"chr1\t4\t{first_offset}\t4\t5\n"
+                f"chr1\t8\t{first_offset}\t8\t9\n"
                 f"chrM\t4\t{second_offset}\t4\t5\n",
                 encoding="ascii",
             )
