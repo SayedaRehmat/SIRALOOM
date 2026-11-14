@@ -32,9 +32,9 @@ def _reference_candidate(tmp_path: Path):
     sequence_identity = inspect_fasta_sequence_identity(fasta)
     dictionary = tmp_path / "GRCh38.dict"
     dictionary.write_text(
-        "@HD\\tVN:1.6\\tSO:unsorted\\n"
+        "@HD\tVN:1.6\tSO:unsorted\n"
         + "".join(
-            f"@SQ\\tSN:{item['name']}\\tLN:{item['length']}\\tM5:{item['md5']}\\n"
+            f"@SQ\tSN:{item['name']}\tLN:{item['length']}\tM5:{item['md5']}\n"
             for item in sequence_identity["sequences"]
         ),
         encoding="ascii",
@@ -114,7 +114,7 @@ def _reference_candidate(tmp_path: Path):
     )
     publisher_evidence = Path(resource.metadata_json["source_contract"]["publisher_checksum_evidence"]["evidence_file_path"])
     expected_md5 = resource.metadata_json["source_contract"]["publisher_checksum_evidence"]["expected_digest"]
-    publisher_evidence.write_text(f"{expected_md5}  {fasta.name}\\n", encoding="ascii")
+    publisher_evidence.write_text(f"{expected_md5}  {fasta.name}\n", encoding="ascii")
     resource.metadata_json["source_contract"]["publisher_checksum_evidence"]["evidence_file_sha256"] = sha256_file(publisher_evidence)
     staging = SimpleNamespace(
         id=uuid4(),
