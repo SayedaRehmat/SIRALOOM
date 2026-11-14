@@ -1,11 +1,13 @@
 import gzip
 import hashlib
+
+import pytest
 from pathlib import Path
 from types import SimpleNamespace
 
 from backend.app.domain.reference_identity import inspect_fasta_sequence_identity
 from backend.app.domain.reference_package import validate_reference_package
-from backend.app.domain.reference_provenance import verify_publisher_checksum_evidence
+from backend.app.domain.reference_provenance import PublisherChecksumError, verify_publisher_checksum_evidence
 from scripts.reference import build_ncbi_grch38_reference_package as builder
 from scripts.reference.register_and_qualify_reference_package import register_and_qualify
 
@@ -108,3 +110,33 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
     assert registry_report["resource_status"] == "QUALIFIED"
     assert registry_report["qualification_status"] == "QUALIFIED"
     assert registry_report["activation"] == "NOT_REQUESTED_REQUIRES_SEPARATE_GOVERNANCE_APPROVAL"
+
+
+
+def test_publisher_verified_source_must_decompress_to_registered_fasta(tmp_path, monkeypatch):
+    source_payload = b">chr1\\nACGT\\n"
+    compressed = gzip.compress(source_payload)
+    source_path = tmp_path / builder.FASTA_FILENAME
+    source_path.write_bytes(compressed)
+    checksum_path = tmp_path / "md5checksums.txt"
+    source_md5 = hashlib.md5(compressed, usedforsecurity=False).hexdigest()
+    checksum_path.write_text(f"{source_md5}  {builder.FASTA_FILENAME}\\n", encoding="ascii")
+    processed_fasta = tmp_path / "processed.fa"
+    processed_fasta.write_bytes(b">chr1\\nTTTT\\n")
+    evidence = {
+        "publisher_checksum_evidence": {
+            "algorithm": "md5",
+            "expected_digest": source_md5,
+            "evidence_file_path": str(checksum_path),
+            "evidence_file_url": "https://ftp.ncbi.nlm.nih.gov/test/md5checksums.txt",
+            "evidence_file_sha256": hashlib.sha256(checksum_path.read_bytes()).hexdigest(),
+            "artifact_filename": builder.FASTA_FILENAME,
+            "verified_artifact_path": str(source_path),
+        },
+        "artifact_url": builder.BASE_URL + builder.FASTA_FILENAME,
+    }
+
+    with pytest.raises(PublisherChecksumError) as exc:
+        verify_publisher_checksum_evidence(evidence, artifact_path=processed_fasta)
+
+    assert exc.value.code == "PUBLISHER_ARTIFACT_TRANSFORM_MISMATCH"
