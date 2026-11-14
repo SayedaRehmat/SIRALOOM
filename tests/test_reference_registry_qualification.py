@@ -29,7 +29,7 @@ from backend.app.infrastructure.db.models import Resource, ResourceQualification
 
 def _reference_candidate(tmp_path: Path, *, version: str = "GRCh38-refseq-test.1"):
     fasta = tmp_path / "GRCh38.fa"
-    fasta.write_text(">chr1\nACGTACGT\n>chrM\nACGT\n", encoding="ascii")
+    fasta.write_text(">chr1\nACAAAAGT\n>chrM\nACGT\n", encoding="ascii")
     fai = tmp_path / "GRCh38.fa.fai"
     fai.write_text("chr1\t8\t6\t8\t9\nchrM\t4\t21\t4\t5\n", encoding="ascii")
     contigs = contigs_from_fai(fai)
@@ -114,7 +114,10 @@ def _reference_candidate(tmp_path: Path, *, version: str = "GRCh38-refseq-test.1
                 "provider_version": "reference-package-v1",
                 "access_method": "LOCAL",
                 "location": str(fasta),
-                "toolchain": {"bcftools": {"version": "1.25"}},
+                "toolchain": {
+                    "bcftools": {"version": "bcftools 1.21"},
+                    "samtools": "samtools 1.21",
+                },
             },
         },
     )
@@ -157,6 +160,11 @@ def test_reference_candidate_must_pass_full_package_validation(tmp_path):
     assert result.checks["staging_observed_checksum_match"] is True
     assert result.checks["staging_expected_size_match"] is True
     assert result.checks["staging_observed_size_match"] is True
+    assert result.checks["bcftools_execution"]["status"] == "VERIFIED"
+    assert result.checks["bcftools_execution"]["reference_fasta_sha256"] == resource.metadata_json["fasta_sha256"]
+    assert result.checks["bcftools_execution"]["tests"]["valid_snv"]["status"] == "PASS"
+    assert result.checks["bcftools_execution"]["tests"]["valid_small_indel"]["left_aligned"] is True
+    assert result.checks["bcftools_execution"]["tests"]["incorrect_ref_rejected"]["reference_mismatch_reported"] is True
 
 
 
