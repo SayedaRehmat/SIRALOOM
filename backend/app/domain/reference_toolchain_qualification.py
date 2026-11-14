@@ -126,6 +126,9 @@ def execute_bcftools_reference_check(
         if observed_fasta_sha256 != str(expected_fasta_sha256).lower():
             evidence["error"] = "reference FASTA SHA-256 changed before BCFtools execution"
             return evidence
+        if not expected_samtools_version:
+            evidence["error"] = "samtools version must be declared for reference fixture extraction"
+            return evidence
 
         bcftools = shutil.which("bcftools")
         samtools = shutil.which("samtools")
