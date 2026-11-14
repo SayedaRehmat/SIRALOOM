@@ -218,6 +218,7 @@ def validate_vcf(
                 p,
                 expected_version=settings.ebi_vcf_validator_version,
                 profile_id=settings.ebi_vcf_validator_profile_id,
+                executable_name=settings.ebi_vcf_validator_executable,
                 caller_provenance=caller_evidence,
             )
             fileformat = ebi_validation.get("vcf_version")
