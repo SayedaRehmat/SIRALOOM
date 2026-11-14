@@ -507,12 +507,30 @@ def count_records(vcf: Path) -> int:
     return sum(1 for line in output.splitlines() if line)
 
 
+def create_tabix_index(vcf: Path) -> Path:
+    """Create and verify the TBI index required by RTG vcfeval.
+
+    BCFtools defaults to CSI, which is valid for HTSlib consumers but is not
+    accepted by the pinned RTG vcfeval workflow used here. GRCh38 contigs are
+    within the TBI coordinate limit, so explicitly request Tabix.
+    """
+    index_path = Path(str(vcf) + ".tbi")
+    run(["bcftools", "index", "--force", "--tbi", str(vcf)])
+    if not index_path.is_file() or index_path.stat().st_size == 0:
+        raise RuntimeError(
+            f"BCFtools did not create the required RTG Tabix index: {index_path}"
+        )
+    # Ask HTSlib to read the index after creation; existence alone is insufficient.
+    run(["bcftools", "index", "--nrecords", str(vcf)])
+    return index_path
+
+
 def split_variant_types(source: Path, root: Path, caller: str):
     result = {}
     for label, kind in (("snv", "snps"), ("indel", "indels")):
         path = root / f"{caller.lower()}.{label}.vcf.gz"
         run(["bcftools", "view", "-v", kind, "-Oz", "-o", str(path), str(source)])
-        run(["bcftools", "index", "-f", str(path)])
+        create_tabix_index(path)
         result[label] = path
     return result
 
@@ -581,6 +599,13 @@ def genotype_comparison(query: Path, truth: Path, regions: Path, contig_order: d
 
 
 def rtg_eval(rtg: str, template: Path, truth: Path, query: Path, regions: Path, outdir: Path):
+    for label, vcf in (("truth", truth), ("query", query)):
+        index_path = Path(str(vcf) + ".tbi")
+        if not index_path.is_file() or index_path.stat().st_size == 0:
+            raise RuntimeError(
+                f"RTG vcfeval requires a readable Tabix index for {label} VCF: "
+                f"expected {index_path}"
+            )
     if outdir.exists():
         shutil.rmtree(outdir)
     command = [
