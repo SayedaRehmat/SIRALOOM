@@ -1,6 +1,7 @@
 """Publisher checksum evidence verification for staged reference artifacts."""
 from __future__ import annotations
 
+import gzip
 import hashlib
 from pathlib import Path
 from urllib.parse import urlparse
@@ -102,6 +103,32 @@ def verify_publisher_checksum_evidence(
             "downloaded reference artifact does not match publisher checksum",
             code="PUBLISHER_ARTIFACT_CHECKSUM_MISMATCH",
         )
+
+    # Independently bind the publisher-verified source artifact to the processed
+    # FASTA consumed by SIRALOOM. The builder's decompression step is not itself
+    # qualification evidence: stream the source payload again and compare its
+    # decompressed SHA-256 with the registered FASTA bytes.
+    with artifact.open("rb") as probe:
+        is_gzip = probe.read(2) == b"\\x1f\\x8b"
+    source_opener = gzip.open if is_gzip else open
+    transformed_digest = hashlib.sha256()
+    transformed_size = 0
+    try:
+        with source_opener(artifact, "rb") as source:
+            for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                transformed_digest.update(chunk)
+                transformed_size += len(chunk)
+    except (OSError, EOFError) as exc:
+        raise PublisherChecksumError(
+            f"publisher-verified source artifact cannot be decompressed: {exc}",
+            code="PUBLISHER_ARTIFACT_TRANSFORM_INVALID",
+        ) from exc
+    qualified_fasta_sha = _digest_file(package_fasta, "sha256")
+    if transformed_digest.hexdigest() != qualified_fasta_sha:
+        raise PublisherChecksumError(
+            "decompressed publisher artifact does not match the registered processed FASTA",
+            code="PUBLISHER_ARTIFACT_TRANSFORM_MISMATCH",
+        )
     return {
         "status": "VERIFIED",
         "algorithm": algorithm,
@@ -113,5 +140,8 @@ def verify_publisher_checksum_evidence(
         "artifact_filename": artifact_filename,
         "publisher_artifact_sha256": _digest_file(artifact, "sha256"),
         "publisher_artifact_size_bytes": artifact.stat().st_size,
+        "decompressed_artifact_sha256": transformed_digest.hexdigest(),
+        "decompressed_artifact_size_bytes": transformed_size,
+        "qualified_fasta_sha256": qualified_fasta_sha,
         "qualified_fasta_path": str(package_fasta),
     }
