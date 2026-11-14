@@ -27,9 +27,13 @@ RUN case "$(uname -m):${BCFTOOLS_PLATFORM}" in \
 FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS ebi-validator
 
 ARG EBI_VCF_VALIDATOR_LOCK_FILE
-ENV MAMBA_ROOT_PREFIX=/opt/ebi-root
+USER root
+RUN mkdir -p /opt/ebi /opt/ebi-mamba-root \
+    && chown -R "$MAMBA_USER:$MAMBA_USER" /opt/ebi /opt/ebi-mamba-root
+USER $MAMBA_USER
+ENV MAMBA_ROOT_PREFIX=/opt/ebi-mamba-root
 COPY --chown=$MAMBA_USER:$MAMBA_USER ${EBI_VCF_VALIDATOR_LOCK_FILE} /tmp/ebi-vcf-validator-explicit.lock
-RUN micromamba create --yes --name ebi-validator --file /tmp/ebi-vcf-validator-explicit.lock \
+RUN micromamba create --yes --prefix /opt/ebi --file /tmp/ebi-vcf-validator-explicit.lock \
     && micromamba clean --all --yes
 
 FROM ${BCFTOOLS_BASE_IMAGE}
@@ -66,7 +70,7 @@ RUN test "$(uname -m)" = "x86_64" || { echo "This locked BCFtools runtime is qua
 ENV HOME=/home/siraloom SIRALOOM_CONFIG_ROOT=/app
 
 COPY --from=bcftools /opt/conda /opt/conda
-COPY --from=ebi-validator /opt/ebi-root/envs/ebi-validator /opt/ebi
+COPY --from=ebi-validator /opt/ebi /opt/ebi
 ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 
 # Resolve the application dependency graph only from the committed uv lock.
