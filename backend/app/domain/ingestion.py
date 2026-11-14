@@ -212,10 +212,12 @@ def validate_vcf(
     ebi_validation: dict | None = None
     try:
         try:
+            caller_evidence = inspect_caller_provenance(p)
             ebi_validation = run_ebi_vcf_validator(
                 p,
                 expected_version=settings.ebi_vcf_validator_version,
                 profile_id=settings.ebi_vcf_validator_profile_id,
+                caller_provenance=caller_evidence,
             )
         except EBIValidatorUnavailable as exc:
             raise VCFValidationUnavailable(str(exc)) from exc
