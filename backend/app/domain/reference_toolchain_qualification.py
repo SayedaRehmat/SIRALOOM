@@ -24,7 +24,7 @@ def _sha256(path: Path) -> str:
 
 
 def _version_token(value: str) -> str | None:
-    match = re.search(r"\\b(\\d+\\.\\d+(?:\\.\\d+)?)\\b", value)
+    match = re.search(r"\b(\d+\.\d+(?:\.\d+)?)\b", value)
     return match.group(1) if match else None
 
 
@@ -86,13 +86,13 @@ def _write_vcf(path: Path, contig: str, contig_length: int, records: list[tuple[
     lines = [
         "##fileformat=VCFv4.2",
         f"##contig=<ID={contig},length={contig_length}>",
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
     ]
     for position, ref, alt in sorted(records, key=lambda item: item[0]):
         lines.append(
-            f"{contig}\\t{position}\\t.\\t{ref}\\t{alt}\\t.\\tPASS\\t."
+            f"{contig}\t{position}\t.\t{ref}\t{alt}\t.\tPASS\t."
         )
-    path.write_text("\\n".join(lines) + "\\n", encoding="ascii")
+    path.write_text("\n".join(lines) + "\n", encoding="ascii")
 
 
 def execute_bcftools_reference_check(
@@ -264,7 +264,7 @@ def execute_bcftools_reference_check(
             output_records: list[list[str]] = []
             if valid_result["returncode"] == 0 and valid_output.is_file():
                 output_records = [
-                    line.split("\\t")
+                    line.split("\t")
                     for line in valid_output.read_text(encoding="utf-8").splitlines()
                     if line and not line.startswith("#")
                 ]
