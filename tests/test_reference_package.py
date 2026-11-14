@@ -29,9 +29,9 @@ from backend.app.domain.reference_identity import inspect_fasta_sequence_identit
 
 def _write_sequence_dictionary(path: Path, identity: dict):
     path.write_text(
-        "@HD\\tVN:1.6\\tSO:unsorted\\n"
+        "@HD\tVN:1.6\tSO:unsorted\n"
         + "".join(
-            f"@SQ\\tSN:{item['name']}\\tLN:{item['length']}\\tM5:{item['md5']}\\n"
+            f"@SQ\tSN:{item['name']}\tLN:{item['length']}\tM5:{item['md5']}\n"
             for item in identity["sequences"]
         ),
         encoding="ascii",
@@ -430,7 +430,7 @@ def test_reference_package_rejects_stale_fai_offset(tmp_path: Path):
     resource, _fasta, fai = make_package(tmp_path)
     fields = fai.read_text(encoding="utf-8").strip().split("\t")
     fields[2] = str(int(fields[2]) + 1)
-    fai.write_text("\t".join(fields) + "\\n", encoding="utf-8")
+    fai.write_text("\t".join(fields) + "\n", encoding="utf-8")
     with pytest.raises(ReferencePackageError) as exc:
         validate_reference_package(resource, expected_genome_build="GRCh38")
     assert exc.value.code == "REFERENCE_CHECKSUM_MISMATCH"
