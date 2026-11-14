@@ -69,7 +69,7 @@ def inspect_fasta_sequence_identity(fasta_path: str | Path) -> dict[str, Any]:
     matching the sequence identifiers used by FAI/SAM dictionaries.
     """
     path = Path(fasta_path)
-    opener = gzip.open if path.read_bytes()[:2] == b"\\x1f\\x8b" else open
+    with path.open("rb") as probe:\n        compressed = probe.read(2) == b"\\x1f\\x8b"\n    opener = gzip.open if compressed else open
     result: list[dict[str, Any]] = []
     try:
         with opener(path, "rb") as handle:
