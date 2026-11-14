@@ -10,7 +10,7 @@ from scripts.reference import build_ncbi_grch38_reference_package as builder
 
 
 def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifest(tmp_path, monkeypatch):
-    fasta_payload = b">chr1\\nACGT\\n>chrM\\nTGCA\\n"
+    fasta_payload = b">chr1\nACGT\n>chrM\nTGCA\n"
     compressed = gzip.compress(fasta_payload)
     publisher_md5 = hashlib.md5(compressed, usedforsecurity=False).hexdigest()
 
@@ -20,7 +20,7 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
             destination.write_bytes(compressed)
         else:
             destination.write_text(
-                f"{publisher_md5}  {builder.FASTA_FILENAME}\\n",
+                f"{publisher_md5}  {builder.FASTA_FILENAME}\n",
                 encoding="ascii",
             )
 
@@ -31,8 +31,8 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
             first_offset = data.index(b"ACGT")
             second_offset = data.index(b"TGCA")
             Path(str(fasta_path) + ".fai").write_text(
-                f"chr1\\t4\\t{first_offset}\\t4\\t5\\n"
-                f"chrM\\t4\\t{second_offset}\\t4\\t5\\n",
+                f"chr1\t4\t{first_offset}\t4\t5\n"
+                f"chrM\t4\t{second_offset}\t4\t5\n",
                 encoding="ascii",
             )
             return "FAIDX OK"
@@ -41,9 +41,9 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
             dictionary_path = Path(command[3].split("=", 1)[1])
             identity = inspect_fasta_sequence_identity(fasta_path)
             dictionary_path.write_text(
-                "@HD\\tVN:1.6\\tSO:unsorted\\n"
+                "@HD\tVN:1.6\tSO:unsorted\n"
                 + "".join(
-                    f"@SQ\\tSN:{item['name']}\\tLN:{item['length']}\\tM5:{item['md5']}\\n"
+                    f"@SQ\tSN:{item['name']}\tLN:{item['length']}\tM5:{item['md5']}\n"
                     for item in identity["sequences"]
                 ),
                 encoding="ascii",
