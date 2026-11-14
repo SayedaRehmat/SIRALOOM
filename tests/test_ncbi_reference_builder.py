@@ -140,3 +140,34 @@ def test_publisher_verified_source_must_decompress_to_registered_fasta(tmp_path)
         verify_publisher_checksum_evidence(evidence, artifact_path=processed_fasta)
 
     assert exc.value.code == "PUBLISHER_ARTIFACT_TRANSFORM_MISMATCH"
+
+
+
+def test_publisher_verified_corrupt_gzip_is_a_blocking_qualification_error(tmp_path):
+    compressed = bytearray(gzip.compress(b"A" * 100000))
+    compressed[12] ^= 0xFF
+    compressed = bytes(compressed)
+    source_path = tmp_path / builder.FASTA_FILENAME
+    source_path.write_bytes(compressed)
+    checksum_path = tmp_path / "md5checksums.txt"
+    source_md5 = hashlib.md5(compressed, usedforsecurity=False).hexdigest()
+    checksum_path.write_text(f"{source_md5}  {builder.FASTA_FILENAME}" + chr(10), encoding="ascii")
+    processed_fasta = tmp_path / "processed.fa"
+    processed_fasta.write_bytes(b">chr1" + bytes((10,)) + b"ACGT" + bytes((10,)))
+    evidence = {
+        "publisher_checksum_evidence": {
+            "algorithm": "md5",
+            "expected_digest": source_md5,
+            "evidence_file_path": str(checksum_path),
+            "evidence_file_url": "https://ftp.ncbi.nlm.nih.gov/test/md5checksums.txt",
+            "evidence_file_sha256": hashlib.sha256(checksum_path.read_bytes()).hexdigest(),
+            "artifact_filename": builder.FASTA_FILENAME,
+            "verified_artifact_path": str(source_path),
+        },
+        "artifact_url": builder.BASE_URL + builder.FASTA_FILENAME,
+    }
+
+    with pytest.raises(PublisherChecksumError) as exc:
+        verify_publisher_checksum_evidence(evidence, artifact_path=processed_fasta)
+
+    assert exc.value.code == "PUBLISHER_ARTIFACT_TRANSFORM_INVALID"
