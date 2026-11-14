@@ -27,6 +27,12 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
+      - name: Install pinned EBI VCF validator package build
+        run: micromamba install --yes --name bcftools --channel conda-forge --channel bioconda "vcf-validator=0.10.2=h7a61d87_0"
+      - name: Verify EBI VCF validator and assembly checker
+        run: |
+          test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
+          test -x "$(command -v vcf_assembly_checker)"
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Verify pinned BCFtools/HTSlib
@@ -119,6 +125,12 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
+      - name: Install pinned EBI VCF validator package build
+        run: micromamba install --yes --name bcftools --channel conda-forge --channel bioconda "vcf-validator=0.10.2=h7a61d87_0"
+      - name: Verify EBI VCF validator and assembly checker
+        run: |
+          test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
+          test -x "$(command -v vcf_assembly_checker)"
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Verify pinned BCFtools/HTSlib for PostgreSQL workflow integration
@@ -161,6 +173,12 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
+      - name: Install pinned EBI VCF validator package build
+        run: micromamba install --yes --name bcftools --channel conda-forge --channel bioconda "vcf-validator=0.10.2=h7a61d87_0"
+      - name: Verify EBI VCF validator and assembly checker
+        run: |
+          test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
+          test -x "$(command -v vcf_assembly_checker)"
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Install backend from committed lock
@@ -178,12 +196,20 @@ jobs:
           uv run --locked python scripts/validation/run_real_caller_vcf_smoke.py \
             --work-dir /tmp/siraloom-real-caller-vcfs \
             --report artifacts/real-caller-vcf-report.json
-      - name: Preserve real caller VCF validation report
+      - name: Export exact combined BCFtools and EBI runtime lock
+        if: always()
+        run: |
+          mkdir -p artifacts
+          micromamba list --explicit --md5 --name bcftools > artifacts/bcftools-ebi-vcf-validator-linux-64.lock
+          grep -q "vcf-validator-0.10.2-h7a61d87_0" artifacts/bcftools-ebi-vcf-validator-linux-64.lock
+      - name: Preserve real caller VCF validation report and generated runtime lock
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: real-caller-vcf-validation-report
-          path: artifacts/real-caller-vcf-report.json
+          name: real-caller-vcf-validation-evidence
+          path: |
+            artifacts/real-caller-vcf-report.json
+            artifacts/bcftools-ebi-vcf-validator-linux-64.lock
           if-no-files-found: warn
 
   frontend:
