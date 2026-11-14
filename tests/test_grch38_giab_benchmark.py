@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 import scripts.validation.run_grch38_giab_three_caller_benchmark as benchmark
@@ -169,8 +171,6 @@ def test_split_variant_types_creates_tabix_indexes_for_both_outputs(tmp_path, mo
         elif "--tbi" in command:
             Path(command[-1] + ".tbi").write_bytes(b"tabix-index")
         return "1"
-
-    from pathlib import Path
 
     monkeypatch.setattr(benchmark, "run", fake_run)
     outputs = benchmark.split_variant_types(source, tmp_path, "TEST_CALLER")
