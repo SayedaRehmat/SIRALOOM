@@ -71,6 +71,8 @@ The registry reuses the shared `resources`, `resource_stagings`, and
 
 - Registration validates the manifest's structure and immutable identity.
 - Staging binds the exact resource ID/version and FASTA artifact location.
+  The lifecycle records independently observed SHA-256 and byte size; qualification
+  re-reads the staged FASTA and compares actual, expected, and observed evidence.
 - Qualification executes byte-level package validation and records a structured
   result with blockers and checks.
 - Activation requires a persisted successful qualification for the exact
@@ -99,8 +101,14 @@ The qualification engine verifies:
 - FASTA/FAI sequence and byte-layout consistency;
 - BGZF/GZI block structure and offsets when applicable;
 - package identity checksum;
-- staging resource/version/location binding and staged FASTA digest;
-- source contract and declared runtime toolchain.
+- staging resource/version/location binding, expected and observed FASTA
+  SHA-256 values, and expected and observed byte sizes;
+- source contract and pinned samtools/BCFtools runtime versions;
+- actual BCFtools `norm` execution against the same qualified FASTA, including a
+  valid SNV, a left-normalized small insertion, and rejection of an intentionally
+  incorrect REF allele. The report retains executable versions, reference
+  SHA-256, exact commands, return codes, output records, and error evidence.
+  Missing executables, version mismatches, or failed checks block qualification.
 
 The qualification report includes a stable outcome, package checksum,
 assembly accession, sequence scope, contig count, and artifact digests. A
@@ -123,9 +131,12 @@ targets the NCBI Genomes FTP GRCh38 full-plus-hs38d1 analysis set:
 The builder downloads the FASTA and checksum manifest, requires exactly one
 publisher MD5 entry for the source filename, verifies the compressed source
 bytes, decompresses the FASTA, generates FAI with samtools, creates the
-sequence dictionary with Picard, computes Refget identity, and emits
-`reference-package.json`. The generated dictionary and FAI are derived
-artifacts and are validated against the actual FASTA content.
+sequence dictionary with Picard, computes Refget identity and records the
+processed FASTA byte size, then emits `reference-package.json`. The generated
+dictionary and FAI are derived artifacts and are validated against the actual
+FASTA content. During registration/qualification, the existing staging state
+machine independently measures the already-acquired FASTA and the qualification
+engine rechecks the persisted evidence.
 
 Example:
 
@@ -139,11 +150,12 @@ uv run python scripts/reference/build_ncbi_grch38_reference_package.py \
 
 The builder deliberately reports `BUILT_NOT_REGISTERED`. The manual workflow
 then calls `scripts/reference/register_and_qualify_reference_package.py` to
-register the package as `CANDIDATE`, stage the exact FASTA artifact, execute
-the same qualification engine, and persist the resource, staging record, and
-qualification in a disposable SQLite registry. The SQLite database and
-qualification report are retained as CI artifacts. Activation is deliberately
-not requested by this workflow.
+register the package as `CANDIDATE`, verify the already-acquired FASTA through
+the governed staging lifecycle, execute reference-backed BCFtools normalization
+checks against that exact FASTA, execute the package qualification engine, and
+persist the resource, staging record, and qualification in a disposable SQLite
+registry. The SQLite database and qualification report are retained as CI
+artifacts. Activation is deliberately not requested by this workflow.
 
 This disposable registry run proves the complete acquisition-to-persisted-
 qualification path against the real NCBI bytes. It does not register or activate
