@@ -26,7 +26,6 @@ from backend.app.domain.ingestion import validate_vcf
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 from backend.app.domain.vcf_validation import (
-    StrictVCFValidationError,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
@@ -311,28 +310,39 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
             (intake_validation.metadata or {}).get("ebi_vcf_validation")
             or {"status": "MISSING_EBI_VALIDATION_EVIDENCE"}
         )
-        strict = validate_vcf_strict(source, caller_attestation=source_attestation)
+        intake_metadata = intake_validation.metadata or {}
+        ebi_failed_after_siraloom_pass = (
+            intake_validation.error_code == "EBI_VCF_VALIDATION_FAILED"
+        )
+        strict_passed = intake_validation.status == "VALID" or ebi_failed_after_siraloom_pass
         result["whole_file_strict_validation"] = {
-            "status": "PASS",
-            "vcf_version": strict["fileformat"],
-            "records": strict["records"],
-            "sample_count": strict["sample_count"],
-            "alternate_alleles": strict["alternate_allele_count"],
-            "multiallelic_records": strict["multiallelic_records"],
-            "symbolic_records": strict["symbolic_records"],
-            "gvcf_markers": strict["gvcf_markers"],
-            "compression": strict["compression"],
-            "caller_semantic_attestation": strict["caller_semantic_attestation"],
-            "caller_semantic_compatibility_review_required": strict["caller_semantic_compatibility_review_required"],
-            "caller_provenance_semantic_status": strict["caller_provenance"]["caller_semantic_compatibility_status"],
+            "status": "PASS" if strict_passed else "FAIL",
+            "vcf_version": intake_validation.fileformat,
+            "records": intake_metadata.get("source_record_count"),
+            "sample_count": len(intake_validation.sample_names),
+            "alternate_alleles": intake_metadata.get("alternate_allele_count"),
+            "multiallelic_records": intake_metadata.get("multiallelic_source_record_count"),
+            "symbolic_records": intake_metadata.get("symbolic_source_record_count"),
+            "gvcf_markers": intake_metadata.get("gvcf_marker_count"),
+            "compression": intake_metadata.get("compression"),
+            "caller_semantic_attestation": intake_metadata.get("caller_semantic_attestation"),
+            "caller_semantic_compatibility_review_required": intake_metadata.get(
+                "caller_semantic_compatibility_review_required"
+            ),
+            "caller_provenance_semantic_status": (
+                intake_metadata.get("caller_provenance") or {}
+            ).get("caller_semantic_compatibility_status"),
+            **(
+                {
+                    "error_code": intake_validation.error_code,
+                    "errors": intake_validation.errors,
+                }
+                if not strict_passed
+                else {}
+            ),
         }
-    except StrictVCFValidationError as error:
-        result["whole_file_strict_validation"] = {
-            "status": "FAIL",
-            "error_code": error.code,
-            "error": str(error),
-        }
-        return result
+        if not strict_passed:
+            return result
 
     subset, contig = project_chr20(source, root, reference_length)
     subset_attestation = dragen_gp_attestation(callset, subset)
