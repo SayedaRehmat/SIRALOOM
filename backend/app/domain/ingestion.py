@@ -9,6 +9,7 @@ from pathlib import Path
 from uuid import UUID
 
 from backend.app.config import settings
+from backend.app.domain.ebi_vcf_validator import EBIValidatorUnavailable, run_ebi_vcf_validator
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
@@ -208,7 +209,21 @@ def validate_vcf(
     fileformat: str | None = None
     bcftools_version: str | None = None
     htslib_version: str | None = None
+    ebi_validation: dict | None = None
     try:
+        try:
+            ebi_validation = run_ebi_vcf_validator(
+                p,
+                expected_version=settings.ebi_vcf_validator_version,
+            )
+        except EBIValidatorUnavailable as exc:
+            raise VCFValidationUnavailable(str(exc)) from exc
+        if ebi_validation.get("status") != "PASS":
+            reason = ebi_validation.get("reason") or (
+                "EBI vcf-validator rejected the VCF "
+                f"(exit_code={ebi_validation.get('exit_code')})."
+            )
+            raise VCFValidationError(reason)
         strict_profile = validate_vcf_strict(
             p,
             caller_attestation=caller_attestation,
@@ -354,6 +369,7 @@ def validate_vcf(
             "breakend_source_record_count": strict_profile["breakend_records"],
             "gvcf_marker_count": strict_profile["gvcf_markers"],
             "caller_provenance": strict_profile["caller_provenance"],
+            "ebi_vcf_validation": ebi_validation,
             "caller_run_attestation": strict_profile.get("caller_run_attestation"),
             "caller_semantic_attestation": strict_profile.get("caller_semantic_attestation"),
             "caller_semantic_compatibility_review_required": strict_profile.get("caller_semantic_compatibility_review_required", False),
@@ -389,6 +405,8 @@ def validate_vcf(
         # provenance for the durable invalid-artifact record without allowing
         # that metadata to alter the structural validation decision.
         failure_metadata: dict | None = {}
+        if ebi_validation is not None:
+            failure_metadata["ebi_vcf_validation"] = ebi_validation
         try:
             caller_provenance = inspect_caller_provenance(p)
             if caller_provenance.get("identity_status") != "UNKNOWN":
