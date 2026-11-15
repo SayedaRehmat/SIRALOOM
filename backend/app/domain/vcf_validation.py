@@ -1652,7 +1652,7 @@ def _verify_dragen_42_gp_attestation(
     path: Path,
     attestation: dict[str, Any],
 ) -> dict[str, Any]:
-    """Verify the pinned public DRAGEN 4.2 fixture before applying GP semantics.
+    """Verify the pinned public DRAGEN 4.2 fixture before applying its documented event-field extension.
 
     This is deliberately an exact public-dataset allowlist, not a general
     caller-controlled override. Production run attestations require a separate
@@ -1665,7 +1665,8 @@ def _verify_dragen_42_gp_attestation(
         "source_record_url": "https://zenodo.org/records/8350256",
         "source_filename": "HG002_35x.hard-filtered.vcf.gz",
         "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
-        "semantic_deviation": "FORMAT/GP_PHRED_SCALE",
+        "spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
+        "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
     }
     for key, value in expected.items():
         if attestation.get(key) != value:
@@ -1741,6 +1742,8 @@ def _verify_dragen_42_gp_attestation(
         "caller_release": expected["caller_release"],
         "field": "FORMAT/GP",
         "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+        "spec_conformance": "VCFv4.2_CONFORMANT",
+        "caller_extension": expected["caller_extension"],
         "clinical_review_required": True,
         "source_record_url": expected["source_record_url"],
         "source_filename": expected["source_filename"],
@@ -1816,6 +1819,8 @@ def validate_vcf_strict(
                     "caller_release": manifest["caller_release"],
                     "field": "FORMAT/GP",
                     "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+                    "spec_conformance": "VCFv4.2_CONFORMANT",
+                    "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
                     "clinical_review_required": True,
                     "manifest_id": manifest["manifest_id"],
                     "signer_id": manifest["signer_id"],
@@ -1824,7 +1829,7 @@ def validate_vcf_strict(
             # Retain the exact public HG002 fixture attestation used by the
             # real-caller regression harness. It is not a production trust path.
             caller_semantic_attestation = _verify_dragen_42_gp_attestation(source, caller_attestation)
-    dragen_gp_phred_semantics_applicable = caller_semantic_attestation is not None
+    dragen_v42_event_extension_applicable = caller_semantic_attestation is not None
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
@@ -2488,17 +2493,37 @@ def validate_vcf_strict(
             "MISSING_REQUIRED_FORMAT_FIELD",
             "DECLARATION_MISMATCH",
         }:
-            caller_provenance["caller_semantic_compatibility_status"] = "CALLER_SPEC_SEMANTIC_DEVIATION"
+            caller_provenance["caller_semantic_compatibility_status"] = "DOCUMENTED_DRAGEN_V42_EVENT_EXTENSION"
         caller_provenance["caller_semantic_compatibility_review_required"] = True
-        caller_provenance["dragen_gp_phred_semantics_applicable"] = True
-        caller_provenance["field_semantic_deviations"] = [
-            *caller_provenance.get("field_semantic_deviations", []),
+        caller_provenance["dragen_v42_event_extension_applicable"] = True
+        caller_provenance["field_semantic_profiles"] = [
+            *caller_provenance.get("field_semantic_profiles", []),
             {
                 "namespace": "FORMAT",
                 "field_id": "GP",
-                "status": "CALLER_SPEC_SEMANTIC_DEVIATION",
-                "caller_release": "4.2",
+                "status": "VCF_SPEC_CONFORMANT",
+                "vcf_version": fileformat,
                 "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+                "clinical_interpretation": "STANDARD_VCF42_SEMANTICS",
+            },
+        ]
+        caller_provenance["field_semantic_deviations"] = [
+            *caller_provenance.get("field_semantic_deviations", []),
+            {
+                "namespace": "INFO",
+                "field_id": "EVENT",
+                "status": "DOCUMENTED_DRAGEN_V42_CALLER_EXTENSION",
+                "caller_release": "4.2",
+                "declared_number": "A",
+                "vcf42_reserved_number": "1",
+                "clinical_interpretation": "REVIEW_REQUIRED",
+            },
+            {
+                "namespace": "INFO",
+                "field_id": "EVENTTYPE",
+                "status": "DOCUMENTED_DRAGEN_V42_CALLER_EXTENSION",
+                "caller_release": "4.2",
+                "declared_number": "A",
                 "clinical_interpretation": "REVIEW_REQUIRED",
             },
         ]
@@ -2506,7 +2531,7 @@ def validate_vcf_strict(
         "fileformat": fileformat,
         "caller_semantic_attestation": caller_semantic_attestation,
         "caller_run_attestation": caller_run_attestation,
-        "caller_semantic_compatibility_review_required": dragen_gp_phred_semantics_applicable,
+        "caller_semantic_compatibility_review_required": caller_provenance.get("caller_semantic_compatibility_review_required", False),
         "caller_provenance": caller_provenance,
         "records": records,
         "alternate_allele_count": alternate_allele_count,
