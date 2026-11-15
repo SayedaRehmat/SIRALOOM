@@ -870,6 +870,17 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
         and number == "A"
         and parsed["Type"] == "String"
     )
+    if (
+        allow_dragen_v42_event_extension
+        and fileformat == "VCFv4.2"
+        and kind == "INFO"
+        and identifier == "TARGETED"
+        and (number != "0" or parsed["Type"] != "Flag")
+    ):
+        raise StrictVCFValidationError(
+            f"DRAGEN VCFv4.2 INFO/TARGETED must be Number=0,Type=Flag at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
     if reserved_vcf41_44_definition is not None and not dragen_event_extension and (
         number != reserved_vcf41_44_definition["Number"]
         or parsed["Type"] != reserved_vcf41_44_definition["Type"]
