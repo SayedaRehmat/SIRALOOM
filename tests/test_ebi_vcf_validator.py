@@ -277,3 +277,54 @@ def test_dragen_v42_event_extension_requires_verified_caller_attestation() -> No
     assert untrusted["effective_status"] == "FAIL"
     assert len(untrusted["blocking_diagnostics"]) == 2
 
+
+
+def test_assembly_checker_full_file_scope_retains_stdout_when_text_report_is_empty(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    vcf = _vcf(tmp_path / "whole-genome.vcf")
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">chr1\\nACGT\\n", encoding="ascii")
+    Path(str(fasta) + ".fai").write_text("chr1\\t4\\t6\\t4\\t5\\n", encoding="ascii")
+    executable = _fake_tool(tmp_path)
+    monkeypatch.setattr(ebi.shutil, "which", lambda _name: str(executable))
+
+    def fake_run(command, **kwargs):
+        if command[-1] == "--version":
+            return subprocess.CompletedProcess(
+                command, 0, "vcf-assembly-checker version 0.10.2\\n", ""
+            )
+        return subprocess.CompletedProcess(
+            command, 0, "100000 of 100000 records match reference (100%)\\n", ""
+        )
+
+    monkeypatch.setattr(ebi.subprocess, "run", fake_run)
+    result = ebi.run_ebi_vcf_assembly_checker(
+        vcf,
+        fasta,
+        source_artifact_sha256=hashlib.sha256(b"source-vcf").hexdigest(),
+        validation_input_scope="FULL_FILE",
+    )
+
+    assert result["status"] == "PASS"
+    assert result["validation_input_scope"] == "FULL_FILE"
+    assert result["summary_evidence"]["stdout"].startswith("100000 of 100000")
+    assert result["summary_evidence"]["text_report_files_present"] is False
+    assert result["summary_evidence"]["empty_text_report_files"] == []
+    assert "not treated as diagnostic evidence" in result["summary_evidence"]["interpretation"]
+
+
+def test_assembly_checker_rejects_unknown_validation_scope(
+    tmp_path: Path,
+) -> None:
+    vcf = _vcf(tmp_path / "sample.vcf")
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">chr1\\nACGT\\n", encoding="ascii")
+    Path(str(fasta) + ".fai").write_text("chr1\\t4\\t6\\t4\\t5\\n", encoding="ascii")
+    with pytest.raises(ValueError, match="validation_input_scope"):
+        ebi.run_ebi_vcf_assembly_checker(
+            vcf,
+            fasta,
+            source_artifact_sha256=hashlib.sha256(b"source-vcf").hexdigest(),
+            validation_input_scope="SOME_PROJECTION",
+        )
