@@ -10,9 +10,9 @@ def _write_vcf(path: Path, *, targeted: bool) -> None:
     header = ["##fileformat=VCFv4.2"]
     if targeted:
         header.append("##source=DRAGEN_TARGETED")
-    header.append("#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO")
+    header.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO")
     with gzip.open(path, "wt", encoding="utf-8") as handle:
-        handle.write("\\n".join(header) + "\\n")
+        handle.write("\n".join(header) + "\n")
 
 
 def _callset(path: Path) -> dict:
