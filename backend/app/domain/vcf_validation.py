@@ -167,6 +167,32 @@ def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
     return _reserved_base_modification_format_definition(field_id)
 
 
+
+def _reserved_vcf41_44_info_definition(fileformat: str | None, field_id: str) -> dict[str, str] | None:
+    """Return version-specific reserved INFO definitions for VCFv4.1-v4.4."""
+    reserved: dict[str, tuple[str, str]] = {}
+    if fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3"}:
+        reserved["EVENT"] = ("1", "String")
+    elif fileformat == "VCFv4.4":
+        reserved.update({
+            "EVENT": ("A", "String"),
+            "EVENTTYPE": ("A", "String"),
+        })
+    definition = reserved.get(field_id)
+    return {"Number": definition[0], "Type": definition[1]} if definition else None
+
+
+def _reserved_vcf41_44_format_definition(fileformat: str | None, field_id: str) -> dict[str, str] | None:
+    """Return version-specific reserved FORMAT definitions for VCFv4.1-v4.4."""
+    reserved: dict[str, tuple[str, str]] = {}
+    if fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
+        reserved["GP"] = ("G", "Float")
+    if fileformat in {"VCFv4.3", "VCFv4.4"}:
+        reserved["PP"] = ("G", "Integer")
+    definition = reserved.get(field_id)
+    return {"Number": definition[0], "Type": definition[1]} if definition else None
+
+
 def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
     # VCFv4.5 Table of reserved INFO keys and structural-variant definitions.
     reserved = {
@@ -700,7 +726,7 @@ def _validate_vcf45_reference_block_coverage(
                 )
 
 
-def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str | None = None) -> tuple[str, dict[str, str]]:
+def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str | None = None, *, allow_dragen_v42_event_extension: bool = False) -> tuple[str, dict[str, str]]:
     """Parse INFO/FORMAT metadata without splitting commas inside quoted descriptions."""
     prefix = f"##{kind}=<"
     if not line.startswith(prefix) or not line.endswith(">"):
@@ -828,6 +854,30 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
             f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
             f"Number={reserved_vcf40_definition['Number']} and "
             f"Type={reserved_vcf40_definition['Type']} at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    reserved_vcf41_44_definition = None
+    if fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
+        if kind == "FORMAT":
+            reserved_vcf41_44_definition = _reserved_vcf41_44_format_definition(fileformat, identifier)
+        elif kind == "INFO":
+            reserved_vcf41_44_definition = _reserved_vcf41_44_info_definition(fileformat, identifier)
+    dragen_event_extension = (
+        allow_dragen_v42_event_extension
+        and fileformat == "VCFv4.2"
+        and kind == "INFO"
+        and identifier == "EVENT"
+        and number == "A"
+        and parsed["Type"] == "String"
+    )
+    if reserved_vcf41_44_definition is not None and not dragen_event_extension and (
+        number != reserved_vcf41_44_definition["Number"]
+        or parsed["Type"] != reserved_vcf41_44_definition["Type"]
+    ):
+        raise StrictVCFValidationError(
+            f"Reserved {fileformat} {kind} field {identifier!r} requires "
+            f"Number={reserved_vcf41_44_definition['Number']} and "
+            f"Type={reserved_vcf41_44_definition['Type']} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     reserved_vcf45_definition = None
