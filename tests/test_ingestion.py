@@ -1065,3 +1065,46 @@ def test_ebi_rejection_preserves_completed_strict_validation_evidence(
     assert result.metadata["toolchain_validation_status"] == "PASS"
     assert result.metadata["bcftools_version"] == "bcftools 1.25"
 
+def test_vcf42_gp_ebi_false_positive_is_nonblocking_but_raw_failure_is_preserved(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "vcf42-gp-phred.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Phred-scaled genotype posterior probabilities">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tHG002\\n"
+        "1\\t10\\t.\\tA\\tC\\t50\\tPASS\\t.\\tGT:GP\\t0/1:3.1662,15.337,3.1125\\n",
+        encoding="utf-8",
+    )
+    ebi_result = {
+        "validator": "EBI_VCF_VALIDATION_SUITE",
+        "validator_version_expected": "0.10.2",
+        "validator_profile_id": "ebi-vcf-validator-0.10.2-linux-64",
+        "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "vcf_version": "VCFv4.2",
+        "status": "FAIL",
+        "exit_code": 1,
+        "stderr": "EBI 0.10.2 rejected VCFv4.2 GP values above 1",
+        "diagnostics": [{
+            "severity": "ERROR",
+            "message_template": "Sample #1, GP=<values> value does not lie in the interval [0,1].",
+            "occurrences": 1,
+            "first_line": 5,
+            "sample_lines": [5],
+        }],
+        "reports": [],
+        "report_count": 0,
+    }
+    monkeypatch.setattr(ingestion, "run_ebi_vcf_validator", lambda *_args, **_kwargs: ebi_result)
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.metadata["ebi_vcf_validation"]["status"] == "FAIL"
+    assert result.metadata["ebi_vcf_validation"]["compatibility_assessment"]["effective_status"] == (
+        "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+    )
+    assert any("raw FAIL" in warning for warning in result.warnings)
+
