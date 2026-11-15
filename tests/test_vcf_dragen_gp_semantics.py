@@ -9,11 +9,12 @@ from backend.app.domain import vcf_validation as validation
 
 def _vcf(path, gp_value: str, *, version: str = "VCFv4.2", event_extension: bool = False) -> None:
     event_header = (
+        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\\n'
         '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\\n'
         '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\\n'
         if event_extension else ""
     )
-    info_value = "EVENT=EV1;EVENTTYPE=VARIANT_IN_HOMOLOGY_REGION" if event_extension else "."
+    info_value = "TARGETED;EVENT=EV1;EVENTTYPE=VARIANT_IN_HOMOLOGY_REGION" if event_extension else "."
     path.write_text(
         f"##fileformat={version}\\n"
         '##source=DRAGEN_SNV\\n'
@@ -92,6 +93,7 @@ def test_verified_dragen_v42_event_extension_is_explicitly_review_required(tmp_p
     result = validation.validate_vcf_strict(source, caller_attestation={"fixture": "pinned"})
     assert result["records"] == 1
     assert result["caller_semantic_attestation"]["caller_release"] == "4.2"
+    assert result["caller_semantic_attestation"]["targeted_records_verified"] is True
     assert result["caller_semantic_compatibility_review_required"] is True
     assert result["caller_provenance"]["caller_semantic_compatibility_review_required"] is True
     assert result["caller_provenance"]["caller_semantic_compatibility_status"] == "DOCUMENTED_DRAGEN_V42_EVENT_EXTENSION"
