@@ -242,6 +242,13 @@ def validate_vcf(
             raise VCFValidationUnavailable(
                 "EBI vcf-validator returned an unrecognized validation state; intake is blocked."
             )
+        bcftools_error, bcftools_version, htslib_version = _bcftools_validate(p)
+        if bcftools_error:
+            raise VCFValidationError(
+                "VCF structural validation failed in bcftools/htslib: "
+                + bcftools_error
+            )
+
         strict_profile = validate_vcf_strict(
             p,
             caller_attestation=caller_attestation,
@@ -289,13 +296,6 @@ def validate_vcf(
                 f"The first eight VCF columns must be #CHROM, POS, ID, REF, ALT, QUAL, "
                 f"FILTER, INFO in that exact order; found {headers[:8]!r}"
             )
-        bcftools_error, bcftools_version, htslib_version = _bcftools_validate(p)
-        if bcftools_error:
-            raise VCFValidationError(
-                "VCF structural validation failed in bcftools/htslib: "
-                + bcftools_error
-            )
-
         parsed_variant_record_count = 0
         warnings: list[str] = []
         reference_only_records = strict_profile["reference_only_records"]
