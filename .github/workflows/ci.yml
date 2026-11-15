@@ -182,7 +182,7 @@ jobs:
         run: uv run --locked pytest -q tests/integration
 
   real-caller-vcf:
-    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'test/real-caller-vcf-')
+    if: github.event_name == 'pull_request' && (startsWith(github.head_ref, 'test/real-caller-vcf-') || startsWith(github.head_ref, 'feat/vcf-full-genome-qualification-'))
     runs-on: ubuntu-latest
     defaults:
       run:
