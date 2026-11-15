@@ -1929,7 +1929,7 @@ def validate_vcf_strict(
                         raise StrictVCFValidationError("Duplicate ##fileformat header", code="VCF_HEADER_INVALID")
                     fileformat = line.split("=", 1)[1]
                 if line.startswith("##INFO="):
-                    identifier, definition = _parse_field_definition(line, "INFO", line_no, fileformat)
+                    identifier, definition = _parse_field_definition(line, "INFO", line_no, fileformat, allow_dragen_v42_event_extension=caller_semantic_attestation is not None)
                     if identifier in info_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate INFO definition for {identifier!r} at line {line_no}",
@@ -1937,7 +1937,7 @@ def validate_vcf_strict(
                         )
                     info_definitions[identifier] = definition
                 elif line.startswith("##FORMAT="):
-                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no, fileformat)
+                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no, fileformat, allow_dragen_v42_event_extension=caller_semantic_attestation is not None)
                     if identifier in format_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate FORMAT definition for {identifier!r} at line {line_no}",
@@ -2060,6 +2060,8 @@ def validate_vcf_strict(
             info_values = _info_values(fields[7])
             for key, value in info_values.items():
                 definition = info_definitions.get(key)
+                if definition is None and fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
+                    definition = _reserved_vcf41_44_info_definition(fileformat, key)
                 if definition is None and fileformat == "VCFv4.5":
                     definition = _reserved_vcf45_info_definition(key)
                 if definition is not None:
@@ -2280,6 +2282,8 @@ def validate_vcf_strict(
                     definition = format_definitions.get(key)
                     if definition is None and fileformat == "VCFv4.0":
                         definition = _reserved_vcf40_format_definition(key)
+                    if definition is None and fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
+                        definition = _reserved_vcf41_44_format_definition(fileformat, key)
                     if definition is None and fileformat == "VCFv4.5":
                         definition = _reserved_vcf45_format_definition(key)
                     if definition is not None:
