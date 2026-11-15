@@ -521,6 +521,7 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
             "spanning_deletions": 0,
             "telomere_coordinates": 0,
             "after_contig_coordinates": 0,
+            "external_reference_contigs": 0,
             "reference_only": 1,
         },
     }
