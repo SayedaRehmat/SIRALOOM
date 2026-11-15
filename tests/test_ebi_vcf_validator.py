@@ -165,18 +165,18 @@ def test_large_ebi_reports_are_hashed_and_bounded_with_structured_diagnostics(
     lines = source.read_text(encoding="utf-8").splitlines()
     lines.insert(1, '##INFO=<ID=EVENT,Number=.,Type=String,Description="Event">')
     lines[2] = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE"
-    lines.append("1\t20\t.\tA\tG\t.\tPASS\t.\tGT:GP\t0/1:3.1,15.3,3.1")
-    source.write_text("\\n".join(lines) + "\\n", encoding="utf-8")
+    lines[3] = "1\t20\t.\tA\tG\t.\tPASS\t.\tGT:GP\t0/1:3.1,15.3,3.1"
+    source.write_text("\n".join(lines) + "\n", encoding="utf-8")
     executable = _fake_tool(tmp_path)
     monkeypatch.setattr(ebi.shutil, "which", lambda _name: str(executable))
 
     def fake_run(command, **kwargs):
         if command[-1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "vcf_validator version 0.10.2\\n", "")
+            return subprocess.CompletedProcess(command, 0, "vcf_validator version 0.10.2\n", "")
         report_dir = Path(command[command.index("-o") + 1])
         (report_dir / "dragen.errors_summary.1.txt").write_text(
-            "Error: INFO EVENT metadata Number is not 1. This occurs 1 time(s), first time in line 2.\\n"
-            "Error: Sample #1, GP=3.1,15.3,3.1 value does not lie in the interval [0,1]. This occurs 1 time(s), first time in line 4.\\n",
+            "Error: INFO EVENT metadata Number is not 1. This occurs 1 time(s), first time in line 2.\n"
+            "Error: Sample #1, GP=3.1,15.3,3.1 value does not lie in the interval [0,1]. This occurs 1 time(s), first time in line 4.\n",
             encoding="utf-8",
         )
         (report_dir / "dragen.errors.1.txt").write_text("x" * (ebi._MAX_INLINE_REPORT_BYTES + 10), encoding="utf-8")
