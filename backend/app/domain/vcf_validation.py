@@ -1659,7 +1659,7 @@ def _validate_record(
     return chrom, pos, alts
 
 
-def _verify_dragen_42_gp_attestation(
+def _verify_dragen_42_fixture_attestation(
     path: Path,
     attestation: dict[str, Any],
 ) -> dict[str, Any]:
@@ -1751,8 +1751,8 @@ def _verify_dragen_42_gp_attestation(
         "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
         "caller_profile_id": expected["caller_profile_id"],
         "caller_release": expected["caller_release"],
-        "field": "FORMAT/GP",
-        "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+        "field": "INFO/EVENT_AND_EVENTTYPE",
+        "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
         "spec_conformance": "VCFv4.2_CONFORMANT",
         "caller_extension": expected["caller_extension"],
         "clinical_review_required": True,
@@ -1828,8 +1828,8 @@ def validate_vcf_strict(
                     "status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
                     "caller_profile_id": manifest["caller_profile_id"],
                     "caller_release": manifest["caller_release"],
-                    "field": "FORMAT/GP",
-                    "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+                    "field": "INFO/EVENT_AND_EVENTTYPE",
+                    "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
                     "spec_conformance": "VCFv4.2_CONFORMANT",
                     "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
                     "clinical_review_required": True,
@@ -1839,7 +1839,7 @@ def validate_vcf_strict(
         else:
             # Retain the exact public HG002 fixture attestation used by the
             # real-caller regression harness. It is not a production trust path.
-            caller_semantic_attestation = _verify_dragen_42_gp_attestation(source, caller_attestation)
+            caller_semantic_attestation = _verify_dragen_42_fixture_attestation(source, caller_attestation)
     dragen_v42_event_extension_applicable = caller_semantic_attestation is not None
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
