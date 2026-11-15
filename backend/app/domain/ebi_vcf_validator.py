@@ -196,6 +196,7 @@ def assess_ebi_vcf_compatibility(
         and caller_semantic_attestation.get("caller_profile_id") == "dragen_snv_germline"
         and caller_semantic_attestation.get("caller_release") == "4.2"
         and caller_semantic_attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
+        and caller_semantic_attestation.get("compatibility_profile_id") == "dragen-v4.2-targeted-merge-vcf42-compatibility"
         and caller_semantic_attestation.get("caller_extension_detected") is True
         and caller_semantic_attestation.get("targeted_records_verified") is True
     )
