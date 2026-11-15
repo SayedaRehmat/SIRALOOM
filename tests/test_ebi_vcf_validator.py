@@ -205,6 +205,21 @@ def test_large_ebi_reports_are_hashed_and_bounded_with_structured_diagnostics(
     assert any(item.get("info_targeted") is True and item.get("info_event") == "evt1" for item in result["source_record_examples"])
     assert any("ID=TARGETED" in item.get("text", "") for item in result["source_record_examples"])
     assert any("ID=EVENTTYPE" in item.get("text", "") for item in result["source_record_examples"])
+    # GP is a VCFv4.2 Phred-scaled field: EBI 0.10.2's [0,1] error
+    # is classified separately, but the un-attested EVENT extension remains
+    # blocking. Never turn the raw EBI FAIL into PASS.
+    assessment = result["compatibility_assessment"]
+    assert assessment["raw_status"] == "FAIL"
+    assert assessment["effective_status"] == "FAIL"
+    assert assessment["raw_ebi_result_preserved"] is True
+    assert any(
+        item["classification"] == "EBI_0_10_2_GP_RANGE_FALSE_POSITIVE_VCF41_VCF42"
+        for item in assessment["known_nonblocking_diagnostics"]
+    )
+    assert any(
+        item["classification"] == "UNRESOLVED"
+        for item in assessment["blocking_diagnostics"]
+    )
 
 def test_vcf42_gp_range_diagnostic_is_classified_as_known_ebi_defect() -> None:
     result = ebi.assess_ebi_vcf_compatibility({
