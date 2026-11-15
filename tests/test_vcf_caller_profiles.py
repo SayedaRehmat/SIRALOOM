@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,31 @@ from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
 FIXTURES = Path(__file__).parent / "fixtures" / "vcf" / "callers"
+
+
+@pytest.fixture(autouse=True)
+def _stub_ebi_validator_for_caller_profile_unit_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise SIRALOOM caller semantics independently of the EBI native executable."""
+    def fake_validator(path, **kwargs):
+        source = Path(path)
+        fileformat = next(
+            (line.rstrip("\\r\\n").split("=", 1)[1] for line in source.read_text(encoding="utf-8").splitlines() if line.startswith("##fileformat=")),
+            None,
+        )
+        return {
+            "validator": "EBI_VCF_VALIDATION_SUITE",
+            "validator_version_expected": "0.10.2",
+            "validator_profile_id": "test-ebi-validator",
+            "artifact_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+            "vcf_version": fileformat,
+            "caller": (kwargs.get("caller_provenance") or {}).get("caller_profile_id", "TEST"),
+            "caller_provenance": kwargs.get("caller_provenance") or {},
+            "status": "PASS",
+            "reports": [],
+            "report_count": 0,
+        }
+
+    monkeypatch.setattr(ingestion, "run_ebi_vcf_validator", fake_validator)
 
 
 @pytest.mark.parametrize(
@@ -354,10 +380,15 @@ def test_dragen_header_declarations_never_relax_reserved_gp_probability_validati
     assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
 
 
-def test_ingestion_preserves_dragen_provenance_when_reserved_gp_validation_rejects_file() -> None:
+def test_ingestion_preserves_dragen_provenance_when_vcf43_gp_validation_rejects_file(tmp_path: Path) -> None:
     fixture = FIXTURES / "dragen_snv_v4_3_doc_example.vcf"
+    vcf43_fixture = tmp_path / "dragen_snv_v4_3.vcf"
+    vcf43_fixture.write_text(
+        fixture.read_text(encoding="utf-8").replace("##fileformat=VCFv4.2", "##fileformat=VCFv4.3", 1),
+        encoding="utf-8",
+    )
 
-    result = ingestion.validate_vcf(fixture)
+    result = ingestion.validate_vcf(vcf43_fixture)
 
     assert result.status == "INVALID"
     assert result.error_code == "VCF_FIELD_TYPE_INVALID"
@@ -369,9 +400,14 @@ def test_ingestion_preserves_dragen_provenance_when_reserved_gp_validation_rejec
     assert provenance["field_semantic_deviations"][0]["field_id"] == "GP"
 
 
-def test_dragen_documented_gp_deviation_is_reported_without_authorizing_validation_override() -> None:
+def test_dragen_documented_gp_deviation_is_reported_for_vcf43_without_override(tmp_path: Path) -> None:
     fixture = FIXTURES / "dragen_snv_v4_3_doc_example.vcf"
-    provenance = inspect_caller_provenance(fixture)
+    vcf43_fixture = tmp_path / "dragen_snv_v4_3.vcf"
+    vcf43_fixture.write_text(
+        fixture.read_text(encoding="utf-8").replace("##fileformat=VCFv4.2", "##fileformat=VCFv4.3", 1),
+        encoding="utf-8",
+    )
+    provenance = inspect_caller_provenance(vcf43_fixture)
 
     assert provenance["dragen_gp_phred_semantics_applicable"] is False
     assert provenance["caller_semantic_compatibility_status"] == "CALLER_SPEC_SEMANTIC_DEVIATION"
@@ -380,11 +416,11 @@ def test_dragen_documented_gp_deviation_is_reported_without_authorizing_validati
         "namespace": "FORMAT",
         "field_id": "GP",
         "status": "CALLER_SPECIFIC_SCALE_DIFFERS_FROM_VCF_RESERVED_SEMANTICS",
-        "description": "DRAGEN documents FORMAT/GP in Phred scale; VCF reserves FORMAT/GP for posterior probabilities in [0, 1].",
+        "description": "DRAGEN 4.3 documents FORMAT/GP in Phred scale while declared VCFv4.3+ requires linear posterior probabilities in [0, 1].",
     }]
 
     with pytest.raises(StrictVCFValidationError) as exc_info:
-        validate_vcf_strict(fixture)
+        validate_vcf_strict(vcf43_fixture)
     assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
 
 

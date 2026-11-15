@@ -1,4 +1,5 @@
 import gzip
+import hashlib
 import struct
 import zlib
 from pathlib import Path
@@ -6,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from backend.app.config import settings
+from backend.app.domain import ingestion, vcf_validation
 
 from backend.app.domain.ingestion import (
     ValidationResult,
@@ -16,6 +18,32 @@ from backend.app.domain.ingestion import (
 )
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
 from backend.app.domain.vcf_validation import StrictVCFValidationError, _verify_bgzf
+
+@pytest.fixture(autouse=True)
+def _stub_ebi_validator_for_siraloom_unit_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep ingestion unit tests focused on SIRALOOM rules, not the native EBI binary."""
+    def fake_validator(path, **kwargs):
+        source = Path(path)
+        with (gzip.open(source, "rt", encoding="utf-8") if source.name.lower().endswith((".gz", ".bgz")) else source.open("rt", encoding="utf-8")) as handle:
+            fileformat = next(
+                (line.rstrip("\\r\n").split("=", 1)[1] for line in handle if line.startswith("##fileformat=")),
+                None,
+            )
+        return {
+            "validator": "EBI_VCF_VALIDATION_SUITE",
+            "validator_version_expected": "0.10.2",
+            "validator_profile_id": "test-ebi-validator",
+            "artifact_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+            "vcf_version": fileformat,
+            "caller": (kwargs.get("caller_provenance") or {}).get("caller_profile_id", "TEST"),
+            "caller_provenance": kwargs.get("caller_provenance") or {},
+            "status": "PASS",
+            "reports": [],
+            "report_count": 0,
+        }
+
+    monkeypatch.setattr(ingestion, "run_ebi_vcf_validator", fake_validator)
+
 
 VALID_VCF = """##fileformat=VCFv4.3
 ##reference=GRCh38
@@ -1004,3 +1032,158 @@ def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch
     assert result.status == "VALID"
     assert resolved == [selected]
     assert result.metadata["bcftools_profile_id"] == settings.bcftools_profile_id
+
+def test_ebi_rejection_preserves_completed_strict_validation_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "ebi-rejected.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+    ebi_result = {
+        "validator": "EBI_VCF_VALIDATION_SUITE",
+        "validator_version_expected": "0.10.2",
+        "validator_profile_id": "ebi-vcf-validator-0.10.2-linux-64",
+        "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "vcf_version": "VCFv4.3",
+        "status": "FAIL",
+        "exit_code": 1,
+        "stderr": "EBI rejected a reserved-field semantic deviation",
+        "diagnostics": [
+            {"severity": "ERROR", "message_template": "FORMAT/GP values outside [0,1]", "occurrences": 1, "first_line": 4}
+        ],
+        "reports": [],
+        "report_count": 0,
+    }
+    monkeypatch.setattr(ingestion, "run_ebi_vcf_validator", lambda *_args, **_kwargs: ebi_result)
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert result.error_code == "EBI_VCF_VALIDATION_FAILED"
+    assert result.metadata["ebi_vcf_validation"]["diagnostics"] == ebi_result["diagnostics"]
+    assert result.metadata["source_record_count"] == 1
+    assert result.metadata["toolchain_validation_status"] == "PASS"
+    assert result.metadata["bcftools_version"] == "bcftools 1.25"
+
+def test_vcf42_gp_ebi_false_positive_is_nonblocking_but_raw_failure_is_preserved(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "vcf42-gp-phred.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Phred-scaled genotype posterior probabilities">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHG002\n"
+        "1\t10\t.\tA\tC\t50\tPASS\t.\tGT:GP\t0/1:3.1662,15.337,3.1125\n",
+        encoding="utf-8",
+    )
+    ebi_result = {
+        "validator": "EBI_VCF_VALIDATION_SUITE",
+        "validator_version_expected": "0.10.2",
+        "validator_profile_id": "ebi-vcf-validator-0.10.2-linux-64",
+        "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "vcf_version": "VCFv4.2",
+        "status": "FAIL",
+        "exit_code": 1,
+        "stderr": "EBI 0.10.2 rejected VCFv4.2 GP values above 1",
+        "diagnostics": [{
+            "severity": "ERROR",
+            "message_template": "Sample #1, GP=<values> value does not lie in the interval [0,1].",
+            "occurrences": 1,
+            "first_line": 5,
+            "sample_lines": [5],
+        }],
+        "reports": [],
+        "report_count": 0,
+    }
+    monkeypatch.setattr(ingestion, "run_ebi_vcf_validator", lambda *_args, **_kwargs: ebi_result)
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.metadata["ebi_vcf_validation"]["status"] == "FAIL"
+    assert result.metadata["ebi_vcf_validation"]["compatibility_assessment"]["effective_status"] == (
+        "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+    )
+    assert any("raw FAIL" in warning for warning in result.warnings)
+
+def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failures_preserved(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "dragen-v42-targeted.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##source=DRAGEN_SNV\n"
+        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Phred-scaled genotype posterior probabilities">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHG002\n"
+        "1\t10\t.\tA\tC\t50\tPASS\tTARGETED;EVENT=EV1;EVENTTYPE=VARIANT_IN_HOMOLOGY_REGION\tGT:GP\t0/1:3.1662,15.337,3.1125\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        vcf_validation,
+        "_verify_dragen_42_fixture_attestation",
+        lambda *_args, **_kwargs: {
+            "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
+            "caller_profile_id": "dragen_snv_germline",
+            "caller_release": "4.2",
+            "field": "INFO/EVENT_AND_EVENTTYPE",
+            "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
+            "spec_conformance": "VCFv4.2_CONFORMANT",
+            "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
+            "clinical_review_required": True,
+        },
+    )
+    ebi_result = {
+        "validator": "EBI_VCF_VALIDATION_SUITE",
+        "validator_version_expected": "0.10.2",
+        "validator_profile_id": "ebi-vcf-validator-0.10.2-linux-64",
+        "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "vcf_version": "VCFv4.2",
+        "status": "FAIL",
+        "exit_code": 1,
+        "stderr": "EBI 0.10.2 reported known VCFv4.2 GP and DRAGEN EVENT compatibility diagnostics",
+        "diagnostics": [
+            {
+                "severity": "ERROR",
+                "message_template": "Sample #1, GP=<values> value does not lie in the interval [0,1].",
+                "occurrences": 1,
+                "first_line": 9,
+                "sample_lines": [9],
+            },
+            {
+                "severity": "ERROR",
+                "message_template": "INFO EVENT metadata Number is not 1.",
+                "occurrences": 1,
+                "first_line": 4,
+                "sample_lines": [4],
+            },
+            {
+                "severity": "WARNING",
+                "message_template": "INFO 'EVENT' is not listed in a valid meta-data INFO entry.",
+                "occurrences": 1,
+                "first_line": 9,
+                "sample_lines": [9],
+            },
+        ],
+        "reports": [],
+        "report_count": 0,
+    }
+    monkeypatch.setattr(ingestion, "run_ebi_vcf_validator", lambda *_args, **_kwargs: ebi_result)
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
+
+    result = validate_vcf(path, caller_attestation={"fixture": "pinned"})
+
+    assert result.status == "VALID"
+    assert result.metadata["ebi_vcf_validation"]["status"] == "FAIL"
+    assert result.metadata["ebi_vcf_validation"]["compatibility_assessment"]["effective_status"] == (
+        "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+    )
+    assert result.metadata["caller_provenance"]["caller_semantic_compatibility_review_required"] is True
+    assert result.metadata["caller_semantic_attestation"]["targeted_records_verified"] is True
+

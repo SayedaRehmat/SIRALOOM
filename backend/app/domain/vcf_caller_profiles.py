@@ -136,7 +136,7 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
             "GQ": "DRAGEN genotype quality; its interpretation differs between variant and homozygous-reference GVCF calls.",
             "PL": "Phred-scaled genotype likelihoods when emitted.",
             "GL": "Log10 genotype likelihoods when emitted.",
-            "GP": "DRAGEN-defined Phred-scaled posterior genotype values; this deliberately differs from the VCF-reserved FORMAT/GP probability scale (0–1) and must not be interpreted as normalized probabilities.",
+            "GP": "DRAGEN 4.3 documents Phred-scaled posterior genotype values, which conflict with VCFv4.3+ FORMAT/GP linear probabilities in [0,1]. DRAGEN 4.2 output declaring VCFv4.2 uses the specification's Phred-scaled GP semantics and is not this deviation.",
             "PRI": "Genotype prior values when emitted.",
             "SB": "Strand-bias evidence when emitted.",
             "MB": "Mate-bias evidence when emitted.",
@@ -220,6 +220,11 @@ def inspect_caller_provenance(
     quality thresholds and never marks a caller release clinically qualified.
     """
     lines = _header(path)
+    if fileformat is None:
+        fileformat = next(
+            (line.split("=", 1)[1].strip() for line in lines if line.startswith("##fileformat=")),
+            None,
+        )
     source_values: list[str] = []
     gatk_stages: list[dict[str, str]] = []
     gatk_command_lines: list[str] = []
@@ -385,8 +390,8 @@ def inspect_caller_provenance(
         else None
     )
     # Header metadata is unauthenticated. This inspection API accepts no
-    # controlled run-manifest attestation, so headers cannot authorize an
-    # exception to reserved FORMAT/GP probability semantics.
+    # controlled run-manifest attestation, so headers cannot authorize a
+    # caller-specific deviation from the GP semantics of the declared VCF version.
     dragen_gp_phred_semantics_applicable = False
     present_format_semantics = {
         key: definition["documented_format_semantics"][key]
@@ -453,12 +458,13 @@ def inspect_caller_provenance(
             "namespace": "FORMAT",
             "field_id": "GP",
             "status": "CALLER_SPECIFIC_SCALE_DIFFERS_FROM_VCF_RESERVED_SEMANTICS",
-            "description": "DRAGEN documents FORMAT/GP in Phred scale; VCF reserves FORMAT/GP for posterior probabilities in [0, 1].",
+            "description": "DRAGEN 4.3 documents FORMAT/GP in Phred scale while declared VCFv4.3+ requires linear posterior probabilities in [0, 1].",
         }]
         if (
             profile_id == "dragen_snv_germline"
             and version_status == "DECLARED"
             and caller_version == "4.3.0"
+            and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
             and "GP" in format_fields
         )
         else []

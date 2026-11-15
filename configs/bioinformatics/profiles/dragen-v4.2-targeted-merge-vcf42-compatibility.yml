@@ -1,0 +1,50 @@
+schema_version: 1
+profile_id: dragen-v4.2-targeted-merge-vcf42-compatibility
+status: EXPERIMENTAL_BENCHMARK_ONLY
+clinical_activation: NOT_APPROVED
+
+caller:
+  profile_id: dragen_snv_germline
+  release: "4.2"
+  declared_vcf_version: VCFv4.2
+
+source_documentation:
+  url: https://support-docs.illumina.com/SW/dragen_v42/Content/SW/DRAGEN/TargetedCalling.htm
+  relevant_sections:
+    - targeted-vcf-file
+    - merging-targeted-calls-in-the-hard-filtered-files
+  documented_behaviour:
+    - DRAGEN v4.2 targeted VCF output declares VCFv4.2.
+    - Targeted calls can be merged into hard-filtered VCFs.
+    - Merged targeted records carry the INFO/TARGETED flag.
+    - EVENT and EVENTTYPE use VCFv4.4-era allele-specific Number=A semantics.
+    - The documented default for --targeted-merge-vc is rh; the actual run option must be attested and must never be inferred from the default.
+
+field_semantics:
+  FORMAT/GP:
+    vcf42_semantics: PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES
+    conformance: VCFv4.2_CONFORMANT
+    transformation: NONE
+  INFO/TARGETED:
+    number: "0"
+    type: Flag
+    purpose: Identifies records contributed by a targeted caller
+  INFO/EVENT:
+    number: A
+    type: String
+    source_semantics: VCFv4.4_EVENT_EXTENSION
+    compatibility_handling: Accept only under this verified caller profile and only when every EVENT-bearing record has INFO/TARGETED.
+  INFO/EVENTTYPE:
+    number: A
+    type: String
+    source_semantics: DRAGEN_TARGETED_CALLER_EXTENSION
+    compatibility_handling: Preserve as caller-specific event classification; require INFO/EVENT and INFO/TARGETED on records where present.
+
+acceptance_requirements:
+  - Exact caller release and declared VCF version must be verified by a pinned public-fixture attestation or a valid signed caller-run manifest.
+  - INFO/TARGETED must be declared as Number=0,Type=Flag.
+  - INFO/EVENT must be declared as Number=A,Type=String.
+  - Every record containing INFO/EVENT must also contain INFO/TARGETED as a flag.
+  - INFO/EVENTTYPE, when present, must accompany INFO/EVENT and INFO/TARGETED.
+  - Original caller-produced VCF must remain immutable; all compatibility decisions and evidence must be persisted.
+  - Targeted records must retain targeted-caller provenance and must not be silently treated as ordinary germline SNV/indel calls.

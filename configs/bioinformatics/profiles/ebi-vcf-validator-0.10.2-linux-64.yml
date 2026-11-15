@@ -1,0 +1,14 @@
+# Exact Bioconda package build used to bootstrap the combined explicit runtime lock.
+# The committed @EXPLICIT lock records every resolved transitive package URL and MD5.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - vcf-validator=0.10.2=h7a61d87_0
+
+# Known upstream compatibility defect: v0.10.2 applies the GP [0,1] range check
+# without gating it on the declared VCF version. VCFv4.1/v4.2 define FORMAT/GP
+# as Phred-scaled posterior genotype probabilities; VCFv4.3+ uses linear probabilities.
+# SIRALOOM preserves the raw EBI FAIL and classifies this diagnostic as non-blocking
+# only for VCFv4.1/v4.2, while its independent version-aware validator enforces the spec.
+# Upstream tracking: https://github.com/EBIvariation/vcf-validator/issues/149

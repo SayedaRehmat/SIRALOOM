@@ -1,4 +1,7 @@
 ARG BCFTOOLS_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock
+ARG EBI_VCF_VALIDATOR_LOCK_FILE=configs/bioinformatics/profiles/ebi-vcf-validator-0.10.2-linux-64.lock
+ARG EBI_VCF_VALIDATOR_VERSION=0.10.2
+ARG EBI_VCF_VALIDATOR_PROFILE_ID=ebi-vcf-validator-0.10.2-linux-64
 ARG BCFTOOLS_PLATFORM=linux-64
 ARG BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64
 ARG BCFTOOLS_VERSION=1.25
@@ -21,15 +24,30 @@ RUN case "$(uname -m):${BCFTOOLS_PLATFORM}" in \
     && micromamba install --yes --name base --file /tmp/bcftools-explicit.lock \
     && micromamba clean --all --yes
 
+FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS ebi-validator
+
+ARG EBI_VCF_VALIDATOR_LOCK_FILE
+USER root
+RUN mkdir -p /opt/ebi /opt/ebi-mamba-root \
+    && chown -R "$MAMBA_USER:$MAMBA_USER" /opt/ebi /opt/ebi-mamba-root
+USER $MAMBA_USER
+ENV MAMBA_ROOT_PREFIX=/opt/ebi-mamba-root
+COPY --chown=$MAMBA_USER:$MAMBA_USER ${EBI_VCF_VALIDATOR_LOCK_FILE} /tmp/ebi-vcf-validator-explicit.lock
+RUN micromamba create --yes --prefix /opt/ebi --file /tmp/ebi-vcf-validator-explicit.lock \
+    && micromamba clean --all --yes
+
 FROM ${BCFTOOLS_BASE_IMAGE}
 
 ARG BCFTOOLS_PROFILE_ID
 ARG BCFTOOLS_VERSION
 ARG HTSLIB_VERSION
+ARG EBI_VCF_VALIDATOR_VERSION
+ARG EBI_VCF_VALIDATOR_PROFILE_ID
 ARG DEBIAN_SNAPSHOT_TIMESTAMP
 ARG UV_VERSION
 ARG UV_ARCHIVE_SHA256
 ENV BCFTOOLS_PROFILE_ID=${BCFTOOLS_PROFILE_ID} BCFTOOLS_VERSION=${BCFTOOLS_VERSION} HTSLIB_VERSION=${HTSLIB_VERSION} BCFTOOLS_EXECUTABLE=/opt/conda/bin/bcftools CELERY_QUEUES=celery,bioinformatics.bcftools.1_25
+ENV EBI_VCF_VALIDATOR_VERSION=${EBI_VCF_VALIDATOR_VERSION} EBI_VCF_VALIDATOR_PROFILE_ID=${EBI_VCF_VALIDATOR_PROFILE_ID} EBI_VCF_VALIDATOR_EXECUTABLE=/opt/ebi/bin/vcf_validator EBI_VCF_ASSEMBLY_CHECKER_EXECUTABLE=/opt/ebi/bin/vcf_assembly_checker
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_NO_PROGRESS=1
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs
@@ -52,6 +70,7 @@ RUN test "$(uname -m)" = "x86_64" || { echo "This locked BCFtools runtime is qua
 ENV HOME=/home/siraloom SIRALOOM_CONFIG_ROOT=/app
 
 COPY --from=bcftools /opt/conda /opt/conda
+COPY --from=ebi-validator /opt/ebi /opt/ebi
 ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 
 # Resolve the application dependency graph only from the committed uv lock.
@@ -98,6 +117,8 @@ RUN lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
     && python -c "import redis; import kombu.transport.redis; import backend.app" \
     && test "$(bcftools --version | head -n1)" = "bcftools ${BCFTOOLS_VERSION}" \
     && test "$(bcftools --version | sed -n '2s/.*htslib //p')" = "${HTSLIB_VERSION}" \
+    && test "$(LD_LIBRARY_PATH=/opt/ebi/lib /opt/ebi/bin/vcf_validator --version)" = "vcf_validator version ${EBI_VCF_VALIDATOR_VERSION}" \
+    && test "$(LD_LIBRARY_PATH=/opt/ebi/lib /opt/ebi/bin/vcf_assembly_checker --version)" = "vcf-assembly-checker version ${EBI_VCF_VALIDATOR_VERSION}" \
     && rm -f /usr/local/bin/uv
 
 RUN chmod +x scripts/start_api_with_worker.sh

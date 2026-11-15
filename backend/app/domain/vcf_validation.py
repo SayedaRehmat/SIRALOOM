@@ -16,6 +16,7 @@ from backend.app.domain.caller_attestation import CallerAttestationError, verify
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
+DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID = "dragen-v4.2-targeted-merge-vcf42-compatibility"
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
 VCF_CONTIG_NAME_RE = re.compile(
@@ -65,7 +66,7 @@ NONNEGATIVE_INTEGER_FIELDS = frozenset({
     ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"),
     ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
 })
-PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP")})
+PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF")})
 NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
@@ -165,6 +166,32 @@ def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
     if definition is not None:
         return {"Number": definition[0], "Type": definition[1]}
     return _reserved_base_modification_format_definition(field_id)
+
+
+
+def _reserved_vcf41_44_info_definition(fileformat: str | None, field_id: str) -> dict[str, str] | None:
+    """Return version-specific reserved INFO definitions for VCFv4.1-v4.4."""
+    reserved: dict[str, tuple[str, str]] = {}
+    if fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3"}:
+        reserved["EVENT"] = ("1", "String")
+    elif fileformat == "VCFv4.4":
+        reserved.update({
+            "EVENT": ("A", "String"),
+            "EVENTTYPE": ("A", "String"),
+        })
+    definition = reserved.get(field_id)
+    return {"Number": definition[0], "Type": definition[1]} if definition else None
+
+
+def _reserved_vcf41_44_format_definition(fileformat: str | None, field_id: str) -> dict[str, str] | None:
+    """Return version-specific reserved FORMAT definitions for VCFv4.1-v4.4."""
+    reserved: dict[str, tuple[str, str]] = {}
+    if fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
+        reserved["GP"] = ("G", "Float")
+    if fileformat in {"VCFv4.3", "VCFv4.4"}:
+        reserved["PP"] = ("G", "Integer")
+    definition = reserved.get(field_id)
+    return {"Number": definition[0], "Type": definition[1]} if definition else None
 
 
 def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
@@ -700,7 +727,7 @@ def _validate_vcf45_reference_block_coverage(
                 )
 
 
-def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str | None = None) -> tuple[str, dict[str, str]]:
+def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str | None = None, *, allow_dragen_v42_event_extension: bool = False) -> tuple[str, dict[str, str]]:
     """Parse INFO/FORMAT metadata without splitting commas inside quoted descriptions."""
     prefix = f"##{kind}=<"
     if not line.startswith(prefix) or not line.endswith(">"):
@@ -828,6 +855,52 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
             f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
             f"Number={reserved_vcf40_definition['Number']} and "
             f"Type={reserved_vcf40_definition['Type']} at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    reserved_vcf41_44_definition = None
+    if fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
+        if kind == "FORMAT":
+            reserved_vcf41_44_definition = _reserved_vcf41_44_format_definition(fileformat, identifier)
+        elif kind == "INFO":
+            reserved_vcf41_44_definition = _reserved_vcf41_44_info_definition(fileformat, identifier)
+    dragen_event_extension = (
+        allow_dragen_v42_event_extension
+        and fileformat == "VCFv4.2"
+        and kind == "INFO"
+        and identifier == "EVENT"
+        and number == "A"
+        and parsed["Type"] == "String"
+    )
+    if (
+        allow_dragen_v42_event_extension
+        and fileformat == "VCFv4.2"
+        and kind == "INFO"
+        and identifier == "EVENTTYPE"
+        and (number != "A" or parsed["Type"] != "String")
+    ):
+        raise StrictVCFValidationError(
+            f"DRAGEN VCFv4.2 INFO/EVENTTYPE must be Number=A,Type=String at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    if (
+        allow_dragen_v42_event_extension
+        and fileformat == "VCFv4.2"
+        and kind == "INFO"
+        and identifier == "TARGETED"
+        and (number != "0" or parsed["Type"] != "Flag")
+    ):
+        raise StrictVCFValidationError(
+            f"DRAGEN VCFv4.2 INFO/TARGETED must be Number=0,Type=Flag at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    if reserved_vcf41_44_definition is not None and not dragen_event_extension and (
+        number != reserved_vcf41_44_definition["Number"]
+        or parsed["Type"] != reserved_vcf41_44_definition["Type"]
+    ):
+        raise StrictVCFValidationError(
+            f"Reserved {fileformat} {kind} field {identifier!r} requires "
+            f"Number={reserved_vcf41_44_definition['Number']} and "
+            f"Type={reserved_vcf41_44_definition['Type']} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     reserved_vcf45_definition = None
@@ -1078,7 +1151,7 @@ def _validate_declared_value(
     local_allele_count: int | None = None,
     base_modification_cardinality: int | None = None,
     allow_empty_values: bool = False,
-    allow_phred_gp: bool = False,
+    vcf_version: str | None = None,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
@@ -1137,11 +1210,20 @@ def _validate_declared_value(
             )
             if valid:
                 numeric_value = float(item)
-                if (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
-                    if field_scope == "FORMAT" and key == "GP" and allow_phred_gp:
+                if field_scope == "FORMAT" and key == "GP":
+                    if vcf_version in {"VCFv4.1", "VCFv4.2"}:
+                        # VCFv4.1/v4.2 define GP as Phred-scaled genotype
+                        # posterior probabilities. VCFv4.3+ changes GP to
+                        # linear probabilities in [0,1].
                         valid = isfinite(numeric_value) and numeric_value >= 0.0
-                    else:
+                    elif vcf_version in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
                         valid = 0.0 <= numeric_value <= 1.0
+                    else:
+                        # VCFv4.0 does not reserve GP; treat it as a caller-
+                        # declared Float field rather than assuming later semantics.
+                        valid = isfinite(numeric_value)
+                elif (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
+                    valid = 0.0 <= numeric_value <= 1.0
                 if (field_scope, key) in NONNEGATIVE_FLOAT_FIELDS:
                     valid = numeric_value >= 0.0
                 if _base_modification_field_kind(key) == "fraction":
@@ -1589,11 +1671,11 @@ def _validate_record(
     return chrom, pos, alts
 
 
-def _verify_dragen_42_gp_attestation(
+def _verify_dragen_42_fixture_attestation(
     path: Path,
     attestation: dict[str, Any],
 ) -> dict[str, Any]:
-    """Verify the pinned public DRAGEN 4.2 fixture before applying GP semantics.
+    """Verify the pinned public DRAGEN 4.2 fixture before applying its documented event-field extension.
 
     This is deliberately an exact public-dataset allowlist, not a general
     caller-controlled override. Production run attestations require a separate
@@ -1606,12 +1688,13 @@ def _verify_dragen_42_gp_attestation(
         "source_record_url": "https://zenodo.org/records/8350256",
         "source_filename": "HG002_35x.hard-filtered.vcf.gz",
         "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
-        "semantic_deviation": "FORMAT/GP_PHRED_SCALE",
+        "spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
+        "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
     }
     for key, value in expected.items():
         if attestation.get(key) != value:
             raise StrictVCFValidationError(
-                f"DRAGEN GP semantic attestation has an invalid {key}",
+                f"DRAGEN v4.2 fixture attestation has an invalid {key}",
                 code="VCF_CALLER_ATTESTATION_INVALID",
             )
     source_sha256 = attestation.get("source_sha256")
@@ -1680,8 +1763,11 @@ def _verify_dragen_42_gp_attestation(
         "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
         "caller_profile_id": expected["caller_profile_id"],
         "caller_release": expected["caller_release"],
-        "field": "FORMAT/GP",
-        "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+        "field": "INFO/EVENT_AND_EVENTTYPE",
+        "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
+        "spec_conformance": "VCFv4.2_CONFORMANT",
+        "caller_extension": expected["caller_extension"],
+        "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
         "clinical_review_required": True,
         "source_record_url": expected["source_record_url"],
         "source_filename": expected["source_filename"],
@@ -1755,8 +1841,11 @@ def validate_vcf_strict(
                     "status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
                     "caller_profile_id": manifest["caller_profile_id"],
                     "caller_release": manifest["caller_release"],
-                    "field": "FORMAT/GP",
-                    "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+                    "field": "INFO/EVENT_AND_EVENTTYPE",
+                    "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
+                    "spec_conformance": "VCFv4.2_CONFORMANT",
+                    "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+                    "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
                     "clinical_review_required": True,
                     "manifest_id": manifest["manifest_id"],
                     "signer_id": manifest["signer_id"],
@@ -1764,8 +1853,8 @@ def validate_vcf_strict(
         else:
             # Retain the exact public HG002 fixture attestation used by the
             # real-caller regression harness. It is not a production trust path.
-            caller_semantic_attestation = _verify_dragen_42_gp_attestation(source, caller_attestation)
-    dragen_gp_phred_semantics_applicable = caller_semantic_attestation is not None
+            caller_semantic_attestation = _verify_dragen_42_fixture_attestation(source, caller_attestation)
+    dragen_v42_event_extension_applicable = caller_semantic_attestation is not None
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
@@ -1775,6 +1864,10 @@ def validate_vcf_strict(
     chrom_header: list[str] | None = None
     found_header = False
     records = 0
+    targeted_records = 0
+    event_records = 0
+    targeted_event_records = 0
+    targeted_eventtype_records = 0
     sample_record_count = 0
     sample_records_without_gt = 0
     alternate_allele_count = 0
@@ -1870,7 +1963,7 @@ def validate_vcf_strict(
                         raise StrictVCFValidationError("Duplicate ##fileformat header", code="VCF_HEADER_INVALID")
                     fileformat = line.split("=", 1)[1]
                 if line.startswith("##INFO="):
-                    identifier, definition = _parse_field_definition(line, "INFO", line_no, fileformat)
+                    identifier, definition = _parse_field_definition(line, "INFO", line_no, fileformat, allow_dragen_v42_event_extension=dragen_v42_event_extension_applicable)
                     if identifier in info_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate INFO definition for {identifier!r} at line {line_no}",
@@ -1878,7 +1971,7 @@ def validate_vcf_strict(
                         )
                     info_definitions[identifier] = definition
                 elif line.startswith("##FORMAT="):
-                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no, fileformat)
+                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no, fileformat, allow_dragen_v42_event_extension=caller_semantic_attestation is not None)
                     if identifier in format_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate FORMAT definition for {identifier!r} at line {line_no}",
@@ -1903,6 +1996,18 @@ def validate_vcf_strict(
                     raise StrictVCFValidationError(
                         "The #CHROM header cannot contain empty columns",
                         code="VCF_HEADER_INVALID",
+                    )
+                if (
+                    caller_semantic_attestation is not None
+                    and fileformat == "VCFv4.2"
+                    and info_definitions.get("EVENT", {}).get("Number") == "A"
+                    and info_definitions.get("EVENT", {}).get("Type") == "String"
+                    and (info_definitions.get("TARGETED", {}).get("Number") != "0"
+                     or info_definitions.get("TARGETED", {}).get("Type") != "Flag")
+                ):
+                    raise StrictVCFValidationError(
+                        "DRAGEN VCFv4.2 EVENT/Number=A extension requires INFO/TARGETED Number=0,Type=Flag",
+                        code="VCF_CALLER_EXTENSION_INVALID",
                     )
                 if len(columns) >= 9 and columns[8] != "FORMAT":
                     raise StrictVCFValidationError("Column 9 must be FORMAT when sample columns are present", code="VCF_HEADER_INVALID")
@@ -1999,8 +2104,50 @@ def validate_vcf_strict(
                     )
                 record_ids_seen.update(record_ids)
             info_values = _info_values(fields[7])
+            if "TARGETED" in info_values:
+                if info_values["TARGETED"] is not None:
+                    raise StrictVCFValidationError(
+                        f"INFO/TARGETED must be a flag at line {line_no}",
+                        code="VCF_CALLER_EXTENSION_INVALID",
+                    )
+                targeted_records += 1
+            dragen_event_extension_header = bool(
+                caller_semantic_attestation is not None
+                and fileformat == "VCFv4.2"
+                and info_definitions.get("EVENT", {}).get("Number") == "A"
+                and info_definitions.get("EVENT", {}).get("Type") == "String"
+            )
+            if "EVENT" in info_values:
+                event_records += 1
+                if dragen_event_extension_header:
+                    if "TARGETED" not in info_values:
+                        raise StrictVCFValidationError(
+                            f"DRAGEN INFO/EVENT record lacks INFO/TARGETED provenance at line {line_no}",
+                            code="VCF_CALLER_EXTENSION_INVALID",
+                        )
+                    targeted_event_records += 1
+            if "EVENTTYPE" in info_values:
+                if dragen_event_extension_header:
+                    if (
+                        "EVENT" not in info_values
+                        or "TARGETED" not in info_values
+                        or info_definitions.get("EVENTTYPE", {}).get("Number") != "A"
+                        or info_definitions.get("EVENTTYPE", {}).get("Type") != "String"
+                    ):
+                        raise StrictVCFValidationError(
+                            f"DRAGEN INFO/EVENTTYPE requires Number=A,Type=String, INFO/EVENT and INFO/TARGETED at line {line_no}",
+                            code="VCF_CALLER_EXTENSION_INVALID",
+                        )
+                    targeted_eventtype_records += 1
+                elif fileformat in {"VCFv4.4", "VCFv4.5"} and "EVENT" not in info_values:
+                    raise StrictVCFValidationError(
+                        f"Reserved INFO/EVENTTYPE requires INFO/EVENT at line {line_no}",
+                        code="VCF_CALLER_EXTENSION_INVALID",
+                    )
             for key, value in info_values.items():
                 definition = info_definitions.get(key)
+                if definition is None and fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
+                    definition = _reserved_vcf41_44_info_definition(fileformat, key)
                 if definition is None and fileformat == "VCFv4.5":
                     definition = _reserved_vcf45_info_definition(key)
                 if definition is not None:
@@ -2221,6 +2368,8 @@ def validate_vcf_strict(
                     definition = format_definitions.get(key)
                     if definition is None and fileformat == "VCFv4.0":
                         definition = _reserved_vcf40_format_definition(key)
+                    if definition is None and fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
+                        definition = _reserved_vcf41_44_format_definition(fileformat, key)
                     if definition is None and fileformat == "VCFv4.5":
                         definition = _reserved_vcf45_format_definition(key)
                     if definition is not None:
@@ -2266,7 +2415,7 @@ def validate_vcf_strict(
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
-                            allow_phred_gp=dragen_gp_phred_semantics_applicable,
+                            vcf_version=fileformat,
                         )
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
@@ -2418,32 +2567,93 @@ def validate_vcf_strict(
         sample_record_count=sample_record_count,
         sample_records_without_gt=sample_records_without_gt,
     )
+    gp_semantic_profile = None
+    if "GP" in format_definitions:
+        if fileformat in {"VCFv4.1", "VCFv4.2"}:
+            gp_semantic_profile = {
+                "namespace": "FORMAT",
+                "field_id": "GP",
+                "status": "VCF_SPEC_CONFORMANT",
+                "vcf_version": fileformat,
+                "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+            }
+        elif fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
+            gp_semantic_profile = {
+                "namespace": "FORMAT",
+                "field_id": "GP",
+                "status": "VCF_SPEC_CONFORMANT",
+                "vcf_version": fileformat,
+                "scale": "LINEAR_POSTERIOR_GENOTYPE_PROBABILITIES_0_TO_1",
+            }
+    if gp_semantic_profile is not None:
+        caller_provenance["field_semantic_profiles"] = [
+            *caller_provenance.get("field_semantic_profiles", []),
+            gp_semantic_profile,
+        ]
+
+    event_definition = info_definitions.get("EVENT")
+    eventtype_definition = info_definitions.get("EVENTTYPE")
+    dragen_event_extension_detected = bool(
+        caller_semantic_attestation is not None
+        and fileformat == "VCFv4.2"
+        and event_definition is not None
+        and event_definition.get("Number") == "A"
+        and event_definition.get("Type") == "String"
+    )
+    targeted_records_verified = bool(
+        dragen_event_extension_detected
+        and event_records > 0
+        and event_records == targeted_event_records
+        and targeted_eventtype_records <= event_records
+    )
     if caller_semantic_attestation is not None:
+        caller_semantic_attestation["caller_extension_detected"] = dragen_event_extension_detected
+        caller_semantic_attestation["targeted_records_verified"] = targeted_records_verified
+        caller_semantic_attestation["targeted_record_count"] = targeted_records
+        caller_semantic_attestation["targeted_event_record_count"] = targeted_event_records
+        caller_semantic_attestation["clinical_review_required"] = targeted_records_verified
+    caller_provenance["targeted_record_count"] = targeted_records
+    caller_provenance["targeted_event_record_count"] = targeted_event_records
+    caller_provenance["targeted_eventtype_record_count"] = targeted_eventtype_records
+    if targeted_records_verified:
         prior_semantic_status = caller_provenance.get("caller_semantic_compatibility_status")
         if prior_semantic_status not in {
             "CONFLICTED_CALLER_METADATA",
             "MISSING_REQUIRED_FORMAT_FIELD",
             "DECLARATION_MISMATCH",
         }:
-            caller_provenance["caller_semantic_compatibility_status"] = "CALLER_SPEC_SEMANTIC_DEVIATION"
+            caller_provenance["caller_semantic_compatibility_status"] = "DOCUMENTED_DRAGEN_V42_EVENT_EXTENSION"
         caller_provenance["caller_semantic_compatibility_review_required"] = True
-        caller_provenance["dragen_gp_phred_semantics_applicable"] = True
+        caller_provenance["dragen_v42_event_extension_applicable"] = True
+        deviations = [
+            {
+                "namespace": "INFO",
+                "field_id": "EVENT",
+                "status": "DOCUMENTED_DRAGEN_V42_CALLER_EXTENSION",
+                "caller_release": "4.2",
+                "declared_number": "A",
+                "vcf42_reserved_number": "1",
+                "clinical_interpretation": "REVIEW_REQUIRED",
+            }
+        ]
+        if eventtype_definition is not None and eventtype_definition.get("Number") == "A" and eventtype_definition.get("Type") == "String":
+            deviations.append({
+                "namespace": "INFO",
+                "field_id": "EVENTTYPE",
+                "status": "DOCUMENTED_DRAGEN_V42_CALLER_EXTENSION",
+                "caller_release": "4.2",
+                "declared_number": "A",
+                "clinical_interpretation": "REVIEW_REQUIRED",
+            })
         caller_provenance["field_semantic_deviations"] = [
             *caller_provenance.get("field_semantic_deviations", []),
-            {
-                "namespace": "FORMAT",
-                "field_id": "GP",
-                "status": "CALLER_SPEC_SEMANTIC_DEVIATION",
-                "caller_release": "4.2",
-                "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
-                "clinical_interpretation": "REVIEW_REQUIRED",
-            },
+            *deviations,
         ]
     return {
         "fileformat": fileformat,
         "caller_semantic_attestation": caller_semantic_attestation,
         "caller_run_attestation": caller_run_attestation,
-        "caller_semantic_compatibility_review_required": dragen_gp_phred_semantics_applicable,
+        "caller_semantic_compatibility_review_required": caller_provenance.get("caller_semantic_compatibility_review_required", False),
         "caller_provenance": caller_provenance,
         "records": records,
         "alternate_allele_count": alternate_allele_count,
