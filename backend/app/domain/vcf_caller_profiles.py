@@ -136,7 +136,7 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
             "GQ": "DRAGEN genotype quality; its interpretation differs between variant and homozygous-reference GVCF calls.",
             "PL": "Phred-scaled genotype likelihoods when emitted.",
             "GL": "Log10 genotype likelihoods when emitted.",
-            "GP": "DRAGEN-defined Phred-scaled posterior genotype values; this deliberately differs from the VCF-reserved FORMAT/GP probability scale (0–1) and must not be interpreted as normalized probabilities.",
+            "GP": "DRAGEN 4.3 documents Phred-scaled posterior genotype values, which conflict with VCFv4.3+ FORMAT/GP linear probabilities in [0,1]. DRAGEN 4.2 output declaring VCFv4.2 uses the specification's Phred-scaled GP semantics and is not this deviation.",
             "PRI": "Genotype prior values when emitted.",
             "SB": "Strand-bias evidence when emitted.",
             "MB": "Mate-bias evidence when emitted.",
@@ -385,8 +385,8 @@ def inspect_caller_provenance(
         else None
     )
     # Header metadata is unauthenticated. This inspection API accepts no
-    # controlled run-manifest attestation, so headers cannot authorize an
-    # exception to reserved FORMAT/GP probability semantics.
+    # controlled run-manifest attestation, so headers cannot authorize a
+    # caller-specific deviation from the GP semantics of the declared VCF version.
     dragen_gp_phred_semantics_applicable = False
     present_format_semantics = {
         key: definition["documented_format_semantics"][key]
