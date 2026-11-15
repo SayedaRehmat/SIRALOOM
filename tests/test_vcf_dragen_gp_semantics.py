@@ -146,3 +146,31 @@ def test_dragen_v42_event_extension_rejects_event_records_without_targeted_flag(
         validation.validate_vcf_strict(source, caller_attestation={"fixture": "pinned"})
     assert error.value.code == "VCF_CALLER_EXTENSION_INVALID"
 
+def test_dragen_v42_event_extension_requires_targeted_flag_header(tmp_path, monkeypatch):
+    source = tmp_path / "dragen-v42-event-without-targeted-header.vcf"
+    _vcf(source, "3.1662,15.337,3.1125", event_extension=True)
+    source.write_text(
+        source.read_text(encoding="utf-8").replace(
+            '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\\n',
+            "",
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        validation,
+        "_verify_dragen_42_fixture_attestation",
+        lambda _path, _attestation: {
+            "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
+            "caller_profile_id": "dragen_snv_germline",
+            "caller_release": "4.2",
+            "field": "INFO/EVENT_AND_EVENTTYPE",
+            "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
+            "spec_conformance": "VCFv4.2_CONFORMANT",
+            "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "clinical_review_required": True,
+        },
+    )
+    with pytest.raises(validation.StrictVCFValidationError) as error:
+        validation.validate_vcf_strict(source, caller_attestation={"fixture": "pinned"})
+    assert error.value.code == "VCF_CALLER_EXTENSION_INVALID"
+
