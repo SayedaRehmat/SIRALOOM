@@ -196,6 +196,7 @@ def assess_ebi_vcf_compatibility(
         and caller_semantic_attestation.get("caller_profile_id") == "dragen_snv_germline"
         and caller_semantic_attestation.get("caller_release") == "4.2"
         and caller_semantic_attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
+        and caller_semantic_attestation.get("caller_extension_detected") is True
     )
     has_event_number_mismatch = any(
         "INFO EVENT metadata Number is not 1" in str(item.get("message_template", ""))
