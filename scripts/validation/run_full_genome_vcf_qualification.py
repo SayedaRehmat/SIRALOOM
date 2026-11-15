@@ -188,44 +188,64 @@ def qualify_one(
             f"blocking_diagnostic_count={len(blocking)}"
         )
 
+    # Route against the exact selected reference contig set before REF checking.
+    # Out-of-package contigs are preserved unchanged in a dedicated artifact and
+    # explicitly excluded from this reference's normalization/benchmark stream.
+    reference_contig_lengths = {
+        str(item["name"]): int(item["length"]) for item in reference["contigs"]
+    }
+    routed_dir = output / caller.lower() / "routing"
+    routed = route_vcf_records(
+        source,
+        routed_dir,
+        reference_contig_lengths=reference_contig_lengths,
+    )
+    result["gates"]["routing"] = routed
+    result["gates"]["external_contig_disposition"] = {
+        "status": "PRESERVED" if routed.get("external_reference_contig_records", 0) else "NONE_PRESENT",
+        "record_count": routed.get("external_reference_contig_records", 0),
+        "artifact_path": routed.get("external_reference_contigs_path"),
+        "policy": routed.get("external_contig_policy"),
+        "reference_package_checksum": reference["package_checksum"],
+    }
+    if not routed.get("sequence_path") or int(routed.get("sequence_records", 0)) <= 0:
+        raise QualificationBlocked(f"{caller}: no eligible sequence-resolved SNV/indel records in the selected reference")
+    sequence_vcf = Path(routed["sequence_path"])
+
     gatk_dir = output / caller.lower() / "gatk"
     gatk_dir.mkdir(parents=True, exist_ok=True)
     gatk_log = gatk_dir / "validatevariants.stdout.log"
     gatk_evidence = run_command(
-        [gatk, "ValidateVariants", "-R", reference["fasta_path"], "-V", str(source)],
+        [gatk, "ValidateVariants", "-R", reference["fasta_path"], "-V", str(sequence_vcf)],
         timeout=6 * 60 * 60,
         stdout_path=gatk_log,
     )
-    result["gates"]["gatk_validate_variants"] = gatk_evidence
+    result["gates"]["gatk_validate_variants"] = {
+        **gatk_evidence,
+        "input_scope": "REFERENCE_RESOLVED_SEQUENCE_RECORDS",
+        "source_vcf_sha256": result["source_sha256"],
+    }
 
-    ref_check = validate_vcf_reference_alleles(source, reference["fasta_path"])
-    result["gates"]["siraloom_full_file_reference_check"] = {
+    ref_check = validate_vcf_reference_alleles(sequence_vcf, reference["fasta_path"])
+    result["gates"]["siraloom_reference_check"] = {
         "status": "PASS",
-        "scope": "FULL_SOURCE_VCF",
+        "scope": "REFERENCE_RESOLVED_SEQUENCE_RECORDS",
+        "source_vcf_sha256": result["source_sha256"],
         "reference_package_checksum": reference["package_checksum"],
         "evidence": ref_check,
     }
     ebi_assembly = run_ebi_vcf_assembly_checker(
-        source,
+        sequence_vcf,
         reference["fasta_path"],
         source_artifact_sha256=result["source_sha256"],
         reference_build="GRCh38",
         caller_provenance=provenance,
-        validation_input_scope="FULL_FILE",
+        validation_input_scope="REFERENCE_RESOLVED_SEQUENCE_RECORDS",
         timeout_seconds=6 * 60 * 60,
     )
-    result["gates"]["ebi_full_file_assembly_checker"] = ebi_assembly
+    result["gates"]["ebi_reference_resolved_assembly_checker"] = ebi_assembly
     if ebi_assembly.get("status") != "PASS":
-        raise QualificationBlocked(f"{caller}: full-file EBI assembly checker failed")
-
-    # The router receives all declared source contigs. Reference validation
-    # above is stricter and blocks unresolved/mismatched contigs before routing.
-    routed_dir = output / caller.lower() / "routing"
-    routed = route_vcf_records(source, routed_dir)
-    result["gates"]["routing"] = routed
-    sequence_vcf = Path(routed["sequence_path"])
-    if not sequence_vcf.is_file() or int(routed.get("sequence_records", 0)) <= 0:
-        raise QualificationBlocked(f"{caller}: no eligible sequence-resolved SNV/indel records")
+        raise QualificationBlocked(f"{caller}: EBI assembly checker failed on reference-resolved sequence records")
 
     normalized = output / caller.lower() / f"{caller.lower()}.normalized.vcf.gz"
     normalization = normalize_vcf_with_bcftools(
