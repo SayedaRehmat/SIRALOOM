@@ -201,10 +201,29 @@ def qualify_one(
         reference_contig_lengths=reference_contig_lengths,
     )
     result["gates"]["routing"] = routed
+    if not routed.get("record_reconciliation", {}).get("balanced"):
+        raise QualificationBlocked(f"{caller}: source-to-routing record reconciliation failed")
+    if int(routed.get("source_record_count", -1)) != int(strict.get("records", -2)):
+        raise QualificationBlocked(
+            f"{caller}: strict-validator and router record counts disagree "
+            f"({strict.get('records')} != {routed.get('source_record_count')})"
+        )
+    external_path_text = routed.get("external_reference_contigs_path")
+    external_path = Path(external_path_text) if external_path_text else None
+    external_count = int(routed.get("external_reference_contig_records", 0))
+    if external_count and (external_path is None or not external_path.is_file()):
+        raise QualificationBlocked(f"{caller}: external-contig records were counted but not preserved")
     result["gates"]["external_contig_disposition"] = {
-        "status": "PRESERVED" if routed.get("external_reference_contig_records", 0) else "NONE_PRESENT",
-        "record_count": routed.get("external_reference_contig_records", 0),
-        "artifact_path": routed.get("external_reference_contigs_path"),
+        "status": "PRESERVED" if external_count else "NONE_PRESENT",
+        "record_count": external_count,
+        "artifact": (
+            {
+                "path": str(external_path),
+                "bytes": external_path.stat().st_size,
+                "sha256": sha256_file(external_path),
+            }
+            if external_path is not None and external_path.is_file() else None
+        ),
         "policy": routed.get("external_contig_policy"),
         "reference_package_checksum": reference["package_checksum"],
     }
