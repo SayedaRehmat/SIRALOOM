@@ -123,6 +123,7 @@ def _collect_report_evidence(report_dir: Path, *, source: Path | None = None) ->
                     severity, detail, occurrences, first_line = match.groups()
                     template = _diagnostic_template(detail)
                     item = diagnostics_by_template.setdefault(template, {
+                        "severity": severity.upper(),
                         "message_template": template,
                         "occurrences": 0,
                         "first_line": int(first_line),
