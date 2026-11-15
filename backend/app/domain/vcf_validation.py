@@ -2126,11 +2126,6 @@ def validate_vcf_strict(
                             code="VCF_CALLER_EXTENSION_INVALID",
                         )
                     targeted_event_records += 1
-                elif info_definitions.get("EVENT", {}).get("Number") not in {"1", "A"}:
-                    raise StrictVCFValidationError(
-                        f"INFO/EVENT has no valid version-specific Number declaration at line {line_no}",
-                        code="VCF_FIELD_CARDINALITY_INVALID",
-                    )
             if "EVENTTYPE" in info_values:
                 if dragen_event_extension_header:
                     if (
