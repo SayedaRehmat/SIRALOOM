@@ -175,6 +175,87 @@ def _collect_report_evidence(report_dir: Path, *, source: Path | None = None) ->
     return reports, diagnostics, examples
 
 
+
+def assess_ebi_vcf_compatibility(
+    validation: dict,
+    *,
+    caller_semantic_attestation: dict | None = None,
+) -> dict:
+    """Classify documented EBI 0.10.2 and attested DRAGEN VCFv4.2 exceptions.
+
+    The raw EBI result is never rewritten. This assessment separates known
+    version/caller compatibility diagnostics from unresolved conformance errors.
+    """
+    raw_status = validation.get("status", "UNKNOWN")
+    vcf_version = validation.get("vcf_version")
+    diagnostics = validation.get("diagnostics") or []
+    attested_dragen_v42_extension = bool(
+        vcf_version == "VCFv4.2"
+        and isinstance(caller_semantic_attestation, dict)
+        and caller_semantic_attestation.get("status") == "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE"
+        and caller_semantic_attestation.get("caller_profile_id") == "dragen_snv_germline"
+        and caller_semantic_attestation.get("caller_release") == "4.2"
+        and caller_semantic_attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
+    )
+    has_event_number_mismatch = any(
+        "INFO EVENT metadata Number is not 1" in str(item.get("message_template", ""))
+        for item in diagnostics
+    )
+    known_nonblocking = []
+    blocking = []
+    exception_ids = set()
+    for diagnostic in diagnostics:
+        message = str(diagnostic.get("message_template", ""))
+        severity = str(diagnostic.get("severity", "ERROR")).upper()
+        classification = None
+        if (
+            vcf_version in {"VCFv4.1", "VCFv4.2"}
+            and severity == "ERROR"
+            and "GP=<values>" in message
+            and "interval [0,1]" in message
+        ):
+            classification = "EBI_0_10_2_GP_RANGE_FALSE_POSITIVE_VCF41_VCF42"
+            exception_ids.add("EBI-VF-149")
+        elif (
+            attested_dragen_v42_extension
+            and severity == "ERROR"
+            and "INFO EVENT metadata Number is not 1" in message
+            and has_event_number_mismatch
+        ):
+            classification = "DOCUMENTED_DRAGEN_V42_EVENT_NUMBER_A_EXTENSION"
+            exception_ids.add("DRAGEN-V42-EVENT-VCF44-EXTENSION")
+        elif (
+            attested_dragen_v42_extension
+            and severity == "WARNING"
+            and has_event_number_mismatch
+            and "INFO 'EVENT' is not listed in a valid meta-data INFO entry" in message
+        ):
+            classification = "SECONDARY_WARNING_FROM_DOCUMENTED_DRAGEN_V42_EVENT_EXTENSION"
+            exception_ids.add("DRAGEN-V42-EVENT-VCF44-EXTENSION")
+        if classification:
+            known_nonblocking.append({**diagnostic, "classification": classification, "blocking": False})
+        else:
+            blocking.append({**diagnostic, "classification": "UNRESOLVED", "blocking": True})
+
+    if raw_status == "PASS":
+        effective_status = "PASS"
+    elif raw_status == "FAIL" and diagnostics and not blocking:
+        effective_status = "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+    elif raw_status == "NOT_SUPPORTED":
+        effective_status = "NOT_SUPPORTED"
+    else:
+        effective_status = "FAIL"
+    return {
+        "raw_status": raw_status,
+        "effective_status": effective_status,
+        "vcf_version": vcf_version,
+        "known_exception_ids": sorted(exception_ids),
+        "known_nonblocking_diagnostics": known_nonblocking,
+        "blocking_diagnostics": blocking,
+        "caller_extension_attested": attested_dragen_v42_extension,
+        "raw_ebi_result_preserved": True,
+    }
+
 def run_ebi_vcf_validator(
     path: str | Path,
     *,
