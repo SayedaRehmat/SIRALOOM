@@ -114,23 +114,25 @@ def _collect_report_evidence(report_dir: Path, *, source: Path | None = None) ->
             with report.open("rt", encoding="utf-8", errors="replace") as handle:
                 for raw in handle:
                     line_count += 1
-                    if "errors_summary" not in report.name:
+                    if "errors" not in report.name:
                         continue
                     message = raw.strip()
-                    match = re.match(r"(Error|Warning): (.*) This occurs (\d+) time\(s\), first time in line (\d+)\.$", message)
+                    match = re.match(r"Line (\d+): (.*?)(?: \(warning\))?$", message)
                     if not match:
                         continue
-                    severity, detail, occurrences, first_line = match.groups()
+                    first_line, detail = match.groups()
+                    severity = "WARNING" if message.endswith("(warning)") else "ERROR"
                     template = _diagnostic_template(detail)
-                    item = diagnostics_by_template.setdefault(template, {
-                        "severity": severity.upper(),
+                    key = f"{severity}:{template}"
+                    item = diagnostics_by_template.setdefault(key, {
+                        "severity": severity,
                         "message_template": template,
                         "occurrences": 0,
                         "first_line": int(first_line),
                         "sample_lines": [],
                         "example": detail[:1000],
                     })
-                    item["occurrences"] += int(occurrences)
+                    item["occurrences"] += 1
                     item["first_line"] = min(item["first_line"], int(first_line))
                     if len(item["sample_lines"]) < _MAX_DIAGNOSTIC_LINE_SAMPLES:
                         item["sample_lines"].append(int(first_line))
@@ -239,7 +241,7 @@ def run_ebi_vcf_validator(
                 str(executable_path),
                 "-i", str(source),
                 "-l", "warning",
-                "-r", "summary,text",
+                "-r", "text",
                 "-o", str(report_dir),
             ]
             completed = subprocess.run(
