@@ -89,9 +89,9 @@ def _source_record_examples(source: Path, line_numbers: set[int]) -> list[dict]:
                         key, separator, value = item.partition("=")
                         if separator:
                             info_values[key] = value
-                    for key in ("EVENT", "EVENTTYPE", "SVTYPE", "MATEID"):
+                    for key in ("EVENT", "EVENTTYPE", "SVTYPE", "MATEID", "TARGETED"):
                         if key in info_values:
-                            example[f"info_{key.lower()}"] = info_values[key]
+                            example[f"info_{key.lower()}"] = info_values[key] if info_values[key] is not None else True
                 if len(fields) > 9:
                     format_keys = fields[8].split(":")
                     sample_values = fields[9].split(":")
