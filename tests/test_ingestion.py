@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from backend.app.config import settings
-from backend.app.domain import ingestion
+from backend.app.domain import ingestion, vcf_validation
 
 from backend.app.domain.ingestion import (
     ValidationResult,
@@ -1125,7 +1125,7 @@ def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failure
         encoding="utf-8",
     )
     monkeypatch.setattr(
-        ingestion,
+        vcf_validation,
         "_verify_dragen_42_fixture_attestation",
         lambda *_args, **_kwargs: {
             "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
