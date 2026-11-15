@@ -1383,3 +1383,21 @@ def test_router_preserves_contigs_outside_selected_reference_package(tmp_path: P
     assert routed["external_contig_policy"] == (
         "PRESERVE_UNCHANGED_AND_EXCLUDE_FROM_SELECTED_REFERENCE_NORMALIZATION"
     )
+
+
+def test_router_defers_external_contig_classification_until_reference_is_resolved(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "unresolved-reference.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "1\\t10\\trs1\\tA\\tC\\t50\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / "routed-unresolved", reference_contig_lengths={})
+
+    assert routed["sequence_records"] == 1
+    assert routed["external_reference_contig_records"] == 0
+    assert routed["external_reference_contigs_path"] is None
