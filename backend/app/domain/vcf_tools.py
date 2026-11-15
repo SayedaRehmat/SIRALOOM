@@ -297,7 +297,7 @@ def route_vcf_records(
                 # semantics; this state distinguishes a spec-valid missing GT
                 # inside a preceding block from an unexplained missing call.
                 chrom = fields[0]
-                if reference_contig_lengths is not None and chrom not in reference_contig_lengths:
+                if reference_contig_lengths and chrom not in reference_contig_lengths:
                     emit("external_contigs", line)
                     record_exclusion(
                         line,
