@@ -478,7 +478,15 @@ def main() -> int:
         if (result.get("normalization") or {}).get("status") != "PASS":
             failures.append(f"{callset['caller']}: reference-aware normalization did not pass")
 
-    report["overall"] = "PASS" if not failures else "FAIL"
+    review_required_callers = sorted({
+        result.get("caller")
+        for result in report["results"]
+        if (result.get("whole_file_strict_validation") or {}).get("caller_semantic_compatibility_review_required")
+    })
+    report["review_required_callers"] = review_required_callers
+    report["overall"] = (
+        "FAIL" if failures else "PASS_WITH_REVIEW_REQUIRED" if review_required_callers else "PASS"
+    )
     report["failures"] = failures
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
