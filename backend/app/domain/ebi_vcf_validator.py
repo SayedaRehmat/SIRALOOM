@@ -89,6 +89,8 @@ def _source_record_examples(source: Path, line_numbers: set[int]) -> list[dict]:
                         key, separator, value = item.partition("=")
                         if separator:
                             info_values[key] = value
+                        else:
+                            info_values[key] = None
                     for key in ("EVENT", "EVENTTYPE", "SVTYPE", "MATEID", "TARGETED"):
                         if key in info_values:
                             example[f"info_{key.lower()}"] = info_values[key] if info_values[key] is not None else True
