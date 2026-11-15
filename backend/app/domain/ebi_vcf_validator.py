@@ -410,8 +410,21 @@ def run_ebi_vcf_assembly_checker(
     profile_id: str = "ebi-vcf-validator-0.10.2-linux-64",
     executable_name: str = "vcf_assembly_checker",
     timeout_seconds: int = 3600,
+    validation_input_scope: str = "CHR20_PROJECTION_ONLY",
 ) -> dict:
-    """Run EBI's independent FASTA REF concordance checker for a defined VCF projection."""
+    """Run EBI's independent FASTA REF concordance checker for an explicit input scope.
+
+    The default remains the historical chr20 smoke-test scope. Full-genome
+    qualification callers must pass FULL_FILE explicitly; the returned evidence
+    records that scope so a projection can never be represented as whole-file
+    validation. EBI's assembly-checker summary is emitted on stdout/stderr in
+    some releases, so those streams are retained as first-class evidence even
+    when its text-report file is empty.
+    """
+    if validation_input_scope not in {"CHR20_PROJECTION_ONLY", "FULL_FILE"}:
+        raise ValueError(
+            "validation_input_scope must be CHR20_PROJECTION_ONLY or FULL_FILE."
+        )
     vcf = Path(vcf_path)
     fasta = Path(reference_fasta)
     fai = Path(str(fasta) + ".fai")
@@ -486,7 +499,22 @@ def run_ebi_vcf_assembly_checker(
                 "source_artifact_sha256": source_artifact_sha256,
                 "vcf_version": _declared_fileformat(vcf),
                 "validation_input_sha256": _sha256(vcf),
-                "validation_input_scope": "CHR20_PROJECTION_ONLY",
+                "validation_input_scope": validation_input_scope,
+                "summary_evidence": {
+                    "stdout": completed.stdout,
+                    "stderr": completed.stderr,
+                    "text_report_files_present": any(
+                        int(item.get("size_bytes", 0)) > 0 for item in reports
+                    ),
+                    "empty_text_report_files": [
+                        item["filename"] for item in reports
+                        if item.get("filename", "").lower().endswith((".txt", ".log"))
+                        and int(item.get("size_bytes", 0)) == 0
+                    ],
+                    "interpretation": (
+                        "EXECUTION_STREAMS_RETAINED; empty text reports are not treated as diagnostic evidence"
+                    ),
+                },
                 "caller": (
                     (caller_provenance or {}).get("caller_profile_id")
                     or (caller_provenance or {}).get("caller")
