@@ -1354,12 +1354,12 @@ def test_router_preserves_contigs_outside_selected_reference_package(tmp_path: P
 
     source = tmp_path / "external-contigs.vcf"
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        '##contig=<ID=chr1,length=100>\\n'
-        '##contig=<ID=hs38d1_decoy,length=25>\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "chr1\\t10\\trs1\\tA\\tC\\t50\\tPASS\\t.\\n"
-        "hs38d1_decoy\\t3\\tdecoy1\\tG\\tT\\t40\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        '##contig=<ID=chr1,length=100>\n'
+        '##contig=<ID=hs38d1_decoy,length=25>\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t10\trs1\tA\tC\t50\tPASS\t.\n"
+        "hs38d1_decoy\t3\tdecoy1\tG\tT\t40\tPASS\t.\n",
         encoding="utf-8",
     )
 
@@ -1371,7 +1371,7 @@ def test_router_preserves_contigs_outside_selected_reference_package(tmp_path: P
 
     external_path = Path(routed["external_reference_contigs_path"])
     sequence_path = Path(routed["sequence_path"])
-    external_record = "hs38d1_decoy\\t3\\tdecoy1\\tG\\tT\\t40\\tPASS\\t."
+    external_record = "hs38d1_decoy\t3\tdecoy1\tG\tT\t40\tPASS\t."
 
     assert routed["source_record_count"] == 2
     assert routed["records_total"] == 2
