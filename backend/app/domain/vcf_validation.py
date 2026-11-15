@@ -16,6 +16,7 @@ from backend.app.domain.caller_attestation import CallerAttestationError, verify
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
+DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID = "dragen-v4.2-targeted-merge-vcf42-compatibility"
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
 VCF_CONTIG_NAME_RE = re.compile(
@@ -1843,6 +1844,7 @@ def validate_vcf_strict(
                     "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
                     "spec_conformance": "VCFv4.2_CONFORMANT",
                     "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+                    "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
                     "clinical_review_required": True,
                     "manifest_id": manifest["manifest_id"],
                     "signer_id": manifest["signer_id"],
