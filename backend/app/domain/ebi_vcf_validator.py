@@ -425,9 +425,12 @@ def run_ebi_vcf_assembly_checker(
     some releases, so those streams are retained as first-class evidence even
     when its text-report file is empty.
     """
-    if validation_input_scope not in {"CHR20_PROJECTION_ONLY", "FULL_FILE"}:
+    if validation_input_scope not in {
+        "CHR20_PROJECTION_ONLY", "FULL_FILE", "REFERENCE_RESOLVED_SEQUENCE_RECORDS"
+    }:
         raise ValueError(
-            "validation_input_scope must be CHR20_PROJECTION_ONLY or FULL_FILE."
+            "validation_input_scope must be CHR20_PROJECTION_ONLY, FULL_FILE, "
+            "or REFERENCE_RESOLVED_SEQUENCE_RECORDS."
         )
     vcf = Path(vcf_path)
     fasta = Path(reference_fasta)
