@@ -83,6 +83,15 @@ def _source_record_examples(source: Path, line_numbers: set[int]) -> list[dict]:
                     "ref": fields[3] if len(fields) > 3 else None,
                     "alt": fields[4] if len(fields) > 4 else None,
                 }
+                if len(fields) > 7:
+                    info_values = {}
+                    for item in fields[7].split(";"):
+                        key, separator, value = item.partition("=")
+                        if separator:
+                            info_values[key] = value
+                    for key in ("EVENT", "EVENTTYPE", "SVTYPE", "MATEID"):
+                        if key in info_values:
+                            example[f"info_{key.lower()}"] = info_values[key]
                 if len(fields) > 9:
                     format_keys = fields[8].split(":")
                     sample_values = fields[9].split(":")
@@ -155,6 +164,13 @@ def _collect_report_evidence(report_dir: Path, *, source: Path | None = None) ->
         diagnostics_by_template.values(),
         key=lambda item: (-item["occurrences"], item["first_line"]),
     )
+    # Keep examples stratified across diagnostic classes so a high-volume GP
+    # error cannot crowd out the rare EVENT header/record evidence.
+    sampled_lines = {
+        line_number
+        for item in diagnostics_by_template.values()
+        for line_number in item["sample_lines"][:4]
+    }
     examples = _source_record_examples(source, sampled_lines) if source is not None else []
     return reports, diagnostics, examples
 
