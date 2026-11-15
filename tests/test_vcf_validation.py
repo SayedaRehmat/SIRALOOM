@@ -617,7 +617,7 @@ def test_format_number_g_cardinality_uses_sample_ploidy(
     values: str,
     expected_count: int,
 ):
-    # GP is a probability vector: use finite values in [0, 1] that sum to 1.
+    # The default VCFv4.2 GP fixture uses finite non-negative Phred scores.
     # PL and GL fixtures intentionally test cardinality/type, not calibration.
     if field_id == "GP":
         values = ",".join([f"{1 / expected_count:.8f}"] * expected_count)
