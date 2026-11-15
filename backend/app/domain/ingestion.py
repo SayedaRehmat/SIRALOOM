@@ -243,12 +243,6 @@ def validate_vcf(
                 "EBI vcf-validator returned an unrecognized validation state; intake is blocked."
             )
         bcftools_error, bcftools_version, htslib_version = _bcftools_validate(p)
-        if bcftools_error:
-            raise VCFValidationError(
-                "VCF structural validation failed in bcftools/htslib: "
-                + bcftools_error
-            )
-
         strict_profile = validate_vcf_strict(
             p,
             caller_attestation=caller_attestation,
@@ -263,6 +257,12 @@ def validate_vcf(
         ebi_validation["compatibility_assessment"] = ebi_compatibility
         if ebi_failure_reason and ebi_compatibility["effective_status"] == "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS":
             ebi_failure_reason = None
+        if bcftools_error:
+            raise VCFValidationError(
+                "VCF structural validation failed in bcftools/htslib: "
+                + bcftools_error
+            )
+
         compression = strict_profile["compression"]
         headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
