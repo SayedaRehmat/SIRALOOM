@@ -126,19 +126,51 @@ def digest(path: Path, algorithm: str = "sha256") -> str:
 def dragen_gp_attestation(callset: dict[str, Any], artifact: Path) -> dict[str, Any] | None:
     if callset["caller"] != "DRAGEN":
         return None
-    return {
+
+    # GP semantics are supported by the pinned VCFv4.2 specification and this
+    # exact checksum-identified DRAGEN 4.2 dataset fixture. EVENT/EVENTTYPE is
+    # a separate DRAGEN targeted-output extension: Illumina documents it for
+    # *.targeted.vcf[.gz] carrying ##source=DRAGEN_TARGETED. Do not infer that
+    # provenance from EVENT fields in an unrelated hard-filtered callset.
+    opener = gzip.open if artifact.suffix == ".gz" else open
+    header_lines: list[str] = []
+    with opener(artifact, "rt", encoding="utf-8") as handle:
+        for line in handle:
+            if line.startswith("#CHROM"):
+                break
+            if line.startswith("##"):
+                header_lines.append(line.rstrip("\\r\\n"))
+    source_marked_targeted = "##source=DRAGEN_TARGETED" in header_lines
+    targeted_filename = ".targeted.vcf" in artifact.name
+    targeted_provenance_verified = source_marked_targeted and targeted_filename
+
+    attestation = {
         "schema_version": 1,
+        "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
         "caller_profile_id": "dragen_snv_germline",
         "caller_release": "4.2",
         "source_record_url": "https://zenodo.org/records/8350256",
         "source_filename": DRAGEN_KEY,
         "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
         "spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
-        "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
         "source_sha256": callset["sha256"],
         "source_artifact_path": callset["local_path"],
         "artifact_sha256": digest(artifact),
+        "caller_extension_detected": source_marked_targeted,
+        "targeted_output_filename_verified": targeted_filename,
+        "targeted_records_verified": targeted_provenance_verified,
+        "targeted_output_provenance_status": (
+            "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FILENAME"
+            if targeted_provenance_verified
+            else "NOT_ESTABLISHED_FOR_THIS_ARTIFACT"
+        ),
     }
+    if targeted_provenance_verified:
+        attestation.update({
+            "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
+        })
+    return attestation
 
 
 def download_callsets(root: Path) -> list[dict[str, Any]]:
