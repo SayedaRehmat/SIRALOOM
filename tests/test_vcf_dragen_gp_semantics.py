@@ -175,3 +175,31 @@ def test_dragen_v42_event_extension_requires_targeted_flag_header(tmp_path, monk
         validation.validate_vcf_strict(source, caller_attestation={"fixture": "pinned"})
     assert error.value.code == "VCF_CALLER_EXTENSION_INVALID"
 
+def test_standard_vcf42_event_number_one_does_not_require_targeted_flag(tmp_path):
+    source = tmp_path / "vcf42-standard-event.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.2\n"
+        '##INFO=<ID=EVENT,Number=1,Type=String,Description="Breakend event identifier">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Phred-scaled genotype posterior probabilities">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHG002\n"
+        "1\t10\t.\tA\tC\t50\tPASS\tEVENT=EV1\tGT:GP\t0/1:3.1662,15.337,3.1125\n",
+        encoding="utf-8",
+    )
+    assert validation.validate_vcf_strict(source)["records"] == 1
+
+
+def test_standard_vcf44_event_number_a_does_not_require_dragen_targeted_flag(tmp_path):
+    source = tmp_path / "vcf44-standard-event.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.4\n"
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior probabilities">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHG002\n"
+        "1\t10\t.\tA\tC\t50\tPASS\tEVENT=EV1;EVENTTYPE=VARIANT_IN_HOMOLOGY_REGION\tGT:GP\t0/1:0.1,0.8,0.1\n",
+        encoding="utf-8",
+    )
+    assert validation.validate_vcf_strict(source)["records"] == 1
+
