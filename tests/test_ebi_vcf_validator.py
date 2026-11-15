@@ -201,3 +201,69 @@ def test_large_ebi_reports_are_hashed_and_bounded_with_structured_diagnostics(
     assert event_warning["occurrences"] == 1
     assert any(item.get("format_gp") == "3.1,15.3,3.1" for item in result["source_record_examples"])
 
+def test_vcf42_gp_range_diagnostic_is_classified_as_known_ebi_defect() -> None:
+    result = ebi.assess_ebi_vcf_compatibility({
+        "status": "FAIL",
+        "vcf_version": "VCFv4.2",
+        "diagnostics": [{
+            "severity": "ERROR",
+            "message_template": "Sample #1, GP=<values> value does not lie in the interval [0,1].",
+            "occurrences": 4933817,
+            "first_line": 3437,
+        }],
+    })
+    assert result["raw_status"] == "FAIL"
+    assert result["effective_status"] == "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+    assert result["known_exception_ids"] == ["EBI-VF-149"]
+    assert result["blocking_diagnostics"] == []
+
+
+def test_vcf43_gp_range_diagnostic_remains_blocking() -> None:
+    result = ebi.assess_ebi_vcf_compatibility({
+        "status": "FAIL",
+        "vcf_version": "VCFv4.3",
+        "diagnostics": [{
+            "severity": "ERROR",
+            "message_template": "Sample #1, GP=<values> value does not lie in the interval [0,1].",
+            "occurrences": 1,
+            "first_line": 4,
+        }],
+    })
+    assert result["effective_status"] == "FAIL"
+    assert result["blocking_diagnostics"][0]["classification"] == "UNRESOLVED"
+
+
+def test_dragen_v42_event_extension_requires_verified_caller_attestation() -> None:
+    result = {
+        "status": "FAIL",
+        "vcf_version": "VCFv4.2",
+        "diagnostics": [
+            {
+                "severity": "ERROR",
+                "message_template": "INFO EVENT metadata Number is not 1.",
+                "occurrences": 1,
+                "first_line": 32,
+            },
+            {
+                "severity": "WARNING",
+                "message_template": "INFO 'EVENT' is not listed in a valid meta-data INFO entry.",
+                "occurrences": 107,
+                "first_line": 50844,
+            },
+        ],
+    }
+    attestation = {
+        "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
+        "caller_profile_id": "dragen_snv_germline",
+        "caller_release": "4.2",
+        "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+    }
+    assessed = ebi.assess_ebi_vcf_compatibility(result, caller_semantic_attestation=attestation)
+    assert assessed["effective_status"] == "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+    assert assessed["caller_extension_attested"] is True
+    assert "DRAGEN-V42-EVENT-VCF44-EXTENSION" in assessed["known_exception_ids"]
+
+    untrusted = ebi.assess_ebi_vcf_compatibility(result)
+    assert untrusted["effective_status"] == "FAIL"
+    assert len(untrusted["blocking_diagnostics"]) == 2
+
