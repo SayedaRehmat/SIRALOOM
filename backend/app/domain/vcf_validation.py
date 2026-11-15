@@ -1934,7 +1934,7 @@ def validate_vcf_strict(
                         raise StrictVCFValidationError("Duplicate ##fileformat header", code="VCF_HEADER_INVALID")
                     fileformat = line.split("=", 1)[1]
                 if line.startswith("##INFO="):
-                    identifier, definition = _parse_field_definition(line, "INFO", line_no, fileformat, allow_dragen_v42_event_extension=caller_semantic_attestation is not None)
+                    identifier, definition = _parse_field_definition(line, "INFO", line_no, fileformat, allow_dragen_v42_event_extension=dragen_v42_event_extension_applicable)
                     if identifier in info_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate INFO definition for {identifier!r} at line {line_no}",
