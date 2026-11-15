@@ -386,6 +386,10 @@ def run_ebi_vcf_validator(
                 "source_record_examples": source_record_examples,
                 "runtime_seconds_limit": timeout_seconds,
             }
+            # Keep the validator's raw result immutable. This separate,
+            # version-aware assessment recognizes only documented EBI defects
+            # and leaves every other diagnostic blocking.
+            evidence["compatibility_assessment"] = assess_ebi_vcf_compatibility(evidence)
             if completed.returncode == 0 and not reports:
                 evidence["report_warning"] = "EBI validator exited successfully but emitted no report files."
             return evidence
