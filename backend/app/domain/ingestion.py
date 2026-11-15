@@ -9,7 +9,7 @@ from pathlib import Path
 from uuid import UUID
 
 from backend.app.config import settings
-from backend.app.domain.ebi_vcf_validator import EBIValidatorUnavailable, run_ebi_vcf_validator
+from backend.app.domain.ebi_vcf_validator import EBIValidatorUnavailable, assess_ebi_vcf_compatibility, run_ebi_vcf_validator
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
@@ -249,6 +249,13 @@ def validate_vcf(
             artifact_sha256=artifact_sha256,
             expected_reference_build=expected_reference_build,
         )
+        ebi_compatibility = assess_ebi_vcf_compatibility(
+            ebi_validation,
+            caller_semantic_attestation=strict_profile.get("caller_semantic_attestation"),
+        )
+        ebi_validation["compatibility_assessment"] = ebi_compatibility
+        if ebi_failure_reason and ebi_compatibility["effective_status"] == "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS":
+            ebi_failure_reason = None
         compression = strict_profile["compression"]
         headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
@@ -352,6 +359,13 @@ def validate_vcf(
                 "EBI vcf-validator does not support the declared "
                 f"{ebi_validation.get('vcf_version')!r}; SIRALOOM's independent validator "
                 "still ran, but no EBI conformance result is claimed for this file."
+            )
+        if ebi_validation and ebi_validation.get("compatibility_assessment", {}).get("effective_status") == "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS":
+            warnings.append(
+                "EBI vcf-validator returned a raw FAIL containing only documented, "
+                "version/caller-specific compatibility exceptions. The raw EBI result "
+                "and diagnostics remain preserved; SIRALOOM applied the explicit "
+                "compatibility assessment and did not claim an EBI PASS."
             )
         caller_provenance = strict_profile["caller_provenance"]
         if caller_provenance.get("caller_semantic_compatibility_review_required"):
