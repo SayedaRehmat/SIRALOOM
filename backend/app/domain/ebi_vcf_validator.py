@@ -197,6 +197,9 @@ def assess_ebi_vcf_compatibility(
     raw_status = validation.get("status", "UNKNOWN")
     vcf_version = validation.get("vcf_version")
     diagnostics = validation.get("diagnostics") or []
+    validator_version = validation.get("validator_version_expected") or validation.get("validator_version")
+    version_banner = str(validation.get("version_banner") or "")
+    is_ebi_0102 = validator_version == "0.10.2" or version_banner.strip() == "vcf_validator version 0.10.2"
     attested_dragen_v42_extension = bool(
         vcf_version == "VCFv4.2"
         and isinstance(caller_semantic_attestation, dict)
@@ -220,7 +223,8 @@ def assess_ebi_vcf_compatibility(
         severity = str(diagnostic.get("severity", "ERROR")).upper()
         classification = None
         if (
-            vcf_version in {"VCFv4.1", "VCFv4.2"}
+            is_ebi_0102
+            and vcf_version in {"VCFv4.1", "VCFv4.2"}
             and severity == "ERROR"
             and "GP=<values>" in message
             and "interval [0,1]" in message
@@ -260,6 +264,7 @@ def assess_ebi_vcf_compatibility(
         "raw_status": raw_status,
         "effective_status": effective_status,
         "vcf_version": vcf_version,
+        "validator_version": validator_version,
         "known_exception_ids": sorted(exception_ids),
         "known_nonblocking_diagnostics": known_nonblocking,
         "blocking_diagnostics": blocking,
