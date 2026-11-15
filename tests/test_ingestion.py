@@ -1032,3 +1032,36 @@ def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch
     assert result.status == "VALID"
     assert resolved == [selected]
     assert result.metadata["bcftools_profile_id"] == settings.bcftools_profile_id
+
+def test_ebi_rejection_preserves_completed_strict_validation_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "ebi-rejected.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+    ebi_result = {
+        "validator": "EBI_VCF_VALIDATION_SUITE",
+        "validator_version_expected": "0.10.2",
+        "validator_profile_id": "ebi-vcf-validator-0.10.2-linux-64",
+        "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "vcf_version": "VCFv4.3",
+        "status": "FAIL",
+        "exit_code": 1,
+        "stderr": "EBI rejected a reserved-field semantic deviation",
+        "diagnostics": [
+            {"severity": "ERROR", "message_template": "FORMAT/GP values outside [0,1]", "occurrences": 1, "first_line": 4}
+        ],
+        "reports": [],
+        "report_count": 0,
+    }
+    monkeypatch.setattr(ingestion, "run_ebi_vcf_validator", lambda *_args, **_kwargs: ebi_result)
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert result.error_code == "EBI_VCF_VALIDATION_FAILED"
+    assert result.metadata["ebi_vcf_validation"]["diagnostics"] == ebi_result["diagnostics"]
+    assert result.metadata["source_record_count"] == 1
+    assert result.metadata["toolchain_validation_status"] == "PASS"
+    assert result.metadata["bcftools_version"] == "bcftools 1.25"
+
