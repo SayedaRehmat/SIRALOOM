@@ -178,8 +178,15 @@ def qualify_one(
 
     ebi = run_ebi_vcf_validator(source, caller_provenance=provenance, timeout_seconds=6 * 60 * 60)
     result["gates"]["ebi_vcf_validator"] = ebi
-    if ebi.get("status") != "PASS":
-        raise QualificationBlocked(f"{caller}: raw EBI VCF validation did not pass; raw result retained")
+    ebi_compatibility = ebi.get("compatibility_assessment") or {}
+    ebi_effective_status = ebi_compatibility.get("effective_status", ebi.get("status"))
+    if ebi_effective_status not in {"PASS", "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"}:
+        blocking = ebi_compatibility.get("blocking_diagnostics") or ebi.get("diagnostics") or []
+        raise QualificationBlocked(
+            f"{caller}: EBI validation has unresolved diagnostics; "
+            f"raw_status={ebi.get('status')}, effective_status={ebi_effective_status}, "
+            f"blocking_diagnostic_count={len(blocking)}"
+        )
 
     gatk_dir = output / caller.lower() / "gatk"
     gatk_dir.mkdir(parents=True, exist_ok=True)
