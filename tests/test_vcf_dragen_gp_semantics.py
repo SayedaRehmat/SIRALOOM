@@ -120,3 +120,29 @@ def test_dragen_attestation_rejects_missing_source_binding(tmp_path):
     with pytest.raises(validation.StrictVCFValidationError) as error:
         validation._verify_dragen_42_gp_attestation(source, attestation)
     assert error.value.code == "VCF_CALLER_ATTESTATION_INVALID"
+
+def test_dragen_v42_event_extension_rejects_event_records_without_targeted_flag(tmp_path, monkeypatch):
+    source = tmp_path / "dragen-v42-event-without-targeted-flag.vcf"
+    _vcf(source, "3.1662,15.337,3.1125", event_extension=True)
+    source.write_text(
+        source.read_text(encoding="utf-8").replace("TARGETED;EVENT=", "EVENT="),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        validation,
+        "_verify_dragen_42_gp_attestation",
+        lambda _path, _attestation: {
+            "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
+            "caller_profile_id": "dragen_snv_germline",
+            "caller_release": "4.2",
+            "field": "FORMAT/GP",
+            "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+            "spec_conformance": "VCFv4.2_CONFORMANT",
+            "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "clinical_review_required": True,
+        },
+    )
+    with pytest.raises(validation.StrictVCFValidationError) as error:
+        validation.validate_vcf_strict(source, caller_attestation={"fixture": "pinned"})
+    assert error.value.code == "VCF_CALLER_EXTENSION_INVALID"
+
