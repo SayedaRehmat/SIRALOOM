@@ -52,15 +52,21 @@ def _signed_envelope(path: Path, organization_id, monkeypatch, *, caller_profile
     return {"manifest": manifest, "key_id": key_id, "signature": signature}
 
 
-def test_dragen_gp_phred_requires_a_trusted_signed_run_manifest(tmp_path: Path) -> None:
+def test_vcf42_gp_phred_semantics_are_spec_conformant_without_signed_manifest(tmp_path: Path) -> None:
     path = tmp_path / "dragen.vcf"
     _write_dragen_vcf(path)
-    with pytest.raises(StrictVCFValidationError) as error:
-        validate_vcf_strict(path)
-    assert error.value.code == "VCF_FIELD_TYPE_INVALID"
+    result = validate_vcf_strict(path)
+    assert result["records"] == 1
+    assert result["caller_semantic_attestation"] is None
+    assert result["caller_semantic_compatibility_review_required"] is False
+    assert any(
+        item["field_id"] == "GP"
+        and item["scale"] == "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES"
+        for item in result["caller_provenance"]["field_semantic_profiles"]
+    )
 
 
-def test_signed_dragen42_manifest_binds_artifact_and_preserves_review_gate(tmp_path, monkeypatch) -> None:
+def test_signed_dragen42_manifest_binds_artifact_without_gp_deviation_review(tmp_path, monkeypatch) -> None:
     organization_id = uuid4()
     path = tmp_path / "dragen.vcf"
     digest = _write_dragen_vcf(path)
@@ -75,10 +81,13 @@ def test_signed_dragen42_manifest_binds_artifact_and_preserves_review_gate(tmp_p
     )
 
     assert result["caller_run_attestation"]["status"] == "VERIFIED_LAB_SIGNED_RUN_MANIFEST"
-    assert result["caller_semantic_compatibility_review_required"] is True
-    assert result["caller_provenance"]["caller_semantic_compatibility_status"] == "CALLER_SPEC_SEMANTIC_DEVIATION"
-    assert result["caller_provenance"]["field_semantic_deviations"][0]["field_id"] == "GP"
-    assert result["caller_provenance"]["field_semantic_deviations"][0]["clinical_interpretation"] == "REVIEW_REQUIRED"
+    assert result["caller_semantic_compatibility_review_required"] is False
+    assert result["caller_semantic_attestation"]["caller_extension_detected"] is False
+    assert result["caller_semantic_attestation"]["clinical_review_required"] is False
+    assert not any(
+        item["field_id"] == "GP"
+        for item in result["caller_provenance"].get("field_semantic_deviations", [])
+    )
 
 
 def test_signed_manifest_with_tampered_signature_is_rejected(tmp_path, monkeypatch) -> None:
@@ -155,21 +164,23 @@ def test_header_release_conflict_rejects_signed_manifest(tmp_path, monkeypatch) 
 
 
 
-def test_signed_manifest_for_other_dragen_release_does_not_authorize_42_gp_semantics(tmp_path, monkeypatch) -> None:
+def test_other_dragen_release_manifest_does_not_change_vcf42_gp_spec_semantics(tmp_path, monkeypatch) -> None:
     organization_id = uuid4()
     path = tmp_path / "dragen.vcf"
     digest = _write_dragen_vcf(path)
     envelope = _signed_envelope(path, organization_id, monkeypatch, caller_release="4.3.0")
 
-    with pytest.raises(StrictVCFValidationError) as error:
-        validate_vcf_strict(
-            path,
-            caller_attestation=envelope,
-            organization_id=organization_id,
-            artifact_sha256=digest,
-            expected_reference_build="GRCh38",
-        )
-    assert error.value.code == "VCF_FIELD_TYPE_INVALID"
+    result = validate_vcf_strict(
+        path,
+        caller_attestation=envelope,
+        organization_id=organization_id,
+        artifact_sha256=digest,
+        expected_reference_build="GRCh38",
+    )
+    assert result["caller_run_attestation"]["status"] == "VERIFIED_LAB_SIGNED_RUN_MANIFEST"
+    assert result["records"] == 1
+    assert result["caller_semantic_attestation"] is None
+    assert result["caller_semantic_compatibility_review_required"] is False
 
 
 def test_untrusted_signer_and_post_signing_artifact_mutation_are_rejected(tmp_path, monkeypatch) -> None:
