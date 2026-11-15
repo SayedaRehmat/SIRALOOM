@@ -257,6 +257,7 @@ def test_dragen_v42_event_extension_requires_verified_caller_attestation() -> No
         "caller_profile_id": "dragen_snv_germline",
         "caller_release": "4.2",
         "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
         "caller_extension_detected": True,
         "targeted_records_verified": True,
     }
