@@ -330,6 +330,9 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
             "caller_semantic_compatibility_review_required": intake_metadata.get(
                 "caller_semantic_compatibility_review_required"
             ),
+            "targeted_record_count": (intake_metadata.get("caller_provenance") or {}).get("targeted_record_count"),
+            "targeted_event_record_count": (intake_metadata.get("caller_provenance") or {}).get("targeted_event_record_count"),
+            "targeted_eventtype_record_count": (intake_metadata.get("caller_provenance") or {}).get("targeted_eventtype_record_count"),
             "caller_provenance_semantic_status": (
                 intake_metadata.get("caller_provenance") or {}
             ).get("caller_semantic_compatibility_status"),
