@@ -157,3 +157,42 @@ def test_assembly_checker_requires_reference_fai(tmp_path: Path, monkeypatch: py
             fasta,
             source_artifact_sha256=hashlib.sha256(b"original").hexdigest(),
         )
+
+def test_large_ebi_reports_are_hashed_and_bounded_with_structured_diagnostics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = _vcf(tmp_path / "dragen.vcf")
+    lines = source.read_text(encoding="utf-8").splitlines()
+    lines.insert(1, '##INFO=<ID=EVENT,Number=.,Type=String,Description="Event">')
+    lines[2] = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE"
+    lines.append("1\t20\t.\tA\tG\t.\tPASS\t.\tGT:GP\t0/1:3.1,15.3,3.1")
+    source.write_text("\\n".join(lines) + "\\n", encoding="utf-8")
+    executable = _fake_tool(tmp_path)
+    monkeypatch.setattr(ebi.shutil, "which", lambda _name: str(executable))
+
+    def fake_run(command, **kwargs):
+        if command[-1] == "--version":
+            return subprocess.CompletedProcess(command, 0, "vcf_validator version 0.10.2\\n", "")
+        report_dir = Path(command[command.index("-o") + 1])
+        (report_dir / "dragen.errors_summary.1.txt").write_text(
+            "Error: INFO EVENT metadata Number is not 1. This occurs 1 time(s), first time in line 2.\\n"
+            "Error: Sample #1, GP=3.1,15.3,3.1 value does not lie in the interval [0,1]. This occurs 1 time(s), first time in line 4.\\n",
+            encoding="utf-8",
+        )
+        (report_dir / "dragen.errors.1.txt").write_text("x" * (ebi._MAX_INLINE_REPORT_BYTES + 10), encoding="utf-8")
+        return subprocess.CompletedProcess(command, 1, "", "VCF is invalid")
+
+    monkeypatch.setattr(ebi.subprocess, "run", fake_run)
+    result = ebi.run_ebi_vcf_validator(source)
+
+    assert result["status"] == "FAIL"
+    assert result["reports"][0]["content_truncated"] is True
+    assert "content" not in result["reports"][0]
+    assert result["reports"][0]["sha256"]
+    assert len(result["reports"][0]["content_preview"]) <= ebi._REPORT_PREVIEW_BYTES
+    assert len(result["diagnostics"]) == 2
+    gp = next(item for item in result["diagnostics"] if "GP=" in item["message_template"])
+    assert gp["occurrences"] == 1
+    assert gp["first_line"] == 4
+    assert any(item.get("format_gp") == "3.1,15.3,3.1" for item in result["source_record_examples"])
+
