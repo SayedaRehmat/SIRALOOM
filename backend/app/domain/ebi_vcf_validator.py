@@ -117,10 +117,10 @@ def _collect_report_evidence(report_dir: Path, *, source: Path | None = None) ->
                     if "errors_summary" not in report.name:
                         continue
                     message = raw.strip()
-                    match = re.match(r"Error: (.*) This occurs (\d+) time\(s\), first time in line (\d+)\\.$", message)
+                    match = re.match(r"(Error|Warning): (.*) This occurs (\d+) time\(s\), first time in line (\d+)\\.$", message)
                     if not match:
                         continue
-                    detail, occurrences, first_line = match.groups()
+                    severity, detail, occurrences, first_line = match.groups()
                     template = _diagnostic_template(detail)
                     item = diagnostics_by_template.setdefault(template, {
                         "message_template": template,
