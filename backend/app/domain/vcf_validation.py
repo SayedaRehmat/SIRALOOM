@@ -874,6 +874,17 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
         allow_dragen_v42_event_extension
         and fileformat == "VCFv4.2"
         and kind == "INFO"
+        and identifier == "EVENTTYPE"
+        and (number != "A" or parsed["Type"] != "String")
+    ):
+        raise StrictVCFValidationError(
+            f"DRAGEN VCFv4.2 INFO/EVENTTYPE must be Number=A,Type=String at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    if (
+        allow_dragen_v42_event_extension
+        and fileformat == "VCFv4.2"
+        and kind == "INFO"
         and identifier == "TARGETED"
         and (number != "0" or parsed["Type"] != "Flag")
     ):
@@ -2112,9 +2123,14 @@ def validate_vcf_strict(
                     )
                 targeted_event_records += 1
             if "EVENTTYPE" in info_values:
-                if "EVENT" not in info_values or "TARGETED" not in info_values:
+                if (
+                    "EVENT" not in info_values
+                    or "TARGETED" not in info_values
+                    or info_definitions.get("EVENTTYPE", {}).get("Number") != "A"
+                    or info_definitions.get("EVENTTYPE", {}).get("Type") != "String"
+                ):
                     raise StrictVCFValidationError(
-                        f"INFO/EVENTTYPE requires INFO/EVENT and INFO/TARGETED at line {line_no}",
+                        f"INFO/EVENTTYPE requires Number=A,Type=String, INFO/EVENT and INFO/TARGETED at line {line_no}",
                         code="VCF_CALLER_EXTENSION_INVALID",
                     )
                 targeted_eventtype_records += 1
