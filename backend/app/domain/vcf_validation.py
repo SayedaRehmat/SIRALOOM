@@ -2102,7 +2102,8 @@ def validate_vcf_strict(
                 if (
                     caller_semantic_attestation is None
                     or fileformat != "VCFv4.2"
-                    or info_definitions.get("EVENT") != {"Number": "A", "Type": "String"}
+                    or info_definitions.get("EVENT", {}).get("Number") != "A"
+                    or info_definitions.get("EVENT", {}).get("Type") != "String"
                     or "TARGETED" not in info_values
                 ):
                     raise StrictVCFValidationError(
