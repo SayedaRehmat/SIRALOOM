@@ -258,6 +258,7 @@ def test_dragen_v42_event_extension_requires_verified_caller_attestation() -> No
         "caller_release": "4.2",
         "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
         "caller_extension_detected": True,
+        "targeted_records_verified": True,
     }
     assessed = ebi.assess_ebi_vcf_compatibility(result, caller_semantic_attestation=attestation)
     assert assessed["effective_status"] == "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
