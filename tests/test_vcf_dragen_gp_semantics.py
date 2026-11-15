@@ -151,7 +151,7 @@ def test_dragen_v42_event_extension_requires_targeted_flag_header(tmp_path, monk
     _vcf(source, "3.1662,15.337,3.1125", event_extension=True)
     source.write_text(
         source.read_text(encoding="utf-8").replace(
-            '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\\n',
+            '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\n',
             "",
         ),
         encoding="utf-8",
