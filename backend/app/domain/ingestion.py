@@ -471,7 +471,9 @@ def validate_vcf(
                 "htslib_version": htslib_version,
                 "expected_htslib_version": settings.htslib_version,
                 "bcftools_profile_id": settings.bcftools_profile_id,
-                "toolchain_validation_status": "PASS",
+                "bcftools_preflight_status": "FAIL" if bcftools_error else "PASS",
+                "bcftools_preflight_error": bcftools_error,
+                "toolchain_validation_status": "FAIL" if bcftools_error else "PASS",
             })
         if not failure_metadata:
             failure_metadata = None
