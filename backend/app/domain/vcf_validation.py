@@ -65,7 +65,7 @@ NONNEGATIVE_INTEGER_FIELDS = frozenset({
     ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"),
     ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
 })
-PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP")})
+PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF")})
 NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
@@ -1078,7 +1078,7 @@ def _validate_declared_value(
     local_allele_count: int | None = None,
     base_modification_cardinality: int | None = None,
     allow_empty_values: bool = False,
-    allow_phred_gp: bool = False,
+    vcf_version: str | None = None,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
@@ -1137,11 +1137,20 @@ def _validate_declared_value(
             )
             if valid:
                 numeric_value = float(item)
-                if (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
-                    if field_scope == "FORMAT" and key == "GP" and allow_phred_gp:
+                if field_scope == "FORMAT" and key == "GP":
+                    if vcf_version in {"VCFv4.1", "VCFv4.2"}:
+                        # VCFv4.1/v4.2 define GP as Phred-scaled genotype
+                        # posterior probabilities. VCFv4.3+ changes GP to
+                        # linear probabilities in [0,1].
                         valid = isfinite(numeric_value) and numeric_value >= 0.0
-                    else:
+                    elif vcf_version in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
                         valid = 0.0 <= numeric_value <= 1.0
+                    else:
+                        # VCFv4.0 does not reserve GP; treat it as a caller-
+                        # declared Float field rather than assuming later semantics.
+                        valid = isfinite(numeric_value)
+                elif (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
+                    valid = 0.0 <= numeric_value <= 1.0
                 if (field_scope, key) in NONNEGATIVE_FLOAT_FIELDS:
                     valid = numeric_value >= 0.0
                 if _base_modification_field_kind(key) == "fraction":
@@ -2266,7 +2275,7 @@ def validate_vcf_strict(
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
-                            allow_phred_gp=dragen_gp_phred_semantics_applicable,
+                            vcf_version=fileformat,
                         )
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
