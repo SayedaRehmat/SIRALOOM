@@ -87,6 +87,7 @@ def test_verified_dragen_v42_event_extension_is_explicitly_review_required(tmp_p
             "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
             "spec_conformance": "VCFv4.2_CONFORMANT",
             "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
             "clinical_review_required": True,
         },
     )
