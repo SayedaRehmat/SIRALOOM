@@ -46,7 +46,8 @@ def _declared_fileformat(path: Path) -> str | None:
 
 _MAX_INLINE_REPORT_BYTES = 64 * 1024
 _REPORT_PREVIEW_BYTES = 8 * 1024
-_MAX_DIAGNOSTIC_LINE_SAMPLES = 16
+_MAX_DIAGNOSTIC_LINE_SAMPLES = 4
+_MAX_SOURCE_RECORD_EXAMPLES = 16
 
 
 def _open_text(path: Path):
@@ -106,7 +107,7 @@ def _source_record_examples(source: Path, line_numbers: set[int]) -> list[dict]:
                         index = format_keys.index("GP")
                         example["format_gp"] = sample_values[index] if index < len(sample_values) else None
                 examples.append(example)
-            if len(examples) >= _MAX_DIAGNOSTIC_LINE_SAMPLES:
+            if len(examples) >= _MAX_SOURCE_RECORD_EXAMPLES:
                 break
     return examples
 
