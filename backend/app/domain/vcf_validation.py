@@ -2111,32 +2111,44 @@ def validate_vcf_strict(
                         code="VCF_CALLER_EXTENSION_INVALID",
                     )
                 targeted_records += 1
+            dragen_event_extension_header = bool(
+                caller_semantic_attestation is not None
+                and fileformat == "VCFv4.2"
+                and info_definitions.get("EVENT", {}).get("Number") == "A"
+                and info_definitions.get("EVENT", {}).get("Type") == "String"
+            )
             if "EVENT" in info_values:
                 event_records += 1
-                if (
-                    caller_semantic_attestation is None
-                    or fileformat != "VCFv4.2"
-                    or info_definitions.get("EVENT", {}).get("Number") != "A"
-                    or info_definitions.get("EVENT", {}).get("Type") != "String"
-                    or "TARGETED" not in info_values
-                ):
+                if dragen_event_extension_header:
+                    if "TARGETED" not in info_values:
+                        raise StrictVCFValidationError(
+                            f"DRAGEN INFO/EVENT record lacks INFO/TARGETED provenance at line {line_no}",
+                            code="VCF_CALLER_EXTENSION_INVALID",
+                        )
+                    targeted_event_records += 1
+                elif info_definitions.get("EVENT", {}).get("Number") not in {"1", "A"}:
                     raise StrictVCFValidationError(
-                        f"INFO/EVENT uses the DRAGEN VCFv4.2 extension without a verified TARGETED record flag at line {line_no}",
-                        code="VCF_CALLER_EXTENSION_INVALID",
+                        f"INFO/EVENT has no valid version-specific Number declaration at line {line_no}",
+                        code="VCF_FIELD_CARDINALITY_INVALID",
                     )
-                targeted_event_records += 1
             if "EVENTTYPE" in info_values:
-                if (
-                    "EVENT" not in info_values
-                    or "TARGETED" not in info_values
-                    or info_definitions.get("EVENTTYPE", {}).get("Number") != "A"
-                    or info_definitions.get("EVENTTYPE", {}).get("Type") != "String"
-                ):
+                if dragen_event_extension_header:
+                    if (
+                        "EVENT" not in info_values
+                        or "TARGETED" not in info_values
+                        or info_definitions.get("EVENTTYPE", {}).get("Number") != "A"
+                        or info_definitions.get("EVENTTYPE", {}).get("Type") != "String"
+                    ):
+                        raise StrictVCFValidationError(
+                            f"DRAGEN INFO/EVENTTYPE requires Number=A,Type=String, INFO/EVENT and INFO/TARGETED at line {line_no}",
+                            code="VCF_CALLER_EXTENSION_INVALID",
+                        )
+                    targeted_eventtype_records += 1
+                elif fileformat in {"VCFv4.4", "VCFv4.5"} and "EVENT" not in info_values:
                     raise StrictVCFValidationError(
-                        f"INFO/EVENTTYPE requires Number=A,Type=String, INFO/EVENT and INFO/TARGETED at line {line_no}",
+                        f"Reserved INFO/EVENTTYPE requires INFO/EVENT at line {line_no}",
                         code="VCF_CALLER_EXTENSION_INVALID",
                     )
-                targeted_eventtype_records += 1
             for key, value in info_values.items():
                 definition = info_definitions.get(key)
                 if definition is None and fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
