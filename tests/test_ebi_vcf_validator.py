@@ -209,6 +209,7 @@ def test_large_ebi_reports_are_hashed_and_bounded_with_structured_diagnostics(
 def test_vcf42_gp_range_diagnostic_is_classified_as_known_ebi_defect() -> None:
     result = ebi.assess_ebi_vcf_compatibility({
         "status": "FAIL",
+        "validator_version_expected": "0.10.2",
         "vcf_version": "VCFv4.2",
         "diagnostics": [{
             "severity": "ERROR",
@@ -226,6 +227,7 @@ def test_vcf42_gp_range_diagnostic_is_classified_as_known_ebi_defect() -> None:
 def test_vcf43_gp_range_diagnostic_remains_blocking() -> None:
     result = ebi.assess_ebi_vcf_compatibility({
         "status": "FAIL",
+        "validator_version_expected": "0.10.2",
         "vcf_version": "VCFv4.3",
         "diagnostics": [{
             "severity": "ERROR",
