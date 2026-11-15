@@ -46,7 +46,7 @@ def _declared_fileformat(path: Path) -> str | None:
 
 _MAX_INLINE_REPORT_BYTES = 64 * 1024
 _REPORT_PREVIEW_BYTES = 8 * 1024
-_MAX_DIAGNOSTIC_LINE_SAMPLES = 12
+_MAX_DIAGNOSTIC_LINE_SAMPLES = 16
 
 
 def _open_text(path: Path):
@@ -63,9 +63,14 @@ def _source_record_examples(source: Path, line_numbers: set[int]) -> list[dict]:
     examples = []
     with _open_text(source) as handle:
         for line_number, raw in enumerate(handle, 1):
-            if line_number not in line_numbers:
-                continue
             line = raw.rstrip("\r\n")
+            relevant_caller_header = (
+                line.startswith("##INFO=<ID=")
+                and any(f"ID={field_id}," in line or f"ID={field_id}>" in line
+                        for field_id in ("EVENT", "EVENTTYPE", "TARGETED"))
+            )
+            if line_number not in line_numbers and not relevant_caller_header:
+                continue
             if line.startswith("#"):
                 examples.append({
                     "line_number": line_number,
