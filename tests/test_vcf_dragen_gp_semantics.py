@@ -9,20 +9,20 @@ from backend.app.domain import vcf_validation as validation
 
 def _vcf(path, gp_value: str, *, version: str = "VCFv4.2", event_extension: bool = False) -> None:
     event_header = (
-        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\\n'
-        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\\n'
-        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\\n'
+        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
         if event_extension else ""
     )
     info_value = "TARGETED;EVENT=EV1;EVENTTYPE=VARIANT_IN_HOMOLOGY_REGION" if event_extension else "."
     path.write_text(
-        f"##fileformat={version}\\n"
-        '##source=DRAGEN_SNV\\n'
+        f"##fileformat={version}\n"
+        '##source=DRAGEN_SNV\n'
         + event_header
-        + '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        + '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior probabilities">\\n'
-        + "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tHG002\\n"
-        + f"chr20\\t100\\t.\\tA\\tC\\t50\\tPASS\\t{info_value}\\tGT:GP\\t0/1:{gp_value}\\n",
+        + '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        + '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior probabilities">\n'
+        + "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHG002\n"
+        + f"chr20\t100\t.\tA\tC\t50\tPASS\t{info_value}\tGT:GP\t0/1:{gp_value}\n",
         encoding="utf-8",
     )
 
