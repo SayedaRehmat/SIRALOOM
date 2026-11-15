@@ -2569,10 +2569,22 @@ def validate_vcf_strict(
         and fileformat == "VCFv4.2"
         and event_definition == {"Number": "A", "Type": "String"}
     )
+    targeted_records_verified = bool(
+        dragen_event_extension_detected
+        and event_records > 0
+        and event_records == targeted_event_records
+        and targeted_eventtype_records <= event_records
+    )
     if caller_semantic_attestation is not None:
         caller_semantic_attestation["caller_extension_detected"] = dragen_event_extension_detected
-        caller_semantic_attestation["clinical_review_required"] = dragen_event_extension_detected
-    if dragen_event_extension_detected:
+        caller_semantic_attestation["targeted_records_verified"] = targeted_records_verified
+        caller_semantic_attestation["targeted_record_count"] = targeted_records
+        caller_semantic_attestation["targeted_event_record_count"] = targeted_event_records
+        caller_semantic_attestation["clinical_review_required"] = targeted_records_verified
+    caller_provenance["targeted_record_count"] = targeted_records
+    caller_provenance["targeted_event_record_count"] = targeted_event_records
+    caller_provenance["targeted_eventtype_record_count"] = targeted_eventtype_records
+    if targeted_records_verified:
         prior_semantic_status = caller_provenance.get("caller_semantic_compatibility_status")
         if prior_semantic_status not in {
             "CONFLICTED_CALLER_METADATA",
