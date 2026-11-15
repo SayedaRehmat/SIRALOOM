@@ -192,7 +192,7 @@ def assess_ebi_vcf_compatibility(
     attested_dragen_v42_extension = bool(
         vcf_version == "VCFv4.2"
         and isinstance(caller_semantic_attestation, dict)
-        and caller_semantic_attestation.get("status") == "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE"
+        and caller_semantic_attestation.get("status") in {"VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE", "VERIFIED_LAB_SIGNED_RUN_MANIFEST"}
         and caller_semantic_attestation.get("caller_profile_id") == "dragen_snv_germline"
         and caller_semantic_attestation.get("caller_release") == "4.2"
         and caller_semantic_attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
