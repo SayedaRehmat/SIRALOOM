@@ -1108,3 +1108,81 @@ def test_vcf42_gp_ebi_false_positive_is_nonblocking_but_raw_failure_is_preserved
     )
     assert any("raw FAIL" in warning for warning in result.warnings)
 
+def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failures_preserved(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "dragen-v42-targeted.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\\n"
+        "##source=DRAGEN_SNV\\n"
+        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Phred-scaled genotype posterior probabilities">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tHG002\\n"
+        "1\\t10\\t.\\tA\\tC\\t50\\tPASS\\tTARGETED;EVENT=EV1;EVENTTYPE=VARIANT_IN_HOMOLOGY_REGION\\tGT:GP\\t0/1:3.1662,15.337,3.1125\\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        ingestion,
+        "_verify_dragen_42_gp_attestation",
+        lambda *_args, **_kwargs: {
+            "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
+            "caller_profile_id": "dragen_snv_germline",
+            "caller_release": "4.2",
+            "field": "FORMAT/GP",
+            "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+            "spec_conformance": "VCFv4.2_CONFORMANT",
+            "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "clinical_review_required": True,
+        },
+    )
+    ebi_result = {
+        "validator": "EBI_VCF_VALIDATION_SUITE",
+        "validator_version_expected": "0.10.2",
+        "validator_profile_id": "ebi-vcf-validator-0.10.2-linux-64",
+        "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "vcf_version": "VCFv4.2",
+        "status": "FAIL",
+        "exit_code": 1,
+        "stderr": "EBI 0.10.2 reported known VCFv4.2 GP and DRAGEN EVENT compatibility diagnostics",
+        "diagnostics": [
+            {
+                "severity": "ERROR",
+                "message_template": "Sample #1, GP=<values> value does not lie in the interval [0,1].",
+                "occurrences": 1,
+                "first_line": 9,
+                "sample_lines": [9],
+            },
+            {
+                "severity": "ERROR",
+                "message_template": "INFO EVENT metadata Number is not 1.",
+                "occurrences": 1,
+                "first_line": 4,
+                "sample_lines": [4],
+            },
+            {
+                "severity": "WARNING",
+                "message_template": "INFO 'EVENT' is not listed in a valid meta-data INFO entry.",
+                "occurrences": 1,
+                "first_line": 9,
+                "sample_lines": [9],
+            },
+        ],
+        "reports": [],
+        "report_count": 0,
+    }
+    monkeypatch.setattr(ingestion, "run_ebi_vcf_validator", lambda *_args, **_kwargs: ebi_result)
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
+
+    result = validate_vcf(path, caller_attestation={"fixture": "pinned"})
+
+    assert result.status == "VALID"
+    assert result.metadata["ebi_vcf_validation"]["status"] == "FAIL"
+    assert result.metadata["ebi_vcf_validation"]["compatibility_assessment"]["effective_status"] == (
+        "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+    )
+    assert result.metadata["caller_provenance"]["caller_semantic_compatibility_review_required"] is True
+    assert result.metadata["caller_semantic_attestation"]["targeted_records_verified"] is True
+
