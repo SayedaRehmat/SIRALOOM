@@ -4,6 +4,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -40,6 +41,119 @@ def _declared_fileformat(path: Path) -> str | None:
             f"Unable to read VCF header before EBI validation: {exc}"
         ) from exc
     return None
+
+
+
+_MAX_INLINE_REPORT_BYTES = 64 * 1024
+_REPORT_PREVIEW_BYTES = 8 * 1024
+_MAX_DIAGNOSTIC_LINE_SAMPLES = 12
+
+
+def _open_text(path: Path):
+    return gzip.open(path, "rt", encoding="utf-8", errors="replace") if path.name.lower().endswith((".gz", ".bgz")) else path.open("rt", encoding="utf-8", errors="replace")
+
+
+def _diagnostic_template(message: str) -> str:
+    return re.sub(r"GP=[^ ]+", "GP=<values>", message)
+
+
+def _source_record_examples(source: Path, line_numbers: set[int]) -> list[dict]:
+    if not line_numbers:
+        return []
+    examples = []
+    with _open_text(source) as handle:
+        for line_number, raw in enumerate(handle, 1):
+            if line_number not in line_numbers:
+                continue
+            line = raw.rstrip("\r\n")
+            if line.startswith("#"):
+                examples.append({
+                    "line_number": line_number,
+                    "kind": "HEADER",
+                    "text": line[:2000],
+                })
+            else:
+                fields = line.split("\t")
+                example = {
+                    "line_number": line_number,
+                    "kind": "RECORD",
+                    "chrom": fields[0] if len(fields) > 0 else None,
+                    "pos": fields[1] if len(fields) > 1 else None,
+                    "id": fields[2] if len(fields) > 2 else None,
+                    "ref": fields[3] if len(fields) > 3 else None,
+                    "alt": fields[4] if len(fields) > 4 else None,
+                }
+                if len(fields) > 9:
+                    format_keys = fields[8].split(":")
+                    sample_values = fields[9].split(":")
+                    if "GP" in format_keys:
+                        index = format_keys.index("GP")
+                        example["format_gp"] = sample_values[index] if index < len(sample_values) else None
+                examples.append(example)
+            if len(examples) >= _MAX_DIAGNOSTIC_LINE_SAMPLES:
+                break
+    return examples
+
+
+def _collect_report_evidence(report_dir: Path, *, source: Path | None = None) -> tuple[list[dict], list[dict], list[dict]]:
+    reports = []
+    diagnostics_by_template: dict[str, dict] = {}
+    sampled_lines: set[int] = set()
+    for report in sorted(candidate for candidate in report_dir.rglob("*") if candidate.is_file()):
+        digest = hashlib.sha256()
+        size_bytes = 0
+        preview = bytearray()
+        with report.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+                size_bytes += len(chunk)
+                if len(preview) < _REPORT_PREVIEW_BYTES:
+                    preview.extend(chunk[:_REPORT_PREVIEW_BYTES - len(preview)])
+        line_count = 0
+        if report.suffix.lower() in {".txt", ".log"}:
+            with report.open("rt", encoding="utf-8", errors="replace") as handle:
+                for raw in handle:
+                    line_count += 1
+                    if "errors_summary" not in report.name:
+                        continue
+                    message = raw.strip()
+                    match = re.match(r"Error: (.*) This occurs (\\d+) time\\(s\\), first time in line (\\d+)\\.$", message)
+                    if not match:
+                        continue
+                    detail, occurrences, first_line = match.groups()
+                    template = _diagnostic_template(detail)
+                    item = diagnostics_by_template.setdefault(template, {
+                        "message_template": template,
+                        "occurrences": 0,
+                        "first_line": int(first_line),
+                        "sample_lines": [],
+                        "example": detail[:1000],
+                    })
+                    item["occurrences"] += int(occurrences)
+                    item["first_line"] = min(item["first_line"], int(first_line))
+                    if len(item["sample_lines"]) < _MAX_DIAGNOSTIC_LINE_SAMPLES:
+                        item["sample_lines"].append(int(first_line))
+                        sampled_lines.add(int(first_line))
+        evidence = {
+            "filename": report.name,
+            "sha256": digest.hexdigest(),
+            "size_bytes": size_bytes,
+            "line_count": line_count,
+            "content_truncated": size_bytes > _MAX_INLINE_REPORT_BYTES,
+        }
+        if size_bytes <= _MAX_INLINE_REPORT_BYTES:
+            evidence["content"] = preview.decode("utf-8", errors="replace")
+            if size_bytes > len(preview):
+                evidence["content"] += report.read_text(encoding="utf-8", errors="replace")[len(preview):]
+        else:
+            evidence["content_preview"] = preview.decode("utf-8", errors="replace")
+        reports.append(evidence)
+    diagnostics = sorted(
+        diagnostics_by_template.values(),
+        key=lambda item: (-item["occurrences"], item["first_line"]),
+    )
+    examples = _source_record_examples(source, sampled_lines) if source is not None else []
+    return reports, diagnostics, examples
 
 
 def run_ebi_vcf_validator(
@@ -135,18 +249,9 @@ def run_ebi_vcf_validator(
                 check=False,
                 env=runtime_env,
             )
-            report_files = sorted(
-                candidate for candidate in report_dir.rglob("*") if candidate.is_file()
+            reports, diagnostics, source_record_examples = _collect_report_evidence(
+                report_dir, source=source
             )
-            reports = []
-            for report in report_files:
-                raw = report.read_bytes()
-                reports.append({
-                    "filename": report.name,
-                    "sha256": hashlib.sha256(raw).hexdigest(),
-                    "size_bytes": len(raw),
-                    "content": raw.decode("utf-8", errors="replace"),
-                })
             finished_at = datetime.now(timezone.utc).isoformat()
             evidence = {
                 **base,
@@ -161,6 +266,8 @@ def run_ebi_vcf_validator(
                 "stderr": completed.stderr,
                 "reports": reports,
                 "report_count": len(reports),
+                "diagnostics": diagnostics,
+                "source_record_examples": source_record_examples,
                 "runtime_seconds_limit": timeout_seconds,
             }
             if completed.returncode == 0 and not reports:
@@ -248,18 +355,7 @@ def run_ebi_vcf_assembly_checker(
                 check=False,
                 env=runtime_env,
             )
-            report_files = sorted(
-                candidate for candidate in report_dir.rglob("*") if candidate.is_file()
-            )
-            reports = []
-            for report in report_files:
-                raw = report.read_bytes()
-                reports.append({
-                    "filename": report.name,
-                    "sha256": hashlib.sha256(raw).hexdigest(),
-                    "size_bytes": len(raw),
-                    "content": raw.decode("utf-8", errors="replace"),
-                })
+            reports, diagnostics, _source_examples = _collect_report_evidence(report_dir)
             return {
                 "validator": "EBI_VCF_ASSEMBLY_CHECKER",
                 "validator_version_expected": expected_version,
@@ -292,6 +388,7 @@ def run_ebi_vcf_assembly_checker(
                 "stderr": completed.stderr,
                 "reports": reports,
                 "report_count": len(reports),
+                "diagnostics": diagnostics,
                 "runtime_seconds_limit": timeout_seconds,
             }
     except subprocess.TimeoutExpired as exc:
