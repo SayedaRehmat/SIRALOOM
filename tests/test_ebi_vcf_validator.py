@@ -164,9 +164,11 @@ def test_large_ebi_reports_are_hashed_and_bounded_with_structured_diagnostics(
     source = _vcf(tmp_path / "dragen.vcf")
     lines = source.read_text(encoding="utf-8").splitlines()
     lines.insert(1, '##INFO=<ID=EVENT,Number=.,Type=String,Description="Event">')
-    lines[2] = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE"
-    lines[3] = "1\t20\t.\tA\tG\t.\tPASS\t.\tGT:GP\t0/1:3.1,15.3,3.1"
-    lines.append("1\t21\t.\tC\tT\t.\tPASS\tTARGETED;EVENT=evt1\tGT:GP\t0/1:3.1,15.3,3.1")
+    lines.insert(2, '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">')
+    lines.insert(3, '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">')
+    lines[4] = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE"
+    lines[5] = "1\t20\t.\tA\tG\t.\tPASS\t.\tGT:GP\t0/1:3.1,15.3,3.1"
+    lines.append("1\t21\t.\tC\tT\t.\tPASS\tTARGETED;EVENT=evt1;EVENTTYPE=VARIANT_IN_HOMOLOGY_REGION\tGT:GP\t0/1:3.1,15.3,3.1")
     source.write_text("\n".join(lines) + "\n", encoding="utf-8")
     executable = _fake_tool(tmp_path)
     monkeypatch.setattr(ebi.shutil, "which", lambda _name: str(executable))
@@ -177,8 +179,8 @@ def test_large_ebi_reports_are_hashed_and_bounded_with_structured_diagnostics(
         report_dir = Path(command[command.index("-o") + 1])
         (report_dir / "dragen.errors.1.txt").write_text(
             "Line 2: INFO EVENT metadata Number is not 1.\n"
-            "Line 4: Sample #1, GP=3.1,15.3,3.1 value does not lie in the interval [0,1].\n"
-            "Line 5: INFO 'EVENT' is not listed in a valid meta-data INFO entry. (warning)\n"
+            "Line 6: Sample #1, GP=3.1,15.3,3.1 value does not lie in the interval [0,1].\n"
+            "Line 7: INFO 'EVENT' is not listed in a valid meta-data INFO entry. (warning)\n"
             + ("x" * (ebi._MAX_INLINE_REPORT_BYTES + 10)),
             encoding="utf-8",
         )
@@ -195,11 +197,14 @@ def test_large_ebi_reports_are_hashed_and_bounded_with_structured_diagnostics(
     assert len(result["diagnostics"]) == 3
     gp = next(item for item in result["diagnostics"] if "GP=" in item["message_template"])
     assert gp["occurrences"] == 1
-    assert gp["first_line"] == 4
+    assert gp["first_line"] == 6
     assert gp["severity"] == "ERROR"
     event_warning = next(item for item in result["diagnostics"] if item["severity"] == "WARNING")
     assert event_warning["occurrences"] == 1
     assert any(item.get("format_gp") == "3.1,15.3,3.1" for item in result["source_record_examples"])
+    assert any(item.get("info_targeted") is True and item.get("info_event") == "evt1" for item in result["source_record_examples"])
+    assert any("ID=TARGETED" in item.get("text", "") for item in result["source_record_examples"])
+    assert any("ID=EVENTTYPE" in item.get("text", "") for item in result["source_record_examples"])
 
 def test_vcf42_gp_range_diagnostic_is_classified_as_known_ebi_defect() -> None:
     result = ebi.assess_ebi_vcf_compatibility({
