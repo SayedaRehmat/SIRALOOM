@@ -139,7 +139,7 @@ def dragen_gp_attestation(callset: dict[str, Any], artifact: Path) -> dict[str, 
             if line.startswith("#CHROM"):
                 break
             if line.startswith("##"):
-                header_lines.append(line.rstrip("\\r\\n"))
+                header_lines.append(line.rstrip("\r\n"))
     source_marked_targeted = "##source=DRAGEN_TARGETED" in header_lines
     targeted_filename = ".targeted.vcf" in artifact.name
     targeted_provenance_verified = source_marked_targeted and targeted_filename
