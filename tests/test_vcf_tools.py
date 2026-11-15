@@ -1390,9 +1390,9 @@ def test_router_defers_external_contig_classification_until_reference_is_resolve
 
     source = tmp_path / "unresolved-reference.vcf"
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t10\\trs1\\tA\\tC\\t50\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\trs1\tA\tC\t50\tPASS\t.\n",
         encoding="utf-8",
     )
 
