@@ -1682,7 +1682,7 @@ def _verify_dragen_42_fixture_attestation(
     for key, value in expected.items():
         if attestation.get(key) != value:
             raise StrictVCFValidationError(
-                f"DRAGEN GP semantic attestation has an invalid {key}",
+                f"DRAGEN v4.2 fixture attestation has an invalid {key}",
                 code="VCF_CALLER_ATTESTATION_INVALID",
             )
     source_sha256 = attestation.get("source_sha256")
@@ -1986,8 +1986,10 @@ def validate_vcf_strict(
                 if (
                     caller_semantic_attestation is not None
                     and fileformat == "VCFv4.2"
-                    and info_definitions.get("EVENT") == {"Number": "A", "Type": "String"}
-                    and info_definitions.get("TARGETED") != {"Number": "0", "Type": "Flag"}
+                    and info_definitions.get("EVENT", {}).get("Number") == "A"
+                    and info_definitions.get("EVENT", {}).get("Type") == "String"
+                    and (info_definitions.get("TARGETED", {}).get("Number") != "0"
+                     or info_definitions.get("TARGETED", {}).get("Type") != "Flag")
                 ):
                     raise StrictVCFValidationError(
                         "DRAGEN VCFv4.2 EVENT/Number=A extension requires INFO/TARGETED Number=0,Type=Flag",
@@ -2567,7 +2569,9 @@ def validate_vcf_strict(
     dragen_event_extension_detected = bool(
         caller_semantic_attestation is not None
         and fileformat == "VCFv4.2"
-        and event_definition == {"Number": "A", "Type": "String"}
+        and event_definition is not None
+        and event_definition.get("Number") == "A"
+        and event_definition.get("Type") == "String"
     )
     targeted_records_verified = bool(
         dragen_event_extension_detected
@@ -2605,7 +2609,7 @@ def validate_vcf_strict(
                 "clinical_interpretation": "REVIEW_REQUIRED",
             }
         ]
-        if eventtype_definition == {"Number": "A", "Type": "String"}:
+        if eventtype_definition is not None and eventtype_definition.get("Number") == "A" and eventtype_definition.get("Type") == "String":
             deviations.append({
                 "namespace": "INFO",
                 "field_id": "EVENTTYPE",
