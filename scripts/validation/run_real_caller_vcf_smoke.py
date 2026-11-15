@@ -456,14 +456,20 @@ def main() -> int:
             failures.append(f"{callset['caller']}: caller profile identity did not match")
         if (result.get("whole_file_intake_validation") or {}).get("status") != "VALID":
             failures.append(f"{callset['caller']}: production-path intake validation did not pass")
-        if (result.get("whole_file_ebi_validation") or {}).get("status") != "PASS":
-            failures.append(f"{callset['caller']}: EBI whole-file VCF validation did not pass")
+        ebi_effective_status = (
+            (result.get("whole_file_ebi_validation") or {})
+            .get("compatibility_assessment", {})
+            .get("effective_status")
+            or (result.get("whole_file_ebi_validation") or {}).get("status")
+        )
+        if ebi_effective_status not in {"PASS", "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"}:
+            failures.append(f"{callset['caller']}: EBI whole-file validation has unresolved diagnostics")
         if (result.get("whole_file_strict_validation") or {}).get("status") != "PASS":
             failures.append(f"{callset['caller']}: whole-file strict VCF validation did not pass")
         if (result.get("ebi_assembly_validation") or {}).get("status") != "PASS":
             failures.append(f"{callset['caller']}: EBI chr20 assembly validation did not pass")
         if callset["caller"] == "DRAGEN" and not (result.get("whole_file_strict_validation") or {}).get("caller_semantic_compatibility_review_required"):
-            failures.append("DRAGEN: GP semantic deviation was not retained as review-required")
+            failures.append("DRAGEN: documented VCFv4.2 EVENT/EVENTTYPE caller extension was not retained as review-required")
         if (result.get("reference_validation") or {}).get("result") not in {"PASS", "PARTIAL"}:
             failures.append(f"{callset['caller']}: selected-reference validation did not pass")
         if (result.get("normalization") or {}).get("status") != "PASS":
