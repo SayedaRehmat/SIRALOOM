@@ -1135,6 +1135,7 @@ def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failure
             "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
             "spec_conformance": "VCFv4.2_CONFORMANT",
             "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
             "clinical_review_required": True,
         },
     )
