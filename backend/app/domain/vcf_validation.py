@@ -2486,7 +2486,41 @@ def validate_vcf_strict(
         sample_record_count=sample_record_count,
         sample_records_without_gt=sample_records_without_gt,
     )
+    gp_semantic_profile = None
+    if "GP" in format_definitions:
+        if fileformat in {"VCFv4.1", "VCFv4.2"}:
+            gp_semantic_profile = {
+                "namespace": "FORMAT",
+                "field_id": "GP",
+                "status": "VCF_SPEC_CONFORMANT",
+                "vcf_version": fileformat,
+                "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+            }
+        elif fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
+            gp_semantic_profile = {
+                "namespace": "FORMAT",
+                "field_id": "GP",
+                "status": "VCF_SPEC_CONFORMANT",
+                "vcf_version": fileformat,
+                "scale": "LINEAR_POSTERIOR_GENOTYPE_PROBABILITIES_0_TO_1",
+            }
+    if gp_semantic_profile is not None:
+        caller_provenance["field_semantic_profiles"] = [
+            *caller_provenance.get("field_semantic_profiles", []),
+            gp_semantic_profile,
+        ]
+
+    event_definition = info_definitions.get("EVENT")
+    eventtype_definition = info_definitions.get("EVENTTYPE")
+    dragen_event_extension_detected = bool(
+        caller_semantic_attestation is not None
+        and fileformat == "VCFv4.2"
+        and event_definition == {"Number": "A", "Type": "String"}
+    )
     if caller_semantic_attestation is not None:
+        caller_semantic_attestation["caller_extension_detected"] = dragen_event_extension_detected
+        caller_semantic_attestation["clinical_review_required"] = dragen_event_extension_detected
+    if dragen_event_extension_detected:
         prior_semantic_status = caller_provenance.get("caller_semantic_compatibility_status")
         if prior_semantic_status not in {
             "CONFLICTED_CALLER_METADATA",
@@ -2496,19 +2530,7 @@ def validate_vcf_strict(
             caller_provenance["caller_semantic_compatibility_status"] = "DOCUMENTED_DRAGEN_V42_EVENT_EXTENSION"
         caller_provenance["caller_semantic_compatibility_review_required"] = True
         caller_provenance["dragen_v42_event_extension_applicable"] = True
-        caller_provenance["field_semantic_profiles"] = [
-            *caller_provenance.get("field_semantic_profiles", []),
-            {
-                "namespace": "FORMAT",
-                "field_id": "GP",
-                "status": "VCF_SPEC_CONFORMANT",
-                "vcf_version": fileformat,
-                "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
-                "clinical_interpretation": "STANDARD_VCF42_SEMANTICS",
-            },
-        ]
-        caller_provenance["field_semantic_deviations"] = [
-            *caller_provenance.get("field_semantic_deviations", []),
+        deviations = [
             {
                 "namespace": "INFO",
                 "field_id": "EVENT",
@@ -2517,15 +2539,20 @@ def validate_vcf_strict(
                 "declared_number": "A",
                 "vcf42_reserved_number": "1",
                 "clinical_interpretation": "REVIEW_REQUIRED",
-            },
-            {
+            }
+        ]
+        if eventtype_definition == {"Number": "A", "Type": "String"}:
+            deviations.append({
                 "namespace": "INFO",
                 "field_id": "EVENTTYPE",
                 "status": "DOCUMENTED_DRAGEN_V42_CALLER_EXTENSION",
                 "caller_release": "4.2",
                 "declared_number": "A",
                 "clinical_interpretation": "REVIEW_REQUIRED",
-            },
+            })
+        caller_provenance["field_semantic_deviations"] = [
+            *caller_provenance.get("field_semantic_deviations", []),
+            *deviations,
         ]
     return {
         "fileformat": fileformat,
