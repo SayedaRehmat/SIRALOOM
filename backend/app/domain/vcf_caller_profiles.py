@@ -453,12 +453,13 @@ def inspect_caller_provenance(
             "namespace": "FORMAT",
             "field_id": "GP",
             "status": "CALLER_SPECIFIC_SCALE_DIFFERS_FROM_VCF_RESERVED_SEMANTICS",
-            "description": "DRAGEN documents FORMAT/GP in Phred scale; VCF reserves FORMAT/GP for posterior probabilities in [0, 1].",
+            "description": "DRAGEN 4.3 documents FORMAT/GP in Phred scale while declared VCFv4.3+ requires linear posterior probabilities in [0, 1].",
         }]
         if (
             profile_id == "dragen_snv_germline"
             and version_status == "DECLARED"
             and caller_version == "4.3.0"
+            and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
             and "GP" in format_fields
         )
         else []
