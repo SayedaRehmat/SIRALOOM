@@ -145,6 +145,7 @@ def route_vcf_records(
         "spanning_deletions": output / "spanning-deletion-records.vcf",
         "telomere": output / "telomere-records.vcf",
         "telomere_after": output / "telomere-after-contig-records.vcf",
+        "external_contigs": output / "external-reference-contigs.vcf",
         "exclusions": output / "excluded-source-records.jsonl",
     }
     opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
@@ -296,6 +297,14 @@ def route_vcf_records(
                 # semantics; this state distinguishes a spec-valid missing GT
                 # inside a preceding block from an unexplained missing call.
                 chrom = fields[0]
+                if reference_contig_lengths is not None and chrom not in reference_contig_lengths:
+                    emit("external_contigs", line)
+                    record_exclusion(
+                        line,
+                        "CONTIG_OUTSIDE_SELECTED_REFERENCE_PACKAGE",
+                        "EXTERNAL_REFERENCE_CONTIG_RECORDS",
+                    )
+                    continue
                 if active_vcf45_block_chrom != chrom:
                     active_vcf45_reference_blocks.clear()
                     active_vcf45_block_chrom = chrom
@@ -444,6 +453,7 @@ def route_vcf_records(
         "spanning_deletions": counts["spanning_deletions"],
         "telomere_coordinates": counts["telomere"],
         "after_contig_coordinates": counts["telomere_after"],
+        "external_reference_contigs": counts["external_contigs"],
         "reference_only": counts["reference_only"],
     }
     routed_record_count = sum(record_disposition_counts.values())
@@ -479,12 +489,13 @@ def route_vcf_records(
         "unresolved_spanning_deletion_records": counts["unresolved_spanning_deletions"],
         "telomere_records": counts["telomere"],
         "telomere_after_contig_records": counts["telomere_after"],
+        "external_reference_contig_records": counts["external_contigs"],
         "reference_only_genotype_alleles": counts["reference_only_genotype_alleles"],
         "exclusion_manifest_path": str(names["exclusions"]) if exclusion_handle is not None else None,
         "exclusion_manifest_records": sum(counts[key] for key in (
             "reference_only", "gvcf_blocks", "gvcf_unresolved", "structural",
             "spanning_deletions", "telomere", "telomere_after",
-            "reference_only_genotype_alleles", "cnv", "repeat_expansions", "mitochondrial",
+            "reference_only_genotype_alleles", "cnv", "repeat_expansions", "mitochondrial", "external_contigs",
         )),
         "sequence_path": str(names["sequence"]) if counts["sequence"] else None,
         "gvcf_blocks_path": str(names["gvcf_blocks"]) if counts["gvcf_blocks"] else None,
@@ -496,6 +507,8 @@ def route_vcf_records(
         "spanning_deletions_path": str(names["spanning_deletions"]) if counts["spanning_deletions"] else None,
         "telomere_path": str(names["telomere"]) if counts["telomere"] else None,
         "telomere_after_contig_path": str(names["telomere_after"]) if counts["telomere_after"] else None,
+        "external_reference_contigs_path": str(names["external_contigs"]) if counts["external_contigs"] else None,
+        "external_contig_policy": "PRESERVE_UNCHANGED_AND_EXCLUDE_FROM_SELECTED_REFERENCE_NORMALIZATION",
         "gvcf_wildcard_policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
     }
 
