@@ -26,7 +26,7 @@ def _stub_ebi_validator_for_siraloom_unit_tests(monkeypatch: pytest.MonkeyPatch)
         source = Path(path)
         with (gzip.open(source, "rt", encoding="utf-8") if source.name.lower().endswith((".gz", ".bgz")) else source.open("rt", encoding="utf-8")) as handle:
             fileformat = next(
-                (line.rstrip("\\r\\n").split("=", 1)[1] for line in handle if line.startswith("##fileformat=")),
+                (line.rstrip("\\r\n").split("=", 1)[1] for line in handle if line.startswith("##fileformat=")),
                 None,
             )
         return {
@@ -1070,11 +1070,11 @@ def test_vcf42_gp_ebi_false_positive_is_nonblocking_but_raw_failure_is_preserved
 ) -> None:
     path = tmp_path / "vcf42-gp-phred.vcf"
     path.write_text(
-        "##fileformat=VCFv4.2\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Phred-scaled genotype posterior probabilities">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tHG002\\n"
-        "1\\t10\\t.\\tA\\tC\\t50\\tPASS\\t.\\tGT:GP\\t0/1:3.1662,15.337,3.1125\\n",
+        "##fileformat=VCFv4.2\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Phred-scaled genotype posterior probabilities">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHG002\n"
+        "1\t10\t.\tA\tC\t50\tPASS\t.\tGT:GP\t0/1:3.1662,15.337,3.1125\n",
         encoding="utf-8",
     )
     ebi_result = {
@@ -1113,15 +1113,15 @@ def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failure
 ) -> None:
     path = tmp_path / "dragen-v42-targeted.vcf"
     path.write_text(
-        "##fileformat=VCFv4.2\\n"
-        "##source=DRAGEN_SNV\\n"
-        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\\n'
-        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\\n'
-        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\\n'
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Phred-scaled genotype posterior probabilities">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tHG002\\n"
-        "1\\t10\\t.\\tA\\tC\\t50\\tPASS\\tTARGETED;EVENT=EV1;EVENTTYPE=VARIANT_IN_HOMOLOGY_REGION\\tGT:GP\\t0/1:3.1662,15.337,3.1125\\n",
+        "##fileformat=VCFv4.2\n"
+        "##source=DRAGEN_SNV\n"
+        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Phred-scaled genotype posterior probabilities">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHG002\n"
+        "1\t10\t.\tA\tC\t50\tPASS\tTARGETED;EVENT=EV1;EVENTTYPE=VARIANT_IN_HOMOLOGY_REGION\tGT:GP\t0/1:3.1662,15.337,3.1125\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(
