@@ -1850,6 +1850,10 @@ def validate_vcf_strict(
     chrom_header: list[str] | None = None
     found_header = False
     records = 0
+    targeted_records = 0
+    event_records = 0
+    targeted_event_records = 0
+    targeted_eventtype_records = 0
     sample_record_count = 0
     sample_records_without_gt = 0
     alternate_allele_count = 0
@@ -1979,6 +1983,16 @@ def validate_vcf_strict(
                         "The #CHROM header cannot contain empty columns",
                         code="VCF_HEADER_INVALID",
                     )
+                if (
+                    caller_semantic_attestation is not None
+                    and fileformat == "VCFv4.2"
+                    and info_definitions.get("EVENT") == {"Number": "A", "Type": "String"}
+                    and info_definitions.get("TARGETED") != {"Number": "0", "Type": "Flag"}
+                ):
+                    raise StrictVCFValidationError(
+                        "DRAGEN VCFv4.2 EVENT/Number=A extension requires INFO/TARGETED Number=0,Type=Flag",
+                        code="VCF_CALLER_EXTENSION_INVALID",
+                    )
                 if len(columns) >= 9 and columns[8] != "FORMAT":
                     raise StrictVCFValidationError("Column 9 must be FORMAT when sample columns are present", code="VCF_HEADER_INVALID")
                 if len(columns) == 9:
@@ -2074,6 +2088,33 @@ def validate_vcf_strict(
                     )
                 record_ids_seen.update(record_ids)
             info_values = _info_values(fields[7])
+            if "TARGETED" in info_values:
+                if info_values["TARGETED"] is not None:
+                    raise StrictVCFValidationError(
+                        f"INFO/TARGETED must be a flag at line {line_no}",
+                        code="VCF_CALLER_EXTENSION_INVALID",
+                    )
+                targeted_records += 1
+            if "EVENT" in info_values:
+                event_records += 1
+                if (
+                    caller_semantic_attestation is None
+                    or fileformat != "VCFv4.2"
+                    or info_definitions.get("EVENT") != {"Number": "A", "Type": "String"}
+                    or "TARGETED" not in info_values
+                ):
+                    raise StrictVCFValidationError(
+                        f"INFO/EVENT uses the DRAGEN VCFv4.2 extension without a verified TARGETED record flag at line {line_no}",
+                        code="VCF_CALLER_EXTENSION_INVALID",
+                    )
+                targeted_event_records += 1
+            if "EVENTTYPE" in info_values:
+                if "EVENT" not in info_values or "TARGETED" not in info_values:
+                    raise StrictVCFValidationError(
+                        f"INFO/EVENTTYPE requires INFO/EVENT and INFO/TARGETED at line {line_no}",
+                        code="VCF_CALLER_EXTENSION_INVALID",
+                    )
+                targeted_eventtype_records += 1
             for key, value in info_values.items():
                 definition = info_definitions.get(key)
                 if definition is None and fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"}:
