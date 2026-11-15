@@ -1767,6 +1767,7 @@ def _verify_dragen_42_fixture_attestation(
         "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
         "spec_conformance": "VCFv4.2_CONFORMANT",
         "caller_extension": expected["caller_extension"],
+        "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
         "clinical_review_required": True,
         "source_record_url": expected["source_record_url"],
         "source_filename": expected["source_filename"],
