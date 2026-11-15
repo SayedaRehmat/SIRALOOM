@@ -413,9 +413,17 @@ def validate_vcf(
             "warning_codes": strict_profile["warning_codes"],
         }
         if ebi_failure_reason:
-            ebi_error_code = "EBI_VCF_VALIDATION_FAILED"
-            raise VCFValidationError(
-                "EBI vcf-validator rejected the VCF: " + ebi_failure_reason[:4000]
+            return ValidationResult(
+                "INVALID",
+                "VCF",
+                parsed_variant_record_count,
+                headers[9:] if len(headers) > 9 else [],
+                detected_build,
+                ["EBI vcf-validator rejected the VCF: " + ebi_failure_reason[:4000]],
+                warnings,
+                strict_profile["fileformat"],
+                validation_metadata,
+                "EBI_VCF_VALIDATION_FAILED",
             )
         return ValidationResult(
             "VALID",
