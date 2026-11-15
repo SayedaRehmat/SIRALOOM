@@ -1126,13 +1126,13 @@ def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failure
     )
     monkeypatch.setattr(
         ingestion,
-        "_verify_dragen_42_gp_attestation",
+        "_verify_dragen_42_fixture_attestation",
         lambda *_args, **_kwargs: {
             "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
             "caller_profile_id": "dragen_snv_germline",
             "caller_release": "4.2",
-            "field": "FORMAT/GP",
-            "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+            "field": "INFO/EVENT_AND_EVENTTYPE",
+            "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
             "spec_conformance": "VCFv4.2_CONFORMANT",
             "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
             "clinical_review_required": True,
