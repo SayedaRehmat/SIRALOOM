@@ -220,6 +220,11 @@ def inspect_caller_provenance(
     quality thresholds and never marks a caller release clinically qualified.
     """
     lines = _header(path)
+    if fileformat is None:
+        fileformat = next(
+            (line.split("=", 1)[1].strip() for line in lines if line.startswith("##fileformat=")),
+            None,
+        )
     source_values: list[str] = []
     gatk_stages: list[dict[str, str]] = []
     gatk_command_lines: list[str] = []
