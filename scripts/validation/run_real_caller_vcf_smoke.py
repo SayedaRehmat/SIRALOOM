@@ -127,11 +127,12 @@ def dragen_gp_attestation(callset: dict[str, Any], artifact: Path) -> dict[str, 
     if callset["caller"] != "DRAGEN":
         return None
 
-    # GP semantics are supported by the pinned VCFv4.2 specification and this
-    # exact checksum-identified DRAGEN 4.2 dataset fixture. EVENT/EVENTTYPE is
-    # a separate DRAGEN targeted-output extension: Illumina documents it for
-    # *.targeted.vcf[.gz] carrying ##source=DRAGEN_TARGETED. Do not infer that
-    # provenance from EVENT fields in an unrelated hard-filtered callset.
+    # The pinned Zenodo fixture is a hard-filtered SNV VCF that declares
+    # BOTH DRAGEN_SNV and DRAGEN_TARGETED. DRAGEN 4.2 supports merging targeted
+    # calls into the hard-filtered VCF; the output filename therefore does not
+    # have to end in .targeted.vcf. We require the source declaration and the
+    # correctly typed TARGETED/EVENT/EVENTTYPE header definitions here, then
+    # validate every EVENT-bearing record's TARGETED flag in validate_vcf_strict.
     opener = gzip.open if artifact.suffix == ".gz" else open
     header_lines: list[str] = []
     with opener(artifact, "rt", encoding="utf-8") as handle:
@@ -140,9 +141,33 @@ def dragen_gp_attestation(callset: dict[str, Any], artifact: Path) -> dict[str, 
                 break
             if line.startswith("##"):
                 header_lines.append(line.rstrip("\r\n"))
-    source_marked_targeted = "##source=DRAGEN_TARGETED" in header_lines
+    source_values = {
+        line.split("=", 1)[1].strip()
+        for line in header_lines
+        if line.startswith("##source=") and "=" in line
+    }
+    definitions = {
+        line.split("ID=", 1)[1].split(",", 1)[0]: line
+        for line in header_lines
+        if line.startswith("##INFO=<ID=") and "ID=" in line
+    }
+    source_marked_targeted = "DRAGEN_TARGETED" in source_values
     targeted_filename = ".targeted.vcf" in artifact.name
-    targeted_provenance_verified = source_marked_targeted and targeted_filename
+    targeted_header_valid = (
+        "TARGETED" in definitions
+        and "Number=0" in definitions["TARGETED"]
+        and "Type=Flag" in definitions["TARGETED"]
+        and "EVENT" in definitions
+        and "Number=A" in definitions["EVENT"]
+        and "Type=String" in definitions["EVENT"]
+        and "EVENTTYPE" in definitions
+        and "Number=A" in definitions["EVENTTYPE"]
+        and "Type=String" in definitions["EVENTTYPE"]
+    )
+    targeted_provenance_verified = (
+        {"DRAGEN_SNV", "DRAGEN_TARGETED"}.issubset(source_values)
+        and targeted_header_valid
+    )
 
     attestation = {
         "schema_version": 1,
@@ -156,13 +181,21 @@ def dragen_gp_attestation(callset: dict[str, Any], artifact: Path) -> dict[str, 
         "source_sha256": callset["sha256"],
         "source_artifact_path": callset["local_path"],
         "artifact_sha256": digest(artifact),
-        "caller_extension_detected": source_marked_targeted,
+        "caller_extension_detected": targeted_provenance_verified,
         "targeted_output_filename_verified": targeted_filename,
-        "targeted_records_verified": targeted_provenance_verified,
+        # Record-level proof is deliberately deferred to the strict parser.
+        "targeted_records_verified": False,
         "targeted_output_provenance_status": (
-            "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FILENAME"
+            "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS"
             if targeted_provenance_verified
             else "NOT_ESTABLISHED_FOR_THIS_ARTIFACT"
+        ),
+        "output_mode": (
+            "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE"
+            if targeted_provenance_verified and "hard-filtered" in artifact.name.lower()
+            else "DRAGEN_V42_STANDALONE_TARGETED"
+            if targeted_provenance_verified and targeted_filename
+            else "DRAGEN_V42_OUTPUT_MODE_UNRESOLVED"
         ),
     }
     if targeted_provenance_verified:
