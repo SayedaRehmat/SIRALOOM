@@ -52,7 +52,7 @@ jobs:
           echo "SIRALOOM_GATK_EXPECTED_VERSION=4.6.2.0" >> "$GITHUB_ENV"
           echo "SIRALOOM_GATK_EXPLICIT_LOCK=$GITHUB_WORKSPACE/artifacts/gatk4-4.6.2.0-linux-64.explicit.lock" >> "$GITHUB_ENV"
           micromamba list --explicit --md5 --prefix "$prefix" > artifacts/gatk4-4.6.2.0-linux-64.explicit.lock
-          gatk --version | tee artifacts/gatk4-version.txt
+          gatk --version 2>&1 | tee artifacts/gatk4-version.txt
           grep -F "v4.6.2.0" artifacts/gatk4-version.txt
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
