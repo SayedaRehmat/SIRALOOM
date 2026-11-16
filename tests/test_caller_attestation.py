@@ -119,6 +119,23 @@ def _write_dragen_merged_targeted_vcf(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def test_signed_v1_manifest_without_output_mode_cannot_authorize_targeted_extension(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-merged-targeted-v1.vcf"
+    digest = _write_dragen_merged_targeted_vcf(path)
+    envelope = _signed_envelope(path, organization_id, monkeypatch, schema_version=1)
+
+    with pytest.raises(StrictVCFValidationError) as error:
+        validate_vcf_strict(
+            path,
+            caller_attestation=envelope,
+            organization_id=organization_id,
+            artifact_sha256=digest,
+            expected_reference_build="GRCh38",
+        )
+    assert error.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
 def test_signed_v2_manifest_authorizes_declared_dragen_42_merged_targeted_mode(tmp_path, monkeypatch):
     organization_id = uuid4()
     path = tmp_path / "dragen-merged-targeted.vcf"
