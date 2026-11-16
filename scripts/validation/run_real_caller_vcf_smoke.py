@@ -12,10 +12,14 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
+import time
 import urllib.request
+from datetime import datetime, timezone
 from urllib.parse import quote
 from pathlib import Path
 from typing import Any
@@ -248,6 +252,17 @@ def download_callsets(root: Path) -> list[dict[str, Any]]:
     return downloaded
 
 
+def write_reference_dictionary(reference: Path, contig: str, sequence: str) -> Path:
+    dictionary = reference.with_suffix(".dict")
+    sequence_md5 = hashlib.md5(sequence.encode("ascii")).hexdigest()
+    dictionary.write_text(
+        "@HD\\tVN:1.6\\tSO:unsorted\\n"
+        f"@SQ\\tSN:{contig}\\tLN:{len(sequence)}\\tM5:{sequence_md5}\\n",
+        encoding="ascii",
+    )
+    return dictionary
+
+
 def build_chr20_reference(root: Path) -> tuple[Path, int]:
     compressed = root / "chr20.fa.gz"
     download(REFERENCE_URL, compressed)
@@ -266,6 +281,7 @@ def build_chr20_reference(root: Path) -> tuple[Path, int]:
     offset = len(header.encode("ascii"))
     with Path(str(fasta) + ".fai").open("w", encoding="ascii", newline="\n") as index:
         index.write(f"chr20\t{len(sequence)}\t{offset}\t{len(sequence)}\t{len(sequence) + 1}\n")
+    write_reference_dictionary(fasta, "chr20", sequence)
     return fasta, len(sequence)
 
 
@@ -287,7 +303,108 @@ def reference_for_contig(reference: Path, contig: str, root: Path) -> Path:
         f"20\t{len(sequence)}\t{offset}\t{len(sequence)}\t{len(sequence) + 1}\n",
         encoding="ascii",
     )
+    write_reference_dictionary(fasta, "20", sequence)
     return fasta
+
+
+def require_gatk(expected_version: str) -> dict[str, Any]:
+    executable = shutil.which("gatk")
+    if not executable:
+        raise RuntimeError("GATK_VALIDATEVARIANTS_UNAVAILABLE")
+    version_result = subprocess.run(
+        [executable, "--version"], check=False, capture_output=True, text=True, timeout=120
+    )
+    version_output = "\n".join(
+        value for value in (version_result.stdout, version_result.stderr) if value
+    )
+    match = re.search(r"v?(\d+\.\d+\.\d+\.\d+)", version_output)
+    if version_result.returncode != 0 or not match:
+        raise RuntimeError(
+            f"GATK_VERSION_UNRESOLVED: exit={version_result.returncode}; output={version_output[-2000:]}"
+        )
+    observed = match.group(1)
+    if observed != expected_version:
+        raise RuntimeError(
+            f"GATK_VERSION_MISMATCH: expected={expected_version}; observed={observed}"
+        )
+    executable_path = Path(executable).resolve()
+    return {
+        "name": "GATK",
+        "expected_version": expected_version,
+        "observed_version": observed,
+        "executable": str(executable_path),
+        "executable_sha256": digest(executable_path),
+        "version_command": [str(executable_path), "--version"],
+        "version_stdout": version_result.stdout,
+        "version_stderr": version_result.stderr,
+        "version_exit_code": version_result.returncode,
+    }
+
+
+def run_gatk_validate_variants(
+    runtime: dict[str, Any],
+    caller: str,
+    input_vcf: Path,
+    reference: Path,
+    root: Path,
+    *,
+    source_vcf_sha256: str,
+    projection: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    log_dir = root / f"{caller.lower()}_gatk_validatevariants"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    stdout_path = log_dir / "validatevariants.stdout.log"
+    stderr_path = log_dir / "validatevariants.stderr.log"
+    command = [
+        runtime["executable"],
+        "ValidateVariants",
+        "-R", str(reference),
+        "-V", str(input_vcf),
+    ]
+    started = datetime.now(timezone.utc).isoformat()
+    start_clock = time.monotonic()
+    try:
+        completed = subprocess.run(
+            command, check=False, capture_output=True, text=True, timeout=6 * 60 * 60
+        )
+        stdout_path.write_text(completed.stdout or "", encoding="utf-8")
+        stderr_path.write_text(completed.stderr or "", encoding="utf-8")
+        exit_code = completed.returncode
+        error = None
+    except Exception as exc:
+        stdout_path.write_text("", encoding="utf-8")
+        stderr_path.write_text(str(exc), encoding="utf-8")
+        exit_code = None
+        error = f"{type(exc).__name__}: {exc}"
+    elapsed = time.monotonic() - start_clock
+    return {
+        "status": "PASS" if exit_code == 0 else "FAIL",
+        "caller": caller,
+        "tool": "GATK ValidateVariants",
+        "tool_version": runtime["observed_version"],
+        "tool_executable_sha256": runtime["executable_sha256"],
+        "command": command,
+        "started_at": started,
+        "elapsed_seconds": round(elapsed, 3),
+        "exit_code": exit_code,
+        "error": error,
+        "input_path": str(input_vcf.resolve()),
+        "input_sha256": digest(input_vcf),
+        "input_bytes": input_vcf.stat().st_size,
+        "source_vcf_sha256": source_vcf_sha256,
+        "input_scope": "CHR20_REFERENCE_RESOLVED_SEQUENCE_RECORDS",
+        "reference_fasta": str(reference.resolve()),
+        "reference_fasta_sha256": digest(reference),
+        "reference_fai_sha256": digest(Path(str(reference) + ".fai")),
+        "reference_dictionary": str(reference.with_suffix(".dict")),
+        "reference_dictionary_sha256": digest(reference.with_suffix(".dict")),
+        "stdout_path": str(stdout_path.resolve()),
+        "stdout_sha256": digest(stdout_path),
+        "stderr_path": str(stderr_path.resolve()),
+        "stderr_sha256": digest(stderr_path),
+        "stderr_tail": stderr_path.read_text(encoding="utf-8")[-4000:],
+        "compatibility_projection": projection,
+    }
 
 
 def run(command: list[str], *, stdout_path: Path | None = None) -> str:
@@ -338,7 +455,13 @@ def project_chr20(source: Path, root: Path, reference_length: int) -> tuple[Path
     return subset, contig
 
 
-def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int, root: Path) -> dict[str, Any]:
+def exercise_one(
+    callset: dict[str, Any],
+    reference: Path,
+    reference_length: int,
+    root: Path,
+    gatk_runtime: dict[str, Any],
+) -> dict[str, Any]:
     caller = callset["caller"]
     source = Path(callset["local_path"])
     expected_profile = EXPECTED_PROFILES[caller]
@@ -497,6 +620,26 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
     if not sequence_path or routed.get("sequence_records", 0) == 0:
         raise RuntimeError(f"No sequence-resolved SNV/indel records were routed for {caller}")
 
+    gatk_input = Path(sequence_path)
+    gatk_projection = None
+    if caller == "DRAGEN":
+        gatk_projection_path = root / f"{caller.lower()}.chr20.event-projected.vcf"
+        gatk_projection = create_dragen_v42_event_projection(
+            gatk_input,
+            gatk_projection_path,
+            caller_semantic_attestation=semantic_attestation,
+        )
+        gatk_input = gatk_projection_path
+    result["gatk_validate_variants"] = run_gatk_validate_variants(
+        gatk_runtime,
+        caller,
+        gatk_input,
+        selected_reference,
+        root,
+        source_vcf_sha256=callset["sha256"],
+        projection=gatk_projection,
+    )
+
     normalized = root / f"{caller.lower()}.normalized.vcf.gz"
     normalization = normalize_vcf_with_bcftools(
         sequence_path,
@@ -523,10 +666,15 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--work-dir", type=Path, default=Path("real-caller-vcf-data"))
     parser.add_argument("--report", type=Path, default=Path("real-caller-vcf-report.json"))
+    parser.add_argument(
+        "--gatk-version",
+        default=os.environ.get("SIRALOOM_GATK_EXPECTED_VERSION", "4.6.2.0"),
+    )
     args = parser.parse_args()
     args.work_dir.mkdir(parents=True, exist_ok=True)
 
     bcftools_version = run(["bcftools", "--version"]).splitlines()[:2]
+    gatk_runtime = require_gatk(args.gatk_version)
     callsets = download_callsets(args.work_dir)
     reference, reference_length = build_chr20_reference(args.work_dir)
 
@@ -539,7 +687,10 @@ def main() -> int:
             "length": reference_length,
             "fasta_sha256": digest(reference),
             "fai_sha256": digest(Path(str(reference) + ".fai")),
+            "dictionary": str(reference.with_suffix(".dict")),
+            "dictionary_sha256": digest(reference.with_suffix(".dict")),
         },
+        "toolchain": {"gatk": gatk_runtime},
         "bcftools": bcftools_version,
         "datasets": {
             "gatk_deepvariant": f"https://zenodo.org/records/{CALLSET_RECORD}",
@@ -552,7 +703,7 @@ def main() -> int:
     failures = []
     for callset in callsets:
         try:
-            result = exercise_one(callset, reference, reference_length, args.work_dir)
+            result = exercise_one(callset, reference, reference_length, args.work_dir, gatk_runtime)
         except Exception as error:
             result = {
                 "caller": callset["caller"],
@@ -591,6 +742,8 @@ def main() -> int:
                 failures.append("DRAGEN: EBI validation did not pass on the lossless EVENT compatibility projection")
         if (result.get("reference_validation") or {}).get("result") not in {"PASS", "PARTIAL"}:
             failures.append(f"{callset['caller']}: selected-reference validation did not pass")
+        if (result.get("gatk_validate_variants") or {}).get("status") != "PASS":
+            failures.append(f"{callset['caller']}: GATK ValidateVariants did not pass on reference-resolved chr20 records")
         if (result.get("normalization") or {}).get("status") != "PASS":
             failures.append(f"{callset['caller']}: reference-aware normalization did not pass")
 
