@@ -236,12 +236,22 @@ jobs:
           uv run --locked python scripts/validation/run_real_caller_vcf_smoke.py \
             --work-dir /tmp/siraloom-real-caller-vcfs \
             --report artifacts/real-caller-vcf-report.json
-      - name: Preserve real caller VCF validation report
+      - name: Preserve real caller validation and compatibility artifacts
+        if: always()
+        run: |
+          mkdir -p artifacts
+          projection=/tmp/siraloom-real-caller-vcfs/dragen.event-projected.vcf
+          if [ -f "$projection" ]; then
+            cp "$projection" artifacts/dragen.event-projected.vcf
+          fi
+      - name: Upload real caller validation and compatibility artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: real-caller-vcf-validation-report
-          path: artifacts/real-caller-vcf-report.json
+          path: |
+            artifacts/real-caller-vcf-report.json
+            artifacts/dragen.event-projected.vcf
           if-no-files-found: warn
 
   frontend:
