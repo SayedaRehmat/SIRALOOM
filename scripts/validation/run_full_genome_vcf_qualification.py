@@ -20,12 +20,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from backend.app.domain.ebi_vcf_validator import run_ebi_vcf_assembly_checker, run_ebi_vcf_validator
+from backend.app.domain.ebi_vcf_validator import (
+    assess_ebi_vcf_compatibility,
+    run_ebi_vcf_assembly_checker,
+    run_ebi_vcf_validator,
+)
 from backend.app.domain.reference_package import sha256_file, validate_fasta_index_consistency
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 from backend.app.domain.vcf_validation import validate_vcf_reference_alleles, validate_vcf_strict
-from scripts.validation.run_real_caller_vcf_smoke import download_callsets, EXPECTED_PROFILES
+from scripts.validation.run_real_caller_vcf_smoke import (
+    download_callsets,
+    EXPECTED_PROFILES,
+    dragen_gp_attestation,
+)
 
 REQUIRED_CALLERS = {"GATK", "DEEPVARIANT", "DRAGEN"}
 
@@ -167,7 +175,14 @@ def qualify_one(
     if provenance.get("caller_profile_id") != EXPECTED_PROFILES[caller]:
         raise QualificationBlocked(f"{caller}: caller profile identity does not match expected profile")
 
-    strict = validate_vcf_strict(source, expected_reference_build="GRCh38")
+    caller_attestation = dragen_gp_attestation(callset, source)
+    strict = validate_vcf_strict(
+        source,
+        caller_attestation=caller_attestation,
+        artifact_sha256=result["source_sha256"],
+        expected_reference_build="GRCh38",
+    )
+    result["caller_semantic_attestation"] = strict.get("caller_semantic_attestation")
     result["gates"]["siraloom_strict"] = {
         "status": "PASS",
         "records": strict.get("records"),
@@ -177,8 +192,12 @@ def qualify_one(
     }
 
     ebi = run_ebi_vcf_validator(source, caller_provenance=provenance, timeout_seconds=6 * 60 * 60)
+    ebi_compatibility = assess_ebi_vcf_compatibility(
+        ebi,
+        caller_semantic_attestation=strict.get("caller_semantic_attestation"),
+    )
+    ebi["compatibility_assessment"] = ebi_compatibility
     result["gates"]["ebi_vcf_validator"] = ebi
-    ebi_compatibility = ebi.get("compatibility_assessment") or {}
     ebi_effective_status = ebi_compatibility.get("effective_status", ebi.get("status"))
     if ebi_effective_status not in {"PASS", "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"}:
         blocking = ebi_compatibility.get("blocking_diagnostics") or ebi.get("diagnostics") or []
@@ -274,7 +293,13 @@ def qualify_one(
         expected_bcftools_version="1.25",
         timeout_seconds=6 * 60 * 60,
     )
-    normalized_strict = validate_vcf_strict(normalized, expected_reference_build="GRCh38")
+    normalized_attestation = dragen_gp_attestation(callset, normalized)
+    normalized_strict = validate_vcf_strict(
+        normalized,
+        caller_attestation=normalized_attestation,
+        artifact_sha256=result["source_sha256"],
+        expected_reference_build="GRCh38",
+    )
     index = Path(str(normalized) + ".csi")
     if not index.is_file():
         raise QualificationBlocked(f"{caller}: normalized output index is missing")
