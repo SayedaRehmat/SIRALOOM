@@ -330,8 +330,10 @@ def require_gatk(expected_version: str) -> dict[str, Any]:
         )
     executable_path = Path(executable).resolve()
     lock_value = os.environ.get("SIRALOOM_GATK_EXPLICIT_LOCK")
-    lock_path = Path(lock_value).resolve() if lock_value else None
-    if lock_path is not None and not lock_path.is_file():
+    if not lock_value:
+        raise RuntimeError("GATK_EXPLICIT_LOCK_REQUIRED")
+    lock_path = Path(lock_value).resolve()
+    if not lock_path.is_file():
         raise RuntimeError(f"GATK_EXPLICIT_LOCK_MISSING: {lock_path}")
     return {
         "name": "GATK",
