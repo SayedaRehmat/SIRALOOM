@@ -1,4 +1,5 @@
 import gzip
+import hashlib
 import struct
 from pathlib import Path
 import zlib
@@ -24,6 +25,88 @@ def write_vcf(path: Path, body: str, *, version: str = "VCFv4.3", columns: str |
         f"{body}",
         encoding="utf-8",
     )
+
+
+def _pinned_dragen_gp_fixture_attestation(path: Path, monkeypatch) -> dict:
+    """Exercise the pinned fixture contract without redistributing the public 435 MB VCF."""
+    artifact_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+
+    class _PublisherMd5:
+        def update(self, _chunk: bytes) -> None:
+            pass
+
+        def hexdigest(self) -> str:
+            return "388f58faa52a8811fe19b06533d2c3d5"
+
+    # The exact publisher MD5 is independently pinned in the fixture registry;
+    # this focused test substitutes only that external-file checksum operation.
+    monkeypatch.setattr(
+        "backend.app.domain.vcf_validation.hashlib.md5",
+        lambda **_kwargs: _PublisherMd5(),
+    )
+    return {
+        "schema_version": 1,
+        "caller_profile_id": "dragen_snv_germline",
+        "caller_release": "4.2",
+        "source_record_url": "https://zenodo.org/records/8350256",
+        "source_filename": "HG002_35x.hard-filtered.vcf.gz",
+        "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
+        "spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
+        "source_sha256": artifact_sha256,
+        "source_artifact_path": str(path),
+        "artifact_sha256": artifact_sha256,
+    }
+
+
+def _write_dragen_v42_gp_vcf(path: Path, *, targeted_event_extension: bool) -> None:
+    metadata = [
+        '##source=DRAGEN_SNV',
+        '##DRAGENVersion=4.2.0',
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior values">',
+    ]
+    info = "."
+    if targeted_event_extension:
+        metadata.extend([
+            '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="The call is from a targeted caller">',
+            '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">',
+            '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">',
+        ])
+        info = "TARGETED;EVENT=event1;EVENTTYPE=GENE_CONVERSION"
+    path.write_text(
+        "##fileformat=VCFv4.2\\n"
+        + "\\n".join(metadata)
+        + "\\n#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        + f"1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t{info}\\tGT:GP\\t0/1:3.1662e+00,0.0,1.2\\n",
+        encoding="utf-8",
+    )
+
+
+def test_pinned_dragen_v42_attestation_validates_gp_without_claiming_event_extension(tmp_path: Path, monkeypatch) -> None:
+    path = tmp_path / "dragen-hard-filtered.vcf"
+    _write_dragen_v42_gp_vcf(path, targeted_event_extension=False)
+    attestation = _pinned_dragen_gp_fixture_attestation(path, monkeypatch)
+
+    result = validate_vcf_strict(path, caller_attestation=attestation)
+
+    assert result["records"] == 1
+    assert result["caller_semantic_attestation"]["gp_spec_semantics"] == "VCFv4.2_FORMAT_GP_PHRED_SCALED"
+    assert "caller_extension" not in result["caller_semantic_attestation"]
+    assert "compatibility_profile_id" not in result["caller_semantic_attestation"]
+    assert result["caller_semantic_attestation"]["caller_extension_detected"] is False
+    assert result["caller_semantic_compatibility_review_required"] is False
+
+
+def test_pinned_dragen_v42_gp_attestation_does_not_waive_event_number_a_header(tmp_path: Path, monkeypatch) -> None:
+    path = tmp_path / "dragen-hard-filtered-with-event.vcf"
+    _write_dragen_v42_gp_vcf(path, targeted_event_extension=True)
+    attestation = _pinned_dragen_gp_fixture_attestation(path, monkeypatch)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path, caller_attestation=attestation)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+    assert "Reserved VCFv4.2 INFO field 'EVENT'" in str(exc.value)
 
 
 def _bgzf_block(data: bytes) -> bytes:
