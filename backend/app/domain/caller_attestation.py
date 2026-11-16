@@ -51,12 +51,34 @@ def validate_attestation_envelope(value: Any) -> dict[str, Any]:
             "Caller attestation must contain exactly manifest, key_id and signature."
         )
     manifest = value.get("manifest")
-    if not isinstance(manifest, dict) or set(manifest) != REQUIRED_MANIFEST_FIELDS:
+    if not isinstance(manifest, dict):
+        raise CallerAttestationError("Caller run manifest must be an object.")
+    schema_version = manifest.get("schema_version")
+    expected_fields = (
+        REQUIRED_MANIFEST_FIELDS
+        if schema_version == 1
+        else REQUIRED_MANIFEST_FIELDS | {"output_mode"}
+        if schema_version == 2
+        else None
+    )
+    if expected_fields is None:
+        raise CallerAttestationError("Unsupported caller run manifest schema version.")
+    if set(manifest) != expected_fields:
         raise CallerAttestationError(
             "Caller run manifest has missing or unexpected fields."
         )
-    if manifest.get("schema_version") != 1:
-        raise CallerAttestationError("Unsupported caller run manifest schema version.")
+    if schema_version == 2:
+        output_mode = manifest.get("output_mode")
+        if not isinstance(output_mode, str) or not output_mode.strip():
+            raise CallerAttestationError("Caller run manifest output_mode is required.")
+        if manifest.get("caller_profile_id") == "dragen_snv_germline" and output_mode not in {
+            "DRAGEN_V42_STANDARD_HARD_FILTERED",
+            "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+            "DRAGEN_V42_STANDALONE_TARGETED",
+        }:
+            raise CallerAttestationError(
+                "DRAGEN v4.2 manifest output_mode is not an approved compatibility-profile mode."
+            )
     for field in (
         "manifest_id", "organization_id", "artifact_sha256", "caller_profile_id",
         "caller_release", "pipeline_run_id", "assay_id", "reference_build",
@@ -164,6 +186,7 @@ def verify_signed_caller_manifest(
         "reference_build": manifest["reference_build"],
         "issued_at": manifest["issued_at"],
         "signer_id": manifest["signer_id"],
+        "output_mode": manifest.get("output_mode"),
         "key_id": envelope["key_id"],
         "signature_sha256": hashlib.sha256(envelope["signature"].encode("ascii")).hexdigest(),
     }
