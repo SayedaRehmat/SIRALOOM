@@ -2665,6 +2665,12 @@ def validate_vcf_strict(
         caller_provenance["identity_status"] = "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST"
         caller_provenance["identity_source"] = "LAB_SIGNED_RUN_MANIFEST_AND_VCF_HEADER"
         caller_provenance["profile_match_status"] = "SIGNED_RUN_MANIFEST_MATCH"
+        if caller_run_attestation.get("output_mode"):
+            caller_provenance["output_mode"] = caller_run_attestation["output_mode"]
+            caller_provenance["output_mode_status"] = "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST"
+            if caller_run_attestation.get("caller_profile_id") == "dragen_snv_germline":
+                caller_provenance["dragen_output_mode"] = caller_run_attestation["output_mode"]
+                caller_provenance["dragen_output_mode_status"] = "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST"
     elif (
         caller_semantic_attestation
         and caller_semantic_attestation.get("status") == "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE"
