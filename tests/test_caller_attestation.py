@@ -104,16 +104,16 @@ def test_signed_dragen42_manifest_binds_artifact_without_gp_deviation_review(tmp
 
 def _write_dragen_merged_targeted_vcf(path: Path) -> str:
     path.write_text(
-        "##fileformat=VCFv4.2\\n"
-        "##source=DRAGEN_SNV\\n"
-        "##source=DRAGEN_TARGETED\\n"
-        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\\n'
-        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\\n'
-        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Event type">\\n'
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior values">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\t.\\tA\\tG\\t.\\tPASS\\tTARGETED;EVENT=evt1;EVENTTYPE=GENE_CONVERSION\\tGT:GP\\t0/1:3.1662,0.0,1.2\\n",
+        "##fileformat=VCFv4.2\n"
+        "##source=DRAGEN_SNV\n"
+        "##source=DRAGEN_TARGETED\n"
+        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Event type">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tG\t.\tPASS\tTARGETED;EVENT=evt1;EVENTTYPE=GENE_CONVERSION\tGT:GP\t0/1:3.1662,0.0,1.2\n",
         encoding="utf-8",
     )
     return hashlib.sha256(path.read_bytes()).hexdigest()
