@@ -61,9 +61,13 @@ def test_dragen_hard_filtered_merged_targeted_output_does_not_require_targeted_f
 
 def test_dragen_targeted_source_without_targeted_field_definitions_is_not_attested(tmp_path: Path):
     artifact = tmp_path / "HG002_35x.hard-filtered.vcf.gz"
-    _write_vcf(artifact, targeted=False)
-    with gzip.open(artifact, "at", encoding="utf-8") as handle:
-        handle.write('##source=DRAGEN_TARGETED\n')
+    with gzip.open(artifact, "wt", encoding="utf-8") as handle:
+        handle.write(
+            "##fileformat=VCFv4.2\n"
+            "##source=DRAGEN_SNV\n"
+            "##source=DRAGEN_TARGETED\n"
+            "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\n"
+        )
 
     attestation = dragen_gp_attestation(_callset(artifact), artifact)
 
