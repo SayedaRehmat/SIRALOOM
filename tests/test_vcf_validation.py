@@ -74,10 +74,10 @@ def _write_dragen_v42_gp_vcf(path: Path, *, targeted_event_extension: bool) -> N
         ])
         info = "TARGETED;EVENT=event1;EVENTTYPE=GENE_CONVERSION"
     path.write_text(
-        "##fileformat=VCFv4.2\\n"
-        + "\\n".join(metadata)
-        + "\\n#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        + f"1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t{info}\\tGT:GP\\t0/1:3.1662e+00,0.0,1.2\\n",
+        "##fileformat=VCFv4.2\n"
+        + "\n".join(metadata)
+        + "\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        + f"1\t10\t.\tA\tG\t.\tPASS\t{info}\tGT:GP\t0/1:3.1662e+00,0.0,1.2\n",
         encoding="utf-8",
     )
 
