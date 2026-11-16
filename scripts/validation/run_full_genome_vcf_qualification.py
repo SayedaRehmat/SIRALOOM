@@ -49,6 +49,7 @@ from scripts.validation.run_real_caller_vcf_smoke import (
     EXPECTED_PROFILES,
     dragen_gp_attestation,
 )
+from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 
 REQUIRED_CALLERS = {"GATK", "DEEPVARIANT", "DRAGEN"}
 
@@ -404,6 +405,41 @@ def validate_giab_manifest(
         "clinical_approval_status": manifest.get("clinical_approval_status", "NOT_ESTABLISHED"),
     }
 
+def build_local_callsets(
+    gatk_vcf: Path,
+    deepvariant_vcf: Path,
+    dragen_vcf: Path,
+) -> list[dict[str, Any]]:
+    supplied = (
+        ("GATK_HAPLOTYPECALLER", gatk_vcf),
+        ("DEEPVARIANT", deepvariant_vcf),
+        ("DRAGEN", dragen_vcf),
+    )
+    callsets: list[dict[str, Any]] = []
+    for caller, source_path in supplied:
+        source = source_path.resolve()
+        if not source.is_file():
+            raise QualificationBlocked(f"LOCAL_CALLSET_MISSING: {caller}: {source}")
+        provenance = inspect_caller_provenance(source)
+        expected_profile = EXPECTED_PROFILES[caller]
+        if provenance.get("caller_profile_id") != expected_profile:
+            raise QualificationBlocked(
+                f"LOCAL_CALLER_IDENTITY_MISMATCH: {caller}: expected profile "
+                f"{expected_profile!r}, observed {provenance.get('caller_profile_id')!r}"
+            )
+        callsets.append({
+            "caller": caller,
+            "filename": source.name,
+            "local_path": str(source),
+            "sha256": sha256_file(source),
+            "bytes": source.stat().st_size,
+            "source_kind": "LAB_SUPPLIED_CALLSET",
+            "caller_profile_id": expected_profile,
+            "caller_provenance": provenance,
+        })
+    return callsets
+
+
 def load_caller_reference_attestation(
     attestation_dir: Path | None,
     callset: dict[str, Any],
@@ -543,6 +579,7 @@ def qualify_one(
     result: dict[str, Any] = {
         "caller": caller,
         "source_filename": callset["filename"],
+        "source_kind": callset.get("source_kind", "UNSPECIFIED"),
         "source_bytes": source.stat().st_size,
         "source_sha256": sha256_file(source),
         "source_publisher_checksum": callset.get("zenodo_checksum"),
@@ -817,12 +854,15 @@ def main() -> int:
     parser.add_argument("--expected-giab-manifest-sha256", required=True)
     parser.add_argument("--gatk-version", required=True)
     parser.add_argument("--caller-attestation-dir", type=Path)
+    parser.add_argument("--gatk-vcf", type=Path)
+    parser.add_argument("--deepvariant-vcf", type=Path)
+    parser.add_argument("--dragen-vcf", type=Path)
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
     args.work_dir.mkdir(parents=True, exist_ok=True)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     report: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "started_at": utc_now(),
         "scope": "FULL_GENOME_GERMLINE_SNV_INDEL_QUALIFICATION",
         "completion_claim": False,
@@ -846,7 +886,19 @@ def main() -> int:
         report["giab"] = giab_evidence
         gatk = require_gatk(args.gatk_version)
         report["toolchain"] = {"gatk": gatk}
-        callsets = download_callsets(args.work_dir)
+        local_inputs = (args.gatk_vcf, args.deepvariant_vcf, args.dragen_vcf)
+        if any(local_inputs) and not all(local_inputs):
+            raise QualificationBlocked(
+                "LOCAL_CALLSETS_REQUIRE_ALL_THREE: supply --gatk-vcf, --deepvariant-vcf, and --dragen-vcf together."
+            )
+        if all(local_inputs):
+            callsets = build_local_callsets(
+                args.gatk_vcf, args.deepvariant_vcf, args.dragen_vcf
+            )
+        else:
+            callsets = download_callsets(args.work_dir)
+            for callset in callsets:
+                callset["source_kind"] = "PUBLIC_REFERENCE_FIXTURE"
         observed = {item["caller"] for item in callsets}
         if observed != REQUIRED_CALLERS:
             raise QualificationBlocked(
