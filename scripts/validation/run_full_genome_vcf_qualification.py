@@ -208,7 +208,11 @@ def qualify_one(
     )
     result["caller_semantic_attestation"] = strict.get("caller_semantic_attestation")
     result["gates"]["siraloom_strict"] = {
-        "status": "PASS",
+        "status": (
+            "PASS_WITH_REVIEW_REQUIRED"
+            if strict.get("caller_semantic_compatibility_review_required")
+            else "PASS"
+        ),
         "records": strict.get("records"),
         "sample_count": strict.get("sample_count"),
         "vcf_version": strict.get("fileformat"),
@@ -406,7 +410,11 @@ def qualify_one(
         "compatibility_projection": happy_projection,
         "normalized_source_vcf_sha256": sha256_file(normalized),
     }
-    result["status"] = "PASS"
+    result["review_required"] = bool(
+        strict.get("caller_semantic_compatibility_review_required")
+        or external_count > 0
+    )
+    result["status"] = "PASS_WITH_REVIEW_REQUIRED" if result["review_required"] else "PASS"
     result["finished_at"] = utc_now()
     return result
 
@@ -469,12 +477,23 @@ def main() -> int:
     except Exception as exc:
         report["failures"].append(f"{type(exc).__name__}: {exc}")
         report["setup_error"] = {"type": type(exc).__name__, "message": str(exc)}
-    all_callers_pass = (
+    all_callers_completed = (
         len(report["results"]) == 3
         and {item.get("caller") for item in report["results"]} == REQUIRED_CALLERS
-        and all(item.get("status") == "PASS" for item in report["results"])
+        and all(
+            item.get("status") in {"PASS", "PASS_WITH_REVIEW_REQUIRED"}
+            for item in report["results"]
+        )
     )
-    report["overall"] = "PASS" if all_callers_pass and not report["failures"] else "FAIL"
+    any_review_required = any(
+        item.get("status") == "PASS_WITH_REVIEW_REQUIRED"
+        or item.get("review_required") is True
+        for item in report["results"]
+    )
+    if all_callers_completed and not report["failures"]:
+        report["overall"] = "PASS_WITH_REVIEW_REQUIRED" if any_review_required else "PASS"
+    else:
+        report["overall"] = "FAIL"
     report["completion_claim"] = report["overall"] == "PASS"
     report["finished_at"] = utc_now()
     temporary = args.report.with_suffix(args.report.suffix + ".partial")
