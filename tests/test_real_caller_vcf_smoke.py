@@ -23,6 +23,7 @@ def _write_vcf(path: Path, *, targeted: bool) -> None:
 def _callset(path: Path) -> dict:
     return {
         "caller": "DRAGEN",
+        "filename": "HG002_35x.hard-filtered.vcf.gz",
         "sha256": "fixture-sha256",
         "local_path": str(path),
     }
