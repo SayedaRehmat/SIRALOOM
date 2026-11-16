@@ -143,7 +143,8 @@ def load_reference(manifest_path: Path, fasta_arg: Path) -> dict[str, Any]:
     if manifest.get("fasta_size_bytes") is not None and fasta.stat().st_size != int(manifest["fasta_size_bytes"]):
         raise QualificationBlocked("REFERENCE_FASTA_SIZE_MISMATCH")
 
-    compressed = fasta.read_bytes()[:2] == b"\x1f\x8b"
+    with fasta.open("rb") as fasta_probe:
+        compressed = fasta_probe.read(2) == b"\\x1f\\x8b"
     if (schema_version == "1.2" and compressed) or (schema_version == "1.3" and not compressed):
         raise QualificationBlocked("REFERENCE_FASTA_COMPRESSION_SCHEMA_MISMATCH")
     gzi_path = None
@@ -413,7 +414,7 @@ def run_happy(truth: Path, query: Path, confident_bed: Path, reference: Path, pr
 
 def qualify_one(
     callset: dict[str, Any], *, reference: dict[str, Any], truth: Path,
-    confident_bed: Path, output: Path, gatk: dict[str, Any],
+    confident_bed: Path, giab: dict[str, Any], output: Path, gatk: dict[str, Any],
 ) -> dict[str, Any]:
     caller = callset["caller"]
     source = Path(callset["local_path"]).resolve()
@@ -427,6 +428,7 @@ def qualify_one(
         "scope": "FULL_SOURCE_VCF",
         "started_at": utc_now(),
         "gates": {},
+        "giab_reference_compatibility": giab,
     }
     if not result["source_checksum_verified"]:
         raise QualificationBlocked(f"{caller}: publisher checksum was not verified")
@@ -666,6 +668,7 @@ def main() -> int:
     parser.add_argument("--reference-manifest", type=Path, required=True)
     parser.add_argument("--giab-truth-vcf", type=Path, required=True)
     parser.add_argument("--giab-confident-bed", type=Path, required=True)
+    parser.add_argument("--giab-manifest", type=Path, required=True)
     parser.add_argument("--gatk-version", required=True)
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
@@ -682,13 +685,13 @@ def main() -> int:
     try:
         reference = load_reference(args.reference_manifest, args.reference_fasta)
         report["reference"] = reference
-        report["giab"] = {
-            "truth_vcf": str(args.giab_truth_vcf.resolve()),
-            "truth_vcf_sha256": sha256_file(args.giab_truth_vcf),
-            "confident_bed": str(args.giab_confident_bed.resolve()),
-            "confident_bed_sha256": sha256_file(args.giab_confident_bed),
-            "truth_version_and_assembly_must_be_reviewed": True,
-        }
+        giab_evidence = validate_giab_manifest(
+            args.giab_manifest,
+            args.giab_truth_vcf,
+            args.giab_confident_bed,
+            reference,
+        )
+        report["giab"] = giab_evidence
         gatk = require_gatk(args.gatk_version)
         report["toolchain"] = {"gatk": gatk}
         callsets = download_callsets(args.work_dir)
@@ -701,8 +704,8 @@ def main() -> int:
             try:
                 result = qualify_one(
                     callset, reference=reference, truth=args.giab_truth_vcf,
-                    confident_bed=args.giab_confident_bed, output=args.work_dir,
-                    gatk=gatk,
+                    confident_bed=args.giab_confident_bed, giab=giab_evidence,
+                    output=args.work_dir, gatk=gatk,
                 )
             except Exception as exc:
                 result = {
