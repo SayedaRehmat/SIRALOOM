@@ -199,6 +199,18 @@ def test_dragen_v42_event_extension_requires_targeted_flag_header(tmp_path, monk
         validation.validate_vcf_strict(source, caller_attestation={"fixture": "pinned"})
     assert error.value.code == "VCF_CALLER_EXTENSION_INVALID"
 
+def test_dragen_profile_reports_embedded_targeted_output_mode_as_unverified_header_evidence(tmp_path):
+    source = tmp_path / "HG002_35x.hard-filtered.vcf"
+    _vcf(source, "3.1662,15.337,3.1125", event_extension=True)
+    _mark_verified_targeted_output(source)
+
+    provenance = validation.inspect_caller_provenance(source)
+
+    assert provenance["caller_profile_id"] == "dragen_snv_germline"
+    assert provenance["dragen_output_mode"] == "SMALL_VARIANT_VCF_WITH_TARGETED_CALLS"
+    assert provenance["dragen_output_mode_status"] == "DECLARED_HEADER_EVIDENCE_UNVERIFIED"
+
+
 def test_standard_vcf42_event_number_one_does_not_require_targeted_flag(tmp_path):
     source = tmp_path / "vcf42-standard-event.vcf"
     source.write_text(
