@@ -28,11 +28,21 @@ def _write_dragen_vcf(path: Path, *, version: str | None = None) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _signed_envelope(path: Path, organization_id, monkeypatch, *, caller_profile_id="dragen_snv_germline", caller_release="4.2", reference_build="GRCh38"):
+def _signed_envelope(
+    path: Path,
+    organization_id,
+    monkeypatch,
+    *,
+    caller_profile_id="dragen_snv_germline",
+    caller_release="4.2",
+    reference_build="GRCh38",
+    schema_version=1,
+    output_mode=None,
+):
     key = b"laboratory-test-signing-key-material-32bytes"
     key_id = "test-lab-run-signer-v1"
     manifest = {
-        "schema_version": 1,
+        "schema_version": schema_version,
         "manifest_id": str(uuid4()),
         "organization_id": str(organization_id),
         "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
@@ -44,6 +54,8 @@ def _signed_envelope(path: Path, organization_id, monkeypatch, *, caller_profile
         "issued_at": datetime.now(timezone.utc).isoformat(),
         "signer_id": "lab-pipeline-attestor",
     }
+    if schema_version == 2:
+        manifest["output_mode"] = output_mode
     monkeypatch.setattr(
         "backend.app.domain.caller_attestation.settings.caller_attestation_hmac_keys_json",
         json.dumps({str(organization_id): {key_id: key.hex()}}),
@@ -88,6 +100,81 @@ def test_signed_dragen42_manifest_binds_artifact_without_gp_deviation_review(tmp
         item["field_id"] == "GP"
         for item in result["caller_provenance"].get("field_semantic_deviations", [])
     )
+
+
+def _write_dragen_merged_targeted_vcf(path: Path) -> str:
+    path.write_text(
+        "##fileformat=VCFv4.2\\n"
+        "##source=DRAGEN_SNV\\n"
+        "##source=DRAGEN_TARGETED\\n"
+        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Event type">\\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior values">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\t.\\tA\\tG\\t.\\tPASS\\tTARGETED;EVENT=evt1;EVENTTYPE=GENE_CONVERSION\\tGT:GP\\t0/1:3.1662,0.0,1.2\\n",
+        encoding="utf-8",
+    )
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_signed_v2_manifest_authorizes_declared_dragen_42_merged_targeted_mode(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-merged-targeted.vcf"
+    digest = _write_dragen_merged_targeted_vcf(path)
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        schema_version=2,
+        output_mode="DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+    )
+
+    result = validate_vcf_strict(
+        path,
+        caller_attestation=envelope,
+        organization_id=organization_id,
+        artifact_sha256=digest,
+        expected_reference_build="GRCh38",
+    )
+
+    assert result["caller_run_attestation"]["output_mode"] == "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE"
+    assert result["caller_semantic_attestation"]["status"] == "VERIFIED_LAB_SIGNED_RUN_MANIFEST"
+    assert result["caller_semantic_attestation"]["targeted_records_verified"] is True
+    assert result["caller_semantic_compatibility_review_required"] is True
+    assert result["caller_provenance"]["dragen_output_mode_status"] == "VERIFIED_LAB_SIGNED_RUN_MANIFEST"
+
+
+def test_signed_v2_dragen_targeted_mode_rejects_records_without_targeted_flag(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-merged-targeted-invalid.vcf"
+    digest = _write_dragen_merged_targeted_vcf(path)
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "TARGETED;EVENT=", "EVENT="
+        ),
+        encoding="utf-8",
+    )
+    # Re-sign the mutated bytes so this test reaches record-level semantic checks.
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        schema_version=2,
+        output_mode="DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as error:
+        validate_vcf_strict(
+            path,
+            caller_attestation=envelope,
+            organization_id=organization_id,
+            artifact_sha256=digest,
+            expected_reference_build="GRCh38",
+        )
+    assert error.value.code == "VCF_CALLER_EXTENSION_INVALID"
 
 
 def test_signed_manifest_with_tampered_signature_is_rejected(tmp_path, monkeypatch) -> None:
