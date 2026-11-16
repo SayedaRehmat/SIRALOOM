@@ -1853,7 +1853,8 @@ def validate_vcf_strict(
         caller_semantic_attestation is not None
         and caller_semantic_attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
         and caller_semantic_attestation.get("compatibility_profile_id") == DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID
-        and caller_semantic_attestation.get("targeted_records_verified") is True
+        and caller_semantic_attestation.get("caller_extension_detected") is True
+        and caller_semantic_attestation.get("targeted_output_filename_verified") is True
         and caller_semantic_attestation.get("targeted_output_provenance_status") == "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FILENAME"
     )
     compression: dict[str, int | str | bool] = {"format": "NONE"}
