@@ -30,8 +30,8 @@ def _vcf(path, gp_value: str, *, version: str = "VCFv4.2", event_extension: bool
 def _mark_verified_targeted_output(path):
     path.write_text(
         path.read_text(encoding="utf-8").replace(
-            "##source=DRAGEN_SNV\\n",
-            "##source=DRAGEN_SNV\\n##source=DRAGEN_TARGETED\\n",
+            "##source=DRAGEN_SNV\n",
+            "##source=DRAGEN_SNV\n##source=DRAGEN_TARGETED\n",
         ),
         encoding="utf-8",
     )
