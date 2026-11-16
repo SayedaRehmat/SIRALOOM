@@ -31,6 +31,12 @@ REQUIRED_MANIFEST_FIELDS = frozenset({
     "issued_at",
     "signer_id",
 })
+REFERENCE_IDENTITY_MANIFEST_FIELDS = frozenset({
+    "reference_assembly_accession",
+    "reference_fasta_sha256",
+    "reference_package_checksum",
+    "reference_sequence_collection_digest",
+})
 
 
 class CallerAttestationError(ValueError):
@@ -59,6 +65,8 @@ def validate_attestation_envelope(value: Any) -> dict[str, Any]:
         if schema_version == 1
         else REQUIRED_MANIFEST_FIELDS | {"output_mode"}
         if schema_version == 2
+        else REQUIRED_MANIFEST_FIELDS | {"output_mode"} | REFERENCE_IDENTITY_MANIFEST_FIELDS
+        if schema_version == 3
         else None
     )
     if expected_fields is None:
@@ -67,7 +75,7 @@ def validate_attestation_envelope(value: Any) -> dict[str, Any]:
         raise CallerAttestationError(
             "Caller run manifest has missing or unexpected fields."
         )
-    if schema_version == 2:
+    if schema_version in {2, 3}:
         output_mode = manifest.get("output_mode")
         if not isinstance(output_mode, str) or not output_mode.strip():
             raise CallerAttestationError("Caller run manifest output_mode is required.")
@@ -93,6 +101,24 @@ def validate_attestation_envelope(value: Any) -> dict[str, Any]:
             raise CallerAttestationError(f"Caller run manifest field {field} is required.")
     if not re.fullmatch(r"[0-9a-f]{64}", manifest["artifact_sha256"]):
         raise CallerAttestationError("Caller run manifest artifact_sha256 must be lowercase SHA-256.")
+    if schema_version == 3:
+        for field in (
+            "reference_assembly_accession",
+            "reference_fasta_sha256",
+            "reference_package_checksum",
+            "reference_sequence_collection_digest",
+        ):
+            if not isinstance(manifest.get(field), str) or not manifest[field].strip():
+                raise CallerAttestationError(f"Caller run manifest field {field} is required.")
+        for field in ("reference_fasta_sha256", "reference_package_checksum"):
+            if not re.fullmatch(r"[0-9a-f]{64}", manifest[field]):
+                raise CallerAttestationError(
+                    f"Caller run manifest field {field} must be lowercase SHA-256."
+                )
+        if not re.fullmatch(r"[A-Za-z0-9_-]{32}", manifest["reference_sequence_collection_digest"]):
+            raise CallerAttestationError(
+                "Caller run manifest reference_sequence_collection_digest must be a GA4GH Seqcol digest."
+            )
     if not isinstance(value.get("key_id"), str) or not value["key_id"].strip():
         raise CallerAttestationError("Caller attestation key_id is required.")
     if not isinstance(value.get("signature"), str) or not re.fullmatch(r"[0-9a-f]{64}", value["signature"]):
@@ -192,6 +218,10 @@ def verify_signed_caller_manifest(
         "issued_at": manifest["issued_at"],
         "signer_id": manifest["signer_id"],
         "output_mode": manifest.get("output_mode"),
+        "reference_assembly_accession": manifest.get("reference_assembly_accession"),
+        "reference_fasta_sha256": manifest.get("reference_fasta_sha256"),
+        "reference_package_checksum": manifest.get("reference_package_checksum"),
+        "reference_sequence_collection_digest": manifest.get("reference_sequence_collection_digest"),
         "key_id": envelope["key_id"],
         "signature_sha256": hashlib.sha256(envelope["signature"].encode("ascii")).hexdigest(),
     }
