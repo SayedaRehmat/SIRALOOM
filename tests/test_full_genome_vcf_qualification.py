@@ -130,7 +130,7 @@ def test_full_genome_reference_loader_verifies_dictionary_refget_seqcol_and_pack
     module = _load_runner()
     fasta, manifest_path, manifest = _write_reference_package(tmp_path, module)
 
-    result = module.load_reference(manifest_path, fasta)
+    result = module.load_reference(manifest_path, fasta, expected_package_checksum=manifest["package_checksum"])
 
     assert result["identity_status"] == (
         "FASTA_FAI_DICTIONARY_REFGET_SEQCOL_AND_PACKAGE_CHECKSUM_VERIFIED"
@@ -147,7 +147,7 @@ def test_full_genome_reference_loader_rejects_dictionary_checksum_mismatch(tmp_p
     dictionary.write_text(dictionary.read_text(encoding="ascii") + "@SQ\tSN:extra\tLN:1\tM5:0\n", encoding="ascii")
 
     with pytest.raises(module.QualificationBlocked, match="REFERENCE_DICTIONARY_CHECKSUM_MISMATCH"):
-        module.load_reference(manifest_path, fasta)
+        module.load_reference(manifest_path, fasta, expected_package_checksum=manifest["package_checksum"])
 
 
 def test_full_genome_reference_loader_rejects_legacy_package_schema(tmp_path: Path):
@@ -157,15 +157,15 @@ def test_full_genome_reference_loader_rejects_legacy_package_schema(tmp_path: Pa
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(module.QualificationBlocked, match="REFERENCE_SEQUENCE_IDENTITY_SCHEMA_REQUIRED"):
-        module.load_reference(manifest_path, fasta)
+        module.load_reference(manifest_path, fasta, expected_package_checksum=manifest["package_checksum"])
 
 
 def test_giab_manifest_requires_exact_reference_and_validates_sample_contigs_and_bed(
     tmp_path: Path,
 ):
     module = _load_runner()
-    fasta, reference_manifest_path, _ = _write_reference_package(tmp_path, module)
-    reference = module.load_reference(reference_manifest_path, fasta)
+    fasta, reference_manifest_path, _reference_manifest = _write_reference_package(tmp_path, module)
+    reference = module.load_reference(reference_manifest_path, fasta, expected_package_checksum=_reference_manifest["package_checksum"])
     truth = tmp_path / "HG002.truth.vcf"
     truth.write_text(
         "##fileformat=VCFv4.2\n"
@@ -190,17 +190,26 @@ def test_giab_manifest_requires_exact_reference_and_validates_sample_contigs_and
             "filename": truth.name,
             "source_url": "https://example.org/HG002.truth.vcf",
             "sha256": module.sha256_file(truth),
+            "publisher_checksum_algorithm": "SHA256",
+            "publisher_checksum": module.sha256_file(truth),
+            "publisher_checksum_source_url": "https://example.org/HG002.truth.vcf.sha256",
         },
         "confident_bed": {
             "filename": bed.name,
             "source_url": "https://example.org/HG002.confident.bed",
             "sha256": module.sha256_file(bed),
+            "publisher_checksum_algorithm": "SHA256",
+            "publisher_checksum": module.sha256_file(bed),
+            "publisher_checksum_source_url": "https://example.org/HG002.confident.bed.sha256",
         },
     }
     manifest_path = tmp_path / "giab-manifest.json"
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
-    result = module.validate_giab_manifest(manifest_path, truth, bed, reference)
+    result = module.validate_giab_manifest(
+        manifest_path, truth, bed, reference,
+        expected_manifest_sha256=module.sha256_file(manifest_path),
+    )
 
     assert result["technical_compatibility_status"] == "VERIFIED_AGAINST_EXACT_REFERENCE_PACKAGE"
     assert result["truth_vcf"]["sample_names"] == ["HG002"]
@@ -210,8 +219,8 @@ def test_giab_manifest_requires_exact_reference_and_validates_sample_contigs_and
 
 def test_giab_manifest_rejects_reference_package_mismatch(tmp_path: Path):
     module = _load_runner()
-    fasta, reference_manifest_path, _ = _write_reference_package(tmp_path, module)
-    reference = module.load_reference(reference_manifest_path, fasta)
+    fasta, reference_manifest_path, _reference_manifest = _write_reference_package(tmp_path, module)
+    reference = module.load_reference(reference_manifest_path, fasta, expected_package_checksum=_reference_manifest["package_checksum"])
     truth = tmp_path / "HG002.truth.vcf"
     truth.write_text(
         "##fileformat=VCFv4.2\n##contig=<ID=chr1,length=5>\n"
@@ -230,14 +239,27 @@ def test_giab_manifest_rejects_reference_package_mismatch(tmp_path: Path):
         "reference_package_checksum": "0" * 64,
         "reference_fasta_sha256": reference["fasta_sha256"],
         "sequence_collection_digest": reference["sequence_collection_digest"],
-        "truth_vcf": {"filename": truth.name, "source_url": "https://example.org/truth.vcf", "sha256": module.sha256_file(truth)},
-        "confident_bed": {"filename": bed.name, "source_url": "https://example.org/bed.bed", "sha256": module.sha256_file(bed)},
+        "truth_vcf": {
+            "filename": truth.name, "source_url": "https://example.org/truth.vcf",
+            "sha256": module.sha256_file(truth), "publisher_checksum_algorithm": "SHA256",
+            "publisher_checksum": module.sha256_file(truth),
+            "publisher_checksum_source_url": "https://example.org/truth.vcf.sha256",
+        },
+        "confident_bed": {
+            "filename": bed.name, "source_url": "https://example.org/bed.bed",
+            "sha256": module.sha256_file(bed), "publisher_checksum_algorithm": "SHA256",
+            "publisher_checksum": module.sha256_file(bed),
+            "publisher_checksum_source_url": "https://example.org/bed.bed.sha256",
+        },
     }
     manifest_path = tmp_path / "giab-manifest.json"
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(module.QualificationBlocked, match="GIAB_REFERENCE_PACKAGE_CHECKSUM_MISMATCH"):
-        module.validate_giab_manifest(manifest_path, truth, bed, reference)
+        module.validate_giab_manifest(
+        manifest_path, truth, bed, reference,
+        expected_manifest_sha256=module.sha256_file(manifest_path),
+    )
 
 
 def _write_signed_gatk_reference_manifest(tmp_path: Path, module, reference: dict):
@@ -278,8 +300,8 @@ def test_full_genome_runner_verifies_signed_caller_reference_package_manifest_v3
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     module = _load_runner()
-    fasta, reference_manifest_path, _ = _write_reference_package(tmp_path, module)
-    reference = module.load_reference(reference_manifest_path, fasta)
+    fasta, reference_manifest_path, _reference_manifest = _write_reference_package(tmp_path, module)
+    reference = module.load_reference(reference_manifest_path, fasta, expected_package_checksum=_reference_manifest["package_checksum"])
     source, attestation_dir, organization_id, key_id, key = _write_signed_gatk_reference_manifest(
         tmp_path, module, reference
     )
@@ -304,8 +326,8 @@ def test_full_genome_runner_blocks_signed_caller_manifest_reference_mismatch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     module = _load_runner()
-    fasta, reference_manifest_path, _ = _write_reference_package(tmp_path, module)
-    reference = module.load_reference(reference_manifest_path, fasta)
+    fasta, reference_manifest_path, _reference_manifest = _write_reference_package(tmp_path, module)
+    reference = module.load_reference(reference_manifest_path, fasta, expected_package_checksum=_reference_manifest["package_checksum"])
     source, attestation_dir, organization_id, key_id, key = _write_signed_gatk_reference_manifest(
         tmp_path, module, reference
     )
