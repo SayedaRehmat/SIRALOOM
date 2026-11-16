@@ -144,7 +144,7 @@ def load_reference(manifest_path: Path, fasta_arg: Path) -> dict[str, Any]:
         raise QualificationBlocked("REFERENCE_FASTA_SIZE_MISMATCH")
 
     with fasta.open("rb") as fasta_probe:
-        compressed = fasta_probe.read(2) == b"\\x1f\\x8b"
+        compressed = fasta_probe.read(2) == bytes((31, 139))
     if (schema_version == "1.2" and compressed) or (schema_version == "1.3" and not compressed):
         raise QualificationBlocked("REFERENCE_FASTA_COMPRESSION_SCHEMA_MISMATCH")
     gzi_path = None
