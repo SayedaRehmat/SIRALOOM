@@ -132,7 +132,7 @@ def require_gatk(expected_version: str) -> dict[str, Any]:
         part for part in (version_evidence.get("stdout"), version_evidence.get("stderr")) if part
     )
     import re
-    match = re.search(r"\b(\d+\.\d+\.\d+\.\d+)\b", version_output)
+    match = re.search(r"v?(\d+\.\d+\.\d+\.\d+)", version_output)
     if not match:
         raise QualificationBlocked(
             f"GATK_VERSION_UNRESOLVED: version command output was {version_output!r}"
