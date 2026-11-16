@@ -121,11 +121,34 @@ def load_reference(manifest_path: Path, fasta_arg: Path) -> dict[str, Any]:
     }
 
 
-def require_gatk() -> str:
+def require_gatk(expected_version: str) -> dict[str, Any]:
     executable = shutil.which("gatk")
     if not executable:
         raise QualificationBlocked("GATK_VALIDATEVARIANTS_UNAVAILABLE")
-    return executable
+    if not expected_version or not expected_version.strip():
+        raise QualificationBlocked("GATK_EXPECTED_VERSION_REQUIRED")
+    version_evidence = run_command([executable, "--version"], timeout=60)
+    version_output = "\\n".join(
+        part for part in (version_evidence.get("stdout"), version_evidence.get("stderr")) if part
+    )
+    import re
+    match = re.search(r"\\b(\\d+\\.\\d+\\.\\d+\\.\\d+)\\b", version_output)
+    if not match:
+        raise QualificationBlocked(
+            f"GATK_VERSION_UNRESOLVED: version command output was {version_output!r}"
+        )
+    observed_version = match.group(1)
+    if observed_version != expected_version:
+        raise QualificationBlocked(
+            f"GATK_VERSION_MISMATCH: expected {expected_version}, observed {observed_version}"
+        )
+    return {
+        "executable": str(Path(executable).resolve()),
+        "executable_sha256": sha256_file(Path(executable)),
+        "expected_version": expected_version,
+        "observed_version": observed_version,
+        "version_evidence": version_evidence,
+    }
 
 
 def run_happy(truth: Path, query: Path, confident_bed: Path, reference: Path, prefix: Path) -> dict:
@@ -154,7 +177,7 @@ def run_happy(truth: Path, query: Path, confident_bed: Path, reference: Path, pr
 
 def qualify_one(
     callset: dict[str, Any], *, reference: dict[str, Any], truth: Path,
-    confident_bed: Path, output: Path, gatk: str,
+    confident_bed: Path, output: Path, gatk: dict[str, Any],
 ) -> dict[str, Any]:
     caller = callset["caller"]
     source = Path(callset["local_path"]).resolve()
@@ -300,7 +323,7 @@ def qualify_one(
         gatk_input_vcf = gatk_projection_path
     gatk_log = gatk_dir / "validatevariants.stdout.log"
     gatk_evidence = run_command(
-        [gatk, "ValidateVariants", "-R", reference["fasta_path"], "-V", str(gatk_input_vcf)],
+        [gatk["executable"], "ValidateVariants", "-R", reference["fasta_path"], "-V", str(gatk_input_vcf)],
         timeout=6 * 60 * 60,
         stdout_path=gatk_log,
     )
@@ -310,6 +333,7 @@ def qualify_one(
         "input_sha256": sha256_file(gatk_input_vcf),
         "input_scope": "REFERENCE_RESOLVED_SEQUENCE_RECORDS",
         "source_vcf_sha256": result["source_sha256"],
+        "gatk_runtime": gatk,
         "compatibility_projection": gatk_projection_evidence,
     }
 
@@ -394,6 +418,7 @@ def main() -> int:
     parser.add_argument("--reference-manifest", type=Path, required=True)
     parser.add_argument("--giab-truth-vcf", type=Path, required=True)
     parser.add_argument("--giab-confident-bed", type=Path, required=True)
+    parser.add_argument("--gatk-version", required=True)
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
     args.work_dir.mkdir(parents=True, exist_ok=True)
@@ -416,7 +441,8 @@ def main() -> int:
             "confident_bed_sha256": sha256_file(args.giab_confident_bed),
             "truth_version_and_assembly_must_be_reviewed": True,
         }
-        gatk = require_gatk()
+        gatk = require_gatk(args.gatk_version)
+        report["toolchain"] = {"gatk": gatk}
         callsets = download_callsets(args.work_dir)
         observed = {item["caller"] for item in callsets}
         if observed != REQUIRED_CALLERS:
