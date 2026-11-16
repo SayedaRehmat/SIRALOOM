@@ -1689,7 +1689,6 @@ def _verify_dragen_42_fixture_attestation(
         "source_filename": "HG002_35x.hard-filtered.vcf.gz",
         "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
         "spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
-        "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
     }
     for key, value in expected.items():
         if attestation.get(key) != value:
@@ -1763,12 +1762,10 @@ def _verify_dragen_42_fixture_attestation(
         "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
         "caller_profile_id": expected["caller_profile_id"],
         "caller_release": expected["caller_release"],
-        "field": "INFO/EVENT_AND_EVENTTYPE",
+        "field": "FORMAT/GP",
         "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
         "spec_conformance": "VCFv4.2_CONFORMANT",
-        "caller_extension": expected["caller_extension"],
-        "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
-        "clinical_review_required": True,
+        "clinical_review_required": False,
         "source_record_url": expected["source_record_url"],
         "source_filename": expected["source_filename"],
         "source_md5": expected["source_md5"],
@@ -1841,12 +1838,10 @@ def validate_vcf_strict(
                     "status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
                     "caller_profile_id": manifest["caller_profile_id"],
                     "caller_release": manifest["caller_release"],
-                    "field": "INFO/EVENT_AND_EVENTTYPE",
+                    "field": "FORMAT/GP",
                     "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
                     "spec_conformance": "VCFv4.2_CONFORMANT",
-                    "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
-                    "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
-                    "clinical_review_required": True,
+                    "clinical_review_required": False,
                     "manifest_id": manifest["manifest_id"],
                     "signer_id": manifest["signer_id"],
                 }
@@ -1854,7 +1849,13 @@ def validate_vcf_strict(
             # Retain the exact public HG002 fixture attestation used by the
             # real-caller regression harness. It is not a production trust path.
             caller_semantic_attestation = _verify_dragen_42_fixture_attestation(source, caller_attestation)
-    dragen_v42_event_extension_applicable = caller_semantic_attestation is not None
+    dragen_v42_event_extension_applicable = bool(
+        caller_semantic_attestation is not None
+        and caller_semantic_attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
+        and caller_semantic_attestation.get("compatibility_profile_id") == DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID
+        and caller_semantic_attestation.get("targeted_records_verified") is True
+        and caller_semantic_attestation.get("targeted_output_provenance_status") == "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FILENAME"
+    )
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
@@ -2112,7 +2113,7 @@ def validate_vcf_strict(
                     )
                 targeted_records += 1
             dragen_event_extension_header = bool(
-                caller_semantic_attestation is not None
+                dragen_v42_event_extension_applicable
                 and fileformat == "VCFv4.2"
                 and info_definitions.get("EVENT", {}).get("Number") == "A"
                 and info_definitions.get("EVENT", {}).get("Type") == "String"
@@ -2594,7 +2595,7 @@ def validate_vcf_strict(
     event_definition = info_definitions.get("EVENT")
     eventtype_definition = info_definitions.get("EVENTTYPE")
     dragen_event_extension_detected = bool(
-        caller_semantic_attestation is not None
+        dragen_v42_event_extension_applicable
         and fileformat == "VCFv4.2"
         and event_definition is not None
         and event_definition.get("Number") == "A"
