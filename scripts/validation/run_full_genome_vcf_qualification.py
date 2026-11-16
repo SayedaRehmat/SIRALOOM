@@ -239,7 +239,11 @@ def qualify_one(
             caller_provenance=provenance,
             timeout_seconds=6 * 60 * 60,
         )
-        projection_ebi_compatibility = projection_ebi.get("compatibility_assessment") or {}
+        projection_ebi_compatibility = assess_ebi_vcf_compatibility(
+            projection_ebi,
+            caller_semantic_attestation=strict.get("caller_semantic_attestation"),
+        )
+        projection_ebi["compatibility_assessment"] = projection_ebi_compatibility
         projection_ebi_effective = projection_ebi_compatibility.get(
             "effective_status", projection_ebi.get("status")
         )
