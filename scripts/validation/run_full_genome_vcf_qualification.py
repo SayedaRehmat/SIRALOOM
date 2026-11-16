@@ -21,6 +21,9 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from uuid import UUID
+
+from backend.app.domain.caller_attestation import verify_signed_caller_manifest
 
 from backend.app.domain.ebi_vcf_validator import (
     assess_ebi_vcf_compatibility,
@@ -358,6 +361,72 @@ def validate_giab_manifest(
         "clinical_approval_status": manifest.get("clinical_approval_status", "NOT_ESTABLISHED"),
     }
 
+def load_caller_reference_attestation(
+    attestation_dir: Path | None,
+    callset: dict[str, Any],
+    source: Path,
+    reference: dict[str, Any],
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    if attestation_dir is None:
+        return None, {
+            "status": "BUILD_ONLY_UNVERIFIED",
+            "reason_code": "SIGNED_CALLER_REFERENCE_MANIFEST_NOT_SUPPLIED",
+            "reference_build": "GRCh38",
+            "exact_reference_identity_verified": False,
+        }
+    caller = str(callset["caller"]).lower()
+    manifest_path = attestation_dir / f"{caller}.json"
+    if not manifest_path.is_file():
+        raise QualificationBlocked(f"CALLER_SIGNED_MANIFEST_MISSING: {manifest_path}")
+    envelope = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = envelope.get("manifest") if isinstance(envelope, dict) else None
+    if not isinstance(manifest, dict) or manifest.get("schema_version") != 3:
+        raise QualificationBlocked(
+            f"{callset['caller']}: signed caller manifest schema v3 with exact reference identity is required"
+        )
+    try:
+        organization_id = UUID(str(manifest["organization_id"]))
+        verified = verify_signed_caller_manifest(
+            source,
+            envelope,
+            organization_id=organization_id,
+            expected_artifact_sha256=sha256_file(source),
+        )
+    except Exception as exc:
+        raise QualificationBlocked(
+            f"{callset['caller']}: signed caller reference manifest verification failed: {exc}"
+        ) from exc
+    expected = {
+        "caller_profile_id": EXPECTED_PROFILES[callset["caller"]],
+        "reference_build": "GRCh38",
+        "reference_assembly_accession": reference["assembly_accession"],
+        "reference_fasta_sha256": reference["fasta_sha256"],
+        "reference_package_checksum": reference["package_checksum"],
+        "reference_sequence_collection_digest": reference["sequence_collection_digest"],
+    }
+    for field, value in expected.items():
+        if verified.get(field) != value:
+            raise QualificationBlocked(
+                f"{callset['caller']}: signed caller manifest {field} does not match selected run/reference"
+            )
+    return envelope, {
+        "status": "EXACT_REFERENCE_IDENTITY_VERIFIED",
+        "reason_code": None,
+        "manifest_path": str(manifest_path.resolve()),
+        "manifest_sha256": sha256_file(manifest_path),
+        "manifest_id": verified["manifest_id"],
+        "caller_profile_id": verified["caller_profile_id"],
+        "caller_release": verified["caller_release"],
+        "reference_build": verified["reference_build"],
+        "reference_assembly_accession": verified["reference_assembly_accession"],
+        "reference_fasta_sha256": verified["reference_fasta_sha256"],
+        "reference_package_checksum": verified["reference_package_checksum"],
+        "reference_sequence_collection_digest": verified["reference_sequence_collection_digest"],
+        "signature_sha256": verified["signature_sha256"],
+        "exact_reference_identity_verified": True,
+    }
+
+
 def require_gatk(expected_version: str) -> dict[str, Any]:
     executable = shutil.which("gatk")
     if not executable:
@@ -415,6 +484,7 @@ def run_happy(truth: Path, query: Path, confident_bed: Path, reference: Path, pr
 def qualify_one(
     callset: dict[str, Any], *, reference: dict[str, Any], truth: Path,
     confident_bed: Path, giab: dict[str, Any], output: Path, gatk: dict[str, Any],
+    caller_attestation_dir: Path | None = None,
 ) -> dict[str, Any]:
     caller = callset["caller"]
     source = Path(callset["local_path"]).resolve()
@@ -437,12 +507,23 @@ def qualify_one(
     if provenance.get("caller_profile_id") != EXPECTED_PROFILES[caller]:
         raise QualificationBlocked(f"{caller}: caller profile identity does not match expected profile")
 
-    caller_attestation = dragen_gp_attestation(callset, source)
+    caller_attestation, caller_reference_identity = load_caller_reference_attestation(
+        caller_attestation_dir, callset, source, reference
+    )
+    result["caller_reference_identity"] = caller_reference_identity
+    if caller_attestation is None:
+        caller_attestation = dragen_gp_attestation(callset, source)
+    signed_manifest = caller_attestation.get("manifest") if isinstance(caller_attestation, dict) else None
     strict = validate_vcf_strict(
         source,
         caller_attestation=caller_attestation,
+        organization_id=UUID(signed_manifest["organization_id"]) if signed_manifest else None,
         artifact_sha256=result["source_sha256"],
         expected_reference_build="GRCh38",
+        expected_reference_assembly_accession=reference["assembly_accession"] if signed_manifest else None,
+        expected_reference_fasta_sha256=reference["fasta_sha256"] if signed_manifest else None,
+        expected_reference_package_checksum=reference["package_checksum"] if signed_manifest else None,
+        expected_reference_sequence_collection_digest=reference["sequence_collection_digest"] if signed_manifest else None,
     )
     result["caller_semantic_attestation"] = strict.get("caller_semantic_attestation")
     result["gates"]["siraloom_strict"] = {
@@ -631,6 +712,17 @@ def qualify_one(
         "normalized_strict_validation": normalized_strict,
     }
 
+    if caller_reference_identity.get("exact_reference_identity_verified") is not True:
+        result["gates"]["giab_happy"] = {
+            "status": "BLOCKED",
+            "reason_code": "CALLER_REFERENCE_EXACT_IDENTITY_UNVERIFIED",
+            "interpretation": "No GIAB qualification metric is produced until the caller run manifest binds this VCF to the exact selected reference package.",
+        }
+        result["review_required"] = True
+        result["status"] = "PASS_WITH_REVIEW_REQUIRED"
+        result["finished_at"] = utc_now()
+        return result
+
     happy_query = normalized
     happy_projection = None
     if normalized_strict.get("caller_semantic_compatibility_review_required"):
@@ -670,6 +762,7 @@ def main() -> int:
     parser.add_argument("--giab-confident-bed", type=Path, required=True)
     parser.add_argument("--giab-manifest", type=Path, required=True)
     parser.add_argument("--gatk-version", required=True)
+    parser.add_argument("--caller-attestation-dir", type=Path)
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
     args.work_dir.mkdir(parents=True, exist_ok=True)
@@ -706,6 +799,7 @@ def main() -> int:
                     callset, reference=reference, truth=args.giab_truth_vcf,
                     confident_bed=args.giab_confident_bed, giab=giab_evidence,
                     output=args.work_dir, gatk=gatk,
+                    caller_attestation_dir=args.caller_attestation_dir,
                 )
             except Exception as exc:
                 result = {
