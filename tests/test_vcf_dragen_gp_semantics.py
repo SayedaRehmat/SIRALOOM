@@ -101,7 +101,7 @@ def test_verified_dragen_v42_event_extension_is_explicitly_review_required(tmp_p
             "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
             "caller_extension_detected": True,
             "targeted_output_filename_verified": True,
-            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FILENAME",
+            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
             "clinical_review_required": True,
         },
     )
@@ -158,7 +158,7 @@ def test_dragen_v42_event_extension_rejects_event_records_without_targeted_flag(
             "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
             "caller_extension_detected": True,
             "targeted_output_filename_verified": True,
-            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FILENAME",
+            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
             "clinical_review_required": True,
         },
     )
@@ -191,7 +191,7 @@ def test_dragen_v42_event_extension_requires_targeted_flag_header(tmp_path, monk
             "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
             "caller_extension_detected": True,
             "targeted_output_filename_verified": True,
-            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FILENAME",
+            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
             "clinical_review_required": True,
         },
     )
