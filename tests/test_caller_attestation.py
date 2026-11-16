@@ -54,8 +54,15 @@ def _signed_envelope(
         "issued_at": datetime.now(timezone.utc).isoformat(),
         "signer_id": "lab-pipeline-attestor",
     }
-    if schema_version == 2:
+    if schema_version in {2, 3}:
         manifest["output_mode"] = output_mode
+    if schema_version == 3:
+        manifest.update({
+            "reference_assembly_accession": "GCA_000001405.15",
+            "reference_fasta_sha256": "1" * 64,
+            "reference_package_checksum": "2" * 64,
+            "reference_sequence_collection_digest": "A" * 32,
+        })
     monkeypatch.setattr(
         "backend.app.domain.caller_attestation.settings.caller_attestation_hmac_keys_json",
         json.dumps({str(organization_id): {key_id: key.hex()}}),
@@ -336,3 +343,56 @@ def test_untrusted_signer_and_post_signing_artifact_mutation_are_rejected(tmp_pa
             artifact_sha256=digest, expected_reference_build="GRCh38",
         )
     assert digest_error.value.code == "CALLER_ATTESTATION_ARTIFACT_DIGEST_MISMATCH"
+
+
+def test_signed_manifest_v3_binds_exact_reference_package_identity(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-reference-bound.vcf"
+    digest = _write_dragen_vcf(path, version="4.2.4")
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        schema_version=3,
+        output_mode="DRAGEN_V42_STANDARD_HARD_FILTERED",
+    )
+
+    result = validate_vcf_strict(
+        path,
+        caller_attestation=envelope,
+        organization_id=organization_id,
+        artifact_sha256=digest,
+        expected_reference_build="GRCh38",
+        expected_reference_assembly_accession="GCA_000001405.15",
+        expected_reference_fasta_sha256="1" * 64,
+        expected_reference_package_checksum="2" * 64,
+        expected_reference_sequence_collection_digest="A" * 32,
+    )
+
+    assert result["caller_run_attestation"]["reference_assembly_accession"] == "GCA_000001405.15"
+    assert result["caller_run_attestation"]["reference_fasta_sha256"] == "1" * 64
+    assert result["caller_run_attestation"]["reference_package_checksum"] == "2" * 64
+
+
+def test_signed_manifest_v3_rejects_selected_reference_package_mismatch(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-reference-mismatch.vcf"
+    digest = _write_dragen_vcf(path, version="4.2.4")
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        schema_version=3,
+        output_mode="DRAGEN_V42_STANDARD_HARD_FILTERED",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as error:
+        validate_vcf_strict(
+            path,
+            caller_attestation=envelope,
+            organization_id=organization_id,
+            artifact_sha256=digest,
+            expected_reference_build="GRCh38",
+            expected_reference_package_checksum="3" * 64,
+        )
+    assert error.value.code == "VCF_CALLER_ATTESTATION_REFERENCE_IDENTITY_CONFLICT"
