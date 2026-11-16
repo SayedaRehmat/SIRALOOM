@@ -1892,6 +1892,11 @@ def validate_vcf_strict(
                     "clinical_review_required": False,
                     "manifest_id": manifest["manifest_id"],
                     "signer_id": manifest["signer_id"],
+                    "output_mode": manifest.get("output_mode"),
+                    "output_mode_status": (
+                        "VERIFIED_LAB_SIGNED_RUN_MANIFEST"
+                        if manifest.get("output_mode") else "NOT_ATTESTED"
+                    ),
                 }
                 output_mode = manifest.get("output_mode")
                 if output_mode in {
