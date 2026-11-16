@@ -202,6 +202,10 @@ def validate_vcf(
     organization_id: UUID | None = None,
     artifact_sha256: str | None = None,
     expected_reference_build: str | None = None,
+    expected_reference_assembly_accession: str | None = None,
+    expected_reference_fasta_sha256: str | None = None,
+    expected_reference_package_checksum: str | None = None,
+    expected_reference_sequence_collection_digest: str | None = None,
 ) -> ValidationResult:
     p = Path(path)
     if classify_filename(p.name) != "VCF":
@@ -249,6 +253,10 @@ def validate_vcf(
             organization_id=organization_id,
             artifact_sha256=artifact_sha256,
             expected_reference_build=expected_reference_build,
+            expected_reference_assembly_accession=expected_reference_assembly_accession,
+            expected_reference_fasta_sha256=expected_reference_fasta_sha256,
+            expected_reference_package_checksum=expected_reference_package_checksum,
+            expected_reference_sequence_collection_digest=expected_reference_sequence_collection_digest,
         )
         ebi_compatibility = assess_ebi_vcf_compatibility(
             ebi_validation,
