@@ -9,9 +9,11 @@ BED. A caller is qualified only when every required gate executes and passes.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -25,7 +27,16 @@ from backend.app.domain.ebi_vcf_validator import (
     run_ebi_vcf_assembly_checker,
     run_ebi_vcf_validator,
 )
-from backend.app.domain.reference_package import sha256_file, validate_fasta_index_consistency
+from backend.app.domain.reference_identity import (
+    inspect_fasta_sequence_identity,
+    validate_sequence_dictionary,
+)
+from backend.app.domain.reference_package import (
+    contig_manifest_sha256,
+    sha256_file,
+    validate_fasta_index_consistency,
+)
+from backend.app.domain.reference import validate_bgzf_gzi_index
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_compatibility import create_dragen_v42_event_projection
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
@@ -84,42 +95,267 @@ def run_command(command: list[str], *, timeout: int, stdout_path: Path | None = 
     return evidence
 
 
+def _reference_package_checksum(manifest: dict[str, Any]) -> str:
+    schema_version = str(manifest.get("schema_version") or "")
+    package_payload = {
+        "schema_version": schema_version,
+        "genome_build": "GRCh38",
+        "version": str(manifest.get("package_version") or ""),
+        "fasta_sha256": str(manifest.get("fasta_sha256") or ""),
+        "fai_sha256": str(manifest.get("fai_sha256") or ""),
+        "contigs_sha256": str(manifest.get("contigs_sha256") or ""),
+        "contig_policy": "EXACT",
+        "assembly_name": str(manifest.get("assembly_name") or ""),
+        "assembly_accession": str(manifest.get("assembly_accession") or ""),
+        "reference_source": str(manifest.get("reference_source") or ""),
+        "sequence_scope": str(manifest.get("sequence_scope") or ""),
+    }
+    if schema_version == "1.3":
+        package_payload["gzi_sha256"] = str(manifest.get("gzi_sha256") or "")
+    if schema_version in {"1.2", "1.3"}:
+        package_payload["dictionary_sha256"] = str(manifest.get("dictionary_sha256") or "")
+        package_payload["sequence_collection_digest"] = str(
+            manifest.get("sequence_collection_digest") or ""
+        )
+    return hashlib.sha256(
+        json.dumps(package_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
 def load_reference(manifest_path: Path, fasta_arg: Path) -> dict[str, Any]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    schema_version = str(manifest.get("schema_version") or "")
+    if schema_version not in {"1.2", "1.3"}:
+        raise QualificationBlocked(
+            "REFERENCE_SEQUENCE_IDENTITY_SCHEMA_REQUIRED: full-genome qualification requires "
+            "reference package schema 1.2 (plain FASTA) or 1.3 (BGZF FASTA) with Refget/Seqcol identity."
+        )
     fasta = fasta_arg.resolve()
     fai = Path(str(fasta) + ".fai")
     if not fasta.is_file() or not fai.is_file():
         raise QualificationBlocked("REFERENCE_ASSET_MISSING: full FASTA and adjacent .fai are required")
-    expected_fasta = manifest.get("fasta_sha256")
-    expected_fai = manifest.get("fai_sha256")
+    expected_fasta = str(manifest.get("fasta_sha256") or "")
+    expected_fai = str(manifest.get("fai_sha256") or "")
     if not expected_fasta or sha256_file(fasta) != expected_fasta:
         raise QualificationBlocked("REFERENCE_FASTA_CHECKSUM_MISMATCH")
     if not expected_fai or sha256_file(fai) != expected_fai:
         raise QualificationBlocked("REFERENCE_FAI_CHECKSUM_MISMATCH")
+    if manifest.get("fasta_size_bytes") is not None and fasta.stat().st_size != int(manifest["fasta_size_bytes"]):
+        raise QualificationBlocked("REFERENCE_FASTA_SIZE_MISMATCH")
+
+    compressed = fasta.read_bytes()[:2] == b"\x1f\x8b"
+    if (schema_version == "1.2" and compressed) or (schema_version == "1.3" and not compressed):
+        raise QualificationBlocked("REFERENCE_FASTA_COMPRESSION_SCHEMA_MISMATCH")
+    gzi_path = None
+    gzi_sha = None
+    if schema_version == "1.3":
+        gzi_value = manifest.get("gzi_path")
+        gzi_path = Path(str(gzi_value or ""))
+        if not gzi_path.is_file():
+            raise QualificationBlocked("REFERENCE_GZI_MISSING")
+        gzi_sha = sha256_file(gzi_path)
+        if gzi_sha != str(manifest.get("gzi_sha256") or ""):
+            raise QualificationBlocked("REFERENCE_GZI_CHECKSUM_MISMATCH")
+        try:
+            validate_bgzf_gzi_index(fasta, gzi_path)
+        except Exception as exc:
+            raise QualificationBlocked(f"REFERENCE_GZI_INVALID: {exc}") from exc
+
     contigs = validate_fasta_index_consistency(fasta, fai)
     if contigs != manifest.get("contigs"):
         raise QualificationBlocked("REFERENCE_CONTIG_MANIFEST_MISMATCH")
+    contigs_sha = contig_manifest_sha256(contigs)
+    if contigs_sha != str(manifest.get("contigs_sha256") or ""):
+        raise QualificationBlocked("REFERENCE_CONTIG_MANIFEST_CHECKSUM_MISMATCH")
     if manifest.get("contig_policy") != "EXACT":
         raise QualificationBlocked("REFERENCE_CONTIG_POLICY_MUST_BE_EXACT")
-    if not manifest.get("assembly_accession") or not manifest.get("sequence_scope"):
-        raise QualificationBlocked("REFERENCE_ASSEMBLY_IDENTITY_INCOMPLETE")
+    for key in ("assembly_name", "assembly_accession", "reference_source", "sequence_scope", "package_version"):
+        if not manifest.get(key):
+            raise QualificationBlocked(f"REFERENCE_ASSEMBLY_IDENTITY_INCOMPLETE: {key}")
+
+    dictionary_value = manifest.get("dictionary_path")
+    dictionary = Path(str(dictionary_value)) if dictionary_value else fasta.with_suffix(".dict")
+    if not dictionary.is_file():
+        raise QualificationBlocked("REFERENCE_DICTIONARY_MISSING")
+    dictionary_sha = sha256_file(dictionary)
+    if dictionary_sha != str(manifest.get("dictionary_sha256") or ""):
+        raise QualificationBlocked("REFERENCE_DICTIONARY_CHECKSUM_MISMATCH")
+    try:
+        sequence_identity = inspect_fasta_sequence_identity(fasta)
+        dictionary_identity = validate_sequence_dictionary(
+            dictionary, sequence_identity["sequences"]
+        )
+    except Exception as exc:
+        raise QualificationBlocked(f"REFERENCE_SEQUENCE_IDENTITY_INVALID: {exc}") from exc
+    if sequence_identity["sequences"] != manifest.get("sequence_manifest"):
+        raise QualificationBlocked("REFERENCE_SEQUENCE_MANIFEST_MISMATCH")
+    if sequence_identity["sequence_collection_digest"] != manifest.get("sequence_collection_digest"):
+        raise QualificationBlocked("REFERENCE_SEQUENCE_COLLECTION_DIGEST_MISMATCH")
+
+    expected_package_checksum = _reference_package_checksum(manifest)
+    if not manifest.get("package_checksum") or manifest["package_checksum"] != expected_package_checksum:
+        raise QualificationBlocked("REFERENCE_PACKAGE_CHECKSUM_MISMATCH")
+
     return {
         "manifest_path": str(manifest_path.resolve()),
         "manifest_sha256": sha256_file(manifest_path),
+        "schema_version": schema_version,
         "fasta_path": str(fasta),
         "fasta_sha256": expected_fasta,
         "fai_path": str(fai),
         "fai_sha256": expected_fai,
+        "dictionary_path": str(dictionary.resolve()),
+        "dictionary_sha256": dictionary_sha,
+        "dictionary_identity": dictionary_identity,
         "assembly_name": manifest["assembly_name"],
         "assembly_accession": manifest["assembly_accession"],
+        "reference_source": manifest["reference_source"],
         "sequence_scope": manifest["sequence_scope"],
         "package_version": manifest["package_version"],
-        "package_checksum": manifest.get("package_checksum"),
+        "package_checksum": expected_package_checksum,
+        "contigs_sha256": contigs_sha,
+        "sequence_manifest": sequence_identity["sequences"],
+        "sequence_collection_digest": sequence_identity["sequence_collection_digest"],
+        "gzi_path": str(gzi_path.resolve()) if gzi_path else None,
+        "gzi_sha256": gzi_sha,
         "contigs": contigs,
         "contig_count": len(contigs),
         "scope": "FULL_REFERENCE_PACKAGE",
+        "identity_status": "FASTA_FAI_DICTIONARY_REFGET_SEQCOL_AND_PACKAGE_CHECKSUM_VERIFIED",
     }
 
+
+def _open_text(path: Path):
+    return gzip.open(path, "rt", encoding="utf-8") if path.name.lower().endswith((".gz", ".bgz")) else path.open("r", encoding="utf-8")
+
+
+def validate_giab_manifest(
+    manifest_path: Path,
+    truth_vcf: Path,
+    confident_bed: Path,
+    reference: dict[str, Any],
+) -> dict[str, Any]:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    required = (
+        "dataset_id", "dataset_version", "sample_id", "variant_scope",
+        "assembly_accession", "reference_package_checksum", "reference_fasta_sha256",
+        "sequence_collection_digest", "truth_vcf", "confident_bed",
+    )
+    missing = [key for key in required if not manifest.get(key)]
+    if missing:
+        raise QualificationBlocked("GIAB_MANIFEST_FIELDS_MISSING: " + ",".join(missing))
+    if manifest.get("schema_version") != 1:
+        raise QualificationBlocked("GIAB_MANIFEST_SCHEMA_UNSUPPORTED")
+    if manifest["variant_scope"] != "GERMLINE_SNV_INDEL":
+        raise QualificationBlocked("GIAB_VARIANT_SCOPE_MUST_BE_GERMLINE_SNV_INDEL")
+    if manifest["assembly_accession"] != reference["assembly_accession"]:
+        raise QualificationBlocked("GIAB_ASSEMBLY_ACCESSION_MISMATCH")
+    if manifest["reference_package_checksum"] != reference["package_checksum"]:
+        raise QualificationBlocked("GIAB_REFERENCE_PACKAGE_CHECKSUM_MISMATCH")
+    if manifest["reference_fasta_sha256"] != reference["fasta_sha256"]:
+        raise QualificationBlocked("GIAB_REFERENCE_FASTA_IDENTITY_MISMATCH")
+    if manifest["sequence_collection_digest"] != reference["sequence_collection_digest"]:
+        raise QualificationBlocked("GIAB_REFERENCE_SEQCOL_IDENTITY_MISMATCH")
+
+    for key, artifact in (("truth_vcf", truth_vcf), ("confident_bed", confident_bed)):
+        entry = manifest[key]
+        if not isinstance(entry, dict):
+            raise QualificationBlocked(f"GIAB_{key.upper()}_MANIFEST_INVALID")
+        source_url = str(entry.get("source_url") or "")
+        if not source_url.startswith("https://"):
+            raise QualificationBlocked(f"GIAB_{key.upper()}_SOURCE_URL_REQUIRED")
+        if Path(str(entry.get("filename") or "")).name != artifact.name:
+            raise QualificationBlocked(f"GIAB_{key.upper()}_FILENAME_MISMATCH")
+        actual_sha = sha256_file(artifact)
+        if actual_sha != str(entry.get("sha256") or ""):
+            raise QualificationBlocked(f"GIAB_{key.upper()}_CHECKSUM_MISMATCH")
+
+    reference_contigs = {str(item["name"]): int(item["length"]) for item in reference["contigs"]}
+    sample_names: list[str] = []
+    declared_contigs: dict[str, int] = {}
+    with _open_text(truth_vcf) as handle:
+        for line in handle:
+            if line.startswith("##contig=<"):
+                id_match = re.search(r"(?:^|,)ID=([^,>]+)", line.strip()[10:-1])
+                length_match = re.search(r"(?:^|,)length=(\d+)", line.strip()[10:-1], flags=re.IGNORECASE)
+                if not id_match or not length_match:
+                    raise QualificationBlocked("GIAB_TRUTH_VCF_CONTIG_HEADER_INCOMPLETE")
+                declared_contigs[id_match.group(1)] = int(length_match.group(1))
+            elif line.startswith("#CHROM"):
+                columns = line.rstrip("\r\n").split("\t")
+                sample_names = columns[9:] if len(columns) > 9 else []
+                break
+            elif not line.startswith("#"):
+                raise QualificationBlocked("GIAB_TRUTH_VCF_HEADER_TERMINATOR_MISSING")
+    if not declared_contigs:
+        raise QualificationBlocked("GIAB_TRUTH_VCF_CONTIG_DICTIONARY_MISSING")
+    for contig, length in declared_contigs.items():
+        if reference_contigs.get(contig) != length:
+            raise QualificationBlocked(
+                f"GIAB_TRUTH_VCF_CONTIG_REFERENCE_MISMATCH: {contig}:{length}"
+            )
+    if str(manifest["sample_id"]) not in sample_names:
+        raise QualificationBlocked(
+            f"GIAB_TRUTH_SAMPLE_MISMATCH: expected {manifest['sample_id']!r}, observed {sample_names}"
+        )
+
+    reference_order = {name: index for index, name in enumerate(reference_contigs)}
+    previous_key = (-1, -1)
+    previous_end: dict[str, int] = {}
+    bed_intervals = 0
+    with _open_text(confident_bed) as handle:
+        for line_number, line in enumerate(handle, 1):
+            if not line.strip() or line.startswith(("#", "track", "browser")):
+                continue
+            fields = line.rstrip("\r\n").split("\t")
+            if len(fields) < 3:
+                raise QualificationBlocked(f"GIAB_CONFIDENT_BED_INVALID_LINE:{line_number}")
+            contig = fields[0]
+            if contig not in reference_contigs:
+                raise QualificationBlocked(f"GIAB_CONFIDENT_BED_UNKNOWN_CONTIG:{contig}")
+            try:
+                start, end = int(fields[1]), int(fields[2])
+            except ValueError as exc:
+                raise QualificationBlocked(f"GIAB_CONFIDENT_BED_INVALID_COORDINATE:{line_number}") from exc
+            if start < 0 or end <= start or end > reference_contigs[contig]:
+                raise QualificationBlocked(f"GIAB_CONFIDENT_BED_INTERVAL_OUT_OF_BOUNDS:{line_number}")
+            order_key = (reference_order[contig], start)
+            if order_key < previous_key or start < previous_end.get(contig, 0):
+                raise QualificationBlocked(f"GIAB_CONFIDENT_BED_NOT_SORTED_OR_OVERLAPPING:{line_number}")
+            previous_key = order_key
+            previous_end[contig] = end
+            bed_intervals += 1
+    if bed_intervals == 0:
+        raise QualificationBlocked("GIAB_CONFIDENT_BED_EMPTY")
+
+    return {
+        "manifest_path": str(manifest_path.resolve()),
+        "manifest_sha256": sha256_file(manifest_path),
+        "schema_version": 1,
+        "dataset_id": manifest["dataset_id"],
+        "dataset_version": manifest["dataset_version"],
+        "sample_id": manifest["sample_id"],
+        "variant_scope": manifest["variant_scope"],
+        "assembly_accession": manifest["assembly_accession"],
+        "reference_package_checksum": manifest["reference_package_checksum"],
+        "reference_fasta_sha256": manifest["reference_fasta_sha256"],
+        "sequence_collection_digest": manifest["sequence_collection_digest"],
+        "truth_vcf": {
+            "path": str(truth_vcf.resolve()),
+            "sha256": sha256_file(truth_vcf),
+            "source_url": manifest["truth_vcf"]["source_url"],
+            "sample_names": sample_names,
+            "declared_contig_count": len(declared_contigs),
+        },
+        "confident_bed": {
+            "path": str(confident_bed.resolve()),
+            "sha256": sha256_file(confident_bed),
+            "source_url": manifest["confident_bed"]["source_url"],
+            "interval_count": bed_intervals,
+        },
+        "technical_compatibility_status": "VERIFIED_AGAINST_EXACT_REFERENCE_PACKAGE",
+        "clinical_approval_status": manifest.get("clinical_approval_status", "NOT_ESTABLISHED"),
+    }
 
 def require_gatk(expected_version: str) -> dict[str, Any]:
     executable = shutil.which("gatk")
