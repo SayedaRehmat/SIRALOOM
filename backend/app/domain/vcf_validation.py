@@ -1972,7 +1972,7 @@ def validate_vcf_strict(
                         )
                     info_definitions[identifier] = definition
                 elif line.startswith("##FORMAT="):
-                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no, fileformat, allow_dragen_v42_event_extension=caller_semantic_attestation is not None)
+                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no, fileformat, allow_dragen_v42_event_extension=dragen_v42_event_extension_applicable)
                     if identifier in format_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate FORMAT definition for {identifier!r} at line {line_no}",
@@ -1999,7 +1999,7 @@ def validate_vcf_strict(
                         code="VCF_HEADER_INVALID",
                     )
                 if (
-                    caller_semantic_attestation is not None
+                    dragen_v42_event_extension_applicable
                     and fileformat == "VCFv4.2"
                     and info_definitions.get("EVENT", {}).get("Number") == "A"
                     and info_definitions.get("EVENT", {}).get("Type") == "String"
