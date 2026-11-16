@@ -86,7 +86,9 @@ def test_gatk_runtime_requires_exact_observed_version_and_records_executable(
 ):
     executable = tmp_path / "gatk"
     executable.write_text("#!/bin/sh\n", encoding="utf-8")
-    monkeypatch.delenv("SIRALOOM_GATK_EXPLICIT_LOCK", raising=False)
+    lock_file = tmp_path / "gatk-explicit.lock"
+    lock_file.write_text("@EXPLICIT\\nhttps://conda.example/gatk-4.6.2.0.conda\\n", encoding="utf-8")
+    monkeypatch.setenv("SIRALOOM_GATK_EXPLICIT_LOCK", str(lock_file))
     monkeypatch.setattr(smoke.shutil, "which", lambda name: str(executable) if name == "gatk" else None)
     monkeypatch.setattr(
         smoke.subprocess,
@@ -106,7 +108,9 @@ def test_gatk_runtime_requires_exact_observed_version_and_records_executable(
 def test_gatk_runtime_rejects_version_mismatch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     executable = tmp_path / "gatk"
     executable.write_text("#!/bin/sh\n", encoding="utf-8")
-    monkeypatch.delenv("SIRALOOM_GATK_EXPLICIT_LOCK", raising=False)
+    lock_file = tmp_path / "gatk-explicit.lock"
+    lock_file.write_text("@EXPLICIT\\nhttps://conda.example/gatk-4.6.2.0.conda\\n", encoding="utf-8")
+    monkeypatch.setenv("SIRALOOM_GATK_EXPLICIT_LOCK", str(lock_file))
     monkeypatch.setattr(smoke.shutil, "which", lambda _name: str(executable))
     monkeypatch.setattr(
         smoke.subprocess,
