@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import importlib.util
 import json
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
+
+from backend.app.domain.caller_attestation import canonical_manifest_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "validation" / "run_full_genome_vcf_qualification.py"
@@ -227,3 +232,110 @@ def test_giab_manifest_rejects_reference_package_mismatch(tmp_path: Path):
 
     with pytest.raises(module.QualificationBlocked, match="GIAB_REFERENCE_PACKAGE_CHECKSUM_MISMATCH"):
         module.validate_giab_manifest(manifest_path, truth, bed, reference)
+
+
+def _write_signed_gatk_reference_manifest(tmp_path: Path, module, reference: dict):
+    organization_id = uuid4()
+    key_id = "full-genome-test-signer"
+    key = b"test-caller-reference-identity-signing-key-32-bytes"
+    source = tmp_path / "HG002_GATK.vcf"
+    source.write_text("##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n", encoding="utf-8")
+    manifest = {
+        "schema_version": 3,
+        "manifest_id": "gatk-run-reference-bound-001",
+        "organization_id": str(organization_id),
+        "artifact_sha256": module.sha256_file(source),
+        "caller_profile_id": "gatk_haplotypecaller",
+        "caller_release": "4.6.2.0",
+        "pipeline_run_id": "GATK-RUN-001",
+        "assay_id": "WGS-GERMLINE-SNV-INDEL",
+        "reference_build": "GRCh38",
+        "issued_at": datetime.now(timezone.utc).isoformat(),
+        "signer_id": "lab-pipeline-attestor",
+        "output_mode": "GATK_HAPLOTYPECALLER_GERMLINE_SNV_INDEL",
+        "reference_assembly_accession": reference["assembly_accession"],
+        "reference_fasta_sha256": reference["fasta_sha256"],
+        "reference_package_checksum": reference["package_checksum"],
+        "reference_sequence_collection_digest": reference["sequence_collection_digest"],
+    }
+    signature = hmac.new(key, canonical_manifest_bytes(manifest), hashlib.sha256).hexdigest()
+    envelope = {"manifest": manifest, "key_id": key_id, "signature": signature}
+    attestation_dir = tmp_path / "caller-attestations"
+    attestation_dir.mkdir()
+    (attestation_dir / "gatk_haplotypecaller.json").write_text(
+        json.dumps(envelope), encoding="utf-8"
+    )
+    return source, attestation_dir, organization_id, key_id, key
+
+
+def test_full_genome_runner_verifies_signed_caller_reference_package_manifest_v3(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    module = _load_runner()
+    fasta, reference_manifest_path, _ = _write_reference_package(tmp_path, module)
+    reference = module.load_reference(reference_manifest_path, fasta)
+    source, attestation_dir, organization_id, key_id, key = _write_signed_gatk_reference_manifest(
+        tmp_path, module, reference
+    )
+    monkeypatch.setattr(
+        "backend.app.domain.caller_attestation.settings.caller_attestation_hmac_keys_json",
+        json.dumps({str(organization_id): {key_id: key.hex()}}),
+    )
+
+    envelope, evidence = module.load_caller_reference_attestation(
+        attestation_dir,
+        {"caller": "GATK_HAPLOTYPECALLER"},
+        source,
+        reference,
+    )
+
+    assert envelope is not None
+    assert evidence["status"] == "EXACT_REFERENCE_IDENTITY_VERIFIED"
+    assert evidence["reference_package_checksum"] == reference["package_checksum"]
+
+
+def test_full_genome_runner_blocks_signed_caller_manifest_reference_mismatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    module = _load_runner()
+    fasta, reference_manifest_path, _ = _write_reference_package(tmp_path, module)
+    reference = module.load_reference(reference_manifest_path, fasta)
+    source, attestation_dir, organization_id, key_id, key = _write_signed_gatk_reference_manifest(
+        tmp_path, module, reference
+    )
+    envelope_path = attestation_dir / "gatk_haplotypecaller.json"
+    envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+    envelope["manifest"]["reference_package_checksum"] = "0" * 64
+    envelope["signature"] = hmac.new(
+        key, canonical_manifest_bytes(envelope["manifest"]), hashlib.sha256
+    ).hexdigest()
+    envelope_path.write_text(json.dumps(envelope), encoding="utf-8")
+    monkeypatch.setattr(
+        "backend.app.domain.caller_attestation.settings.caller_attestation_hmac_keys_json",
+        json.dumps({str(organization_id): {key_id: key.hex()}}),
+    )
+
+    with pytest.raises(module.QualificationBlocked, match="reference_package_checksum"):
+        module.load_caller_reference_attestation(
+            attestation_dir,
+            {"caller": "GATK_HAPLOTYPECALLER"},
+            source,
+            reference,
+        )
+
+
+def test_full_genome_runner_marks_public_fixture_reference_identity_unverified(tmp_path: Path):
+    module = _load_runner()
+    source = tmp_path / "public-fixture.vcf"
+    source.write_text("fixture", encoding="utf-8")
+
+    envelope, evidence = module.load_caller_reference_attestation(
+        None,
+        {"caller": "GATK_HAPLOTYPECALLER"},
+        source,
+        {"assembly_accession": "GCA_000001405.15"},
+    )
+
+    assert envelope is None
+    assert evidence["status"] == "BUILD_ONLY_UNVERIFIED"
+    assert evidence["exact_reference_identity_verified"] is False
