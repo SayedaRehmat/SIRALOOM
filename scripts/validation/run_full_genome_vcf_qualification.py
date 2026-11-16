@@ -361,10 +361,27 @@ def qualify_one(
         "normalized_strict_validation": normalized_strict,
     }
 
-    result["gates"]["giab_happy"] = run_happy(
-        truth, normalized, confident_bed, Path(reference["fasta_path"]),
+    happy_query = normalized
+    happy_projection = None
+    if normalized_strict.get("caller_semantic_compatibility_review_required"):
+        happy_projection_path = output / caller.lower() / "giab" / "normalized.event-projected.vcf"
+        happy_projection = create_dragen_v42_event_projection(
+            normalized,
+            happy_projection_path,
+            caller_semantic_attestation=normalized_strict.get("caller_semantic_attestation"),
+        )
+        happy_query = happy_projection_path
+    happy_evidence = run_happy(
+        truth, happy_query, confident_bed, Path(reference["fasta_path"]),
         output / caller.lower() / "giab" / "hap.py",
     )
+    result["gates"]["giab_happy"] = {
+        **happy_evidence,
+        "query_input_path": str(happy_query),
+        "query_input_sha256": sha256_file(happy_query),
+        "compatibility_projection": happy_projection,
+        "normalized_source_vcf_sha256": sha256_file(normalized),
+    }
     result["status"] = "PASS"
     result["finished_at"] = utc_now()
     return result
