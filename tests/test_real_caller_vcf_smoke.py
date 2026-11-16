@@ -66,7 +66,7 @@ def test_dragen_targeted_source_without_targeted_field_definitions_is_not_attest
             "##fileformat=VCFv4.2\n"
             "##source=DRAGEN_SNV\n"
             "##source=DRAGEN_TARGETED\n"
-            "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         )
 
     attestation = dragen_gp_attestation(_callset(artifact), artifact)
