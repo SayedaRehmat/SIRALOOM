@@ -722,19 +722,19 @@ def qualify_one(
     gatk_dir.mkdir(parents=True, exist_ok=True)
     gatk_input_vcf = sequence_vcf
     gatk_projection_evidence = None
-    if caller == "DRAGEN" and strict.get("caller_semantic_compatibility_review_required"):
-        sequence_attestation = dragen_gp_attestation(callset, sequence_vcf)
-        sequence_strict = validate_vcf_strict(
-            sequence_vcf,
-            caller_attestation=sequence_attestation,
-            artifact_sha256=result["source_sha256"],
-            expected_reference_build="GRCh38",
-        )
+    source_semantic_attestation = strict.get("caller_semantic_attestation")
+    dragen_event_projection_required = bool(
+        caller == "DRAGEN"
+        and isinstance(source_semantic_attestation, dict)
+        and source_semantic_attestation.get("caller_extension_detected") is True
+        and source_semantic_attestation.get("targeted_records_verified") is True
+    )
+    if dragen_event_projection_required:
         gatk_projection_path = gatk_dir / "sequence.event-projected.vcf"
         gatk_projection_evidence = create_dragen_v42_event_projection(
             sequence_vcf,
             gatk_projection_path,
-            caller_semantic_attestation=sequence_strict.get("caller_semantic_attestation"),
+            caller_semantic_attestation=source_semantic_attestation,
         )
         gatk_input_vcf = gatk_projection_path
     gatk_log = gatk_dir / "validatevariants.stdout.log"
@@ -782,11 +782,18 @@ def qualify_one(
         expected_bcftools_version="1.25",
         timeout_seconds=6 * 60 * 60,
     )
-    normalized_attestation = dragen_gp_attestation(callset, normalized)
+    normalized_validation_input = normalized
+    normalized_projection_evidence = None
+    if dragen_event_projection_required:
+        normalized_projection_path = output / caller.lower() / "normalized.event-projected.vcf"
+        normalized_projection_evidence = create_dragen_v42_event_projection(
+            normalized,
+            normalized_projection_path,
+            caller_semantic_attestation=source_semantic_attestation,
+        )
+        normalized_validation_input = normalized_projection_path
     normalized_strict = validate_vcf_strict(
-        normalized,
-        caller_attestation=normalized_attestation,
-        artifact_sha256=result["source_sha256"],
+        normalized_validation_input,
         expected_reference_build="GRCh38",
     )
     index = Path(str(normalized) + ".csi")
@@ -799,6 +806,9 @@ def qualify_one(
         "normalized_sha256": sha256_file(normalized),
         "index_sha256": sha256_file(index),
         "normalized_strict_validation": normalized_strict,
+        "normalized_validation_input_path": str(normalized_validation_input),
+        "normalized_validation_input_sha256": sha256_file(normalized_validation_input),
+        "compatibility_projection": normalized_projection_evidence,
     }
 
     if caller_reference_identity.get("exact_reference_identity_verified") is not True:
@@ -812,16 +822,8 @@ def qualify_one(
         result["finished_at"] = utc_now()
         return result
 
-    happy_query = normalized
-    happy_projection = None
-    if normalized_strict.get("caller_semantic_compatibility_review_required"):
-        happy_projection_path = output / caller.lower() / "giab" / "normalized.event-projected.vcf"
-        happy_projection = create_dragen_v42_event_projection(
-            normalized,
-            happy_projection_path,
-            caller_semantic_attestation=normalized_strict.get("caller_semantic_attestation"),
-        )
-        happy_query = happy_projection_path
+    happy_query = normalized_validation_input
+    happy_projection = normalized_projection_evidence
     happy_evidence = run_happy(
         truth, happy_query, confident_bed, Path(reference["fasta_path"]),
         output / caller.lower() / "giab" / "hap.py",
