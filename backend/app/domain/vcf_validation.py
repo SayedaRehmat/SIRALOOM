@@ -1806,6 +1806,8 @@ def _verify_dragen_42_fixture_attestation(
             "caller_extension_detected": True,
             "targeted_records_verified": False,
             "targeted_output_provenance_status": attestation["targeted_output_provenance_status"],
+            "output_mode": attestation.get("output_mode", "DRAGEN_V42_OUTPUT_MODE_UNRESOLVED"),
+            "output_mode_status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
             "clinical_review_required": True,
         })
     return result
@@ -2606,6 +2608,11 @@ def validate_vcf_strict(
         sample_record_count=sample_record_count,
         sample_records_without_gt=sample_records_without_gt,
     )
+    if caller_semantic_attestation and caller_semantic_attestation.get("output_mode"):
+        caller_provenance["dragen_output_mode"] = caller_semantic_attestation["output_mode"]
+        caller_provenance["dragen_output_mode_status"] = caller_semantic_attestation.get(
+            "output_mode_status", "FIXTURE_ATTESTED"
+        )
     gp_semantic_profile = None
     if "GP" in format_definitions:
         if fileformat in {"VCFv4.1", "VCFv4.2"}:
