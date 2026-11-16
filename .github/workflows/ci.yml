@@ -42,18 +42,6 @@ jobs:
             <(micromamba list --explicit --md5 --prefix "$EBI_VCF_VALIDATOR_PREFIX" | grep '^https://' | sort)
           test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
           test "$(vcf_assembly_checker --version)" = "vcf-assembly-checker version 0.10.2"
-      - name: Install and attest pinned GATK ValidateVariants runtime
-        run: |
-          mkdir -p artifacts
-          prefix="$RUNNER_TEMP/gatk4-4.6.2.0"
-          micromamba create --yes --strict-channel-priority --prefix "$prefix" \
-            --file configs/bioinformatics/profiles/gatk4-main-4.6.2.0-linux-64.yml
-          echo "$prefix/bin" >> "$GITHUB_PATH"
-          echo "SIRALOOM_GATK_EXPECTED_VERSION=4.6.2.0" >> "$GITHUB_ENV"
-          echo "SIRALOOM_GATK_EXPLICIT_LOCK=$GITHUB_WORKSPACE/artifacts/gatk4-4.6.2.0-linux-64.explicit.lock" >> "$GITHUB_ENV"
-          micromamba list --explicit --md5 --prefix "$prefix" > artifacts/gatk4-4.6.2.0-linux-64.explicit.lock
-          gatk --version 2>&1 | tee artifacts/gatk4-version.txt
-          grep -F "v4.6.2.0" artifacts/gatk4-version.txt
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Verify pinned BCFtools/HTSlib
@@ -237,6 +225,19 @@ jobs:
         run: |
           uv lock --check
           uv sync --locked --extra dev
+      - name: Install and attest pinned GATK ValidateVariants runtime
+        run: |
+          mkdir -p artifacts
+          prefix="$RUNNER_TEMP/gatk4-4.6.2.0"
+          micromamba create --yes --strict-channel-priority --prefix "$prefix" \
+            --file configs/bioinformatics/profiles/gatk4-main-4.6.2.0-linux-64.yml
+          export PATH="$prefix/bin:$PATH"
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          echo "SIRALOOM_GATK_EXPECTED_VERSION=4.6.2.0" >> "$GITHUB_ENV"
+          echo "SIRALOOM_GATK_EXPLICIT_LOCK=$GITHUB_WORKSPACE/artifacts/gatk4-4.6.2.0-linux-64.explicit.lock" >> "$GITHUB_ENV"
+          micromamba list --explicit --md5 --prefix "$prefix" > artifacts/gatk4-4.6.2.0-linux-64.explicit.lock
+          gatk --version 2>&1 | tee artifacts/gatk4-version.txt
+          grep -F "v4.6.2.0" artifacts/gatk4-version.txt
       - name: Download and exercise real caller-produced HG002 SNV/indel VCFs
         env:
           DATABASE_URL: sqlite:///./real-vcf-ci.db
