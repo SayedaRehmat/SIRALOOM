@@ -27,6 +27,7 @@ from backend.app.domain.ebi_vcf_validator import (
 )
 from backend.app.domain.reference_package import sha256_file, validate_fasta_index_consistency
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
+from backend.app.domain.vcf_compatibility import create_dragen_v42_event_projection
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 from backend.app.domain.vcf_validation import validate_vcf_reference_alleles, validate_vcf_strict
 from scripts.validation.run_real_caller_vcf_smoke import (
@@ -199,6 +200,34 @@ def qualify_one(
     ebi["compatibility_assessment"] = ebi_compatibility
     result["gates"]["ebi_vcf_validator"] = ebi
     ebi_effective_status = ebi_compatibility.get("effective_status", ebi.get("status"))
+    if strict.get("caller_semantic_compatibility_review_required"):
+        projection_path = output / caller.lower() / "compatibility" / "source.event-projected.vcf"
+        projection = create_dragen_v42_event_projection(
+            source,
+            projection_path,
+            caller_semantic_attestation=strict.get("caller_semantic_attestation"),
+        )
+        projection_ebi = run_ebi_vcf_validator(
+            projection_path,
+            caller_provenance=provenance,
+            timeout_seconds=6 * 60 * 60,
+        )
+        projection_ebi_compatibility = projection_ebi.get("compatibility_assessment") or {}
+        projection_ebi_effective = projection_ebi_compatibility.get(
+            "effective_status", projection_ebi.get("status")
+        )
+        result["gates"]["dragen_event_compatibility_projection"] = {
+            **projection,
+            "raw_source_ebi_status": ebi.get("status"),
+            "projection_ebi_validation": projection_ebi,
+            "projection_ebi_effective_status": projection_ebi_effective,
+        }
+        if projection_ebi_effective not in {
+            "PASS", "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+        }:
+            raise QualificationBlocked(
+                f"{caller}: EBI validation failed on the lossless DRAGEN compatibility projection"
+            )
     if ebi_effective_status not in {"PASS", "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"}:
         blocking = ebi_compatibility.get("blocking_diagnostics") or ebi.get("diagnostics") or []
         raise QualificationBlocked(
@@ -252,16 +281,36 @@ def qualify_one(
 
     gatk_dir = output / caller.lower() / "gatk"
     gatk_dir.mkdir(parents=True, exist_ok=True)
+    gatk_input_vcf = sequence_vcf
+    gatk_projection_evidence = None
+    if caller == "DRAGEN" and strict.get("caller_semantic_compatibility_review_required"):
+        sequence_attestation = dragen_gp_attestation(callset, sequence_vcf)
+        sequence_strict = validate_vcf_strict(
+            sequence_vcf,
+            caller_attestation=sequence_attestation,
+            artifact_sha256=result["source_sha256"],
+            expected_reference_build="GRCh38",
+        )
+        gatk_projection_path = gatk_dir / "sequence.event-projected.vcf"
+        gatk_projection_evidence = create_dragen_v42_event_projection(
+            sequence_vcf,
+            gatk_projection_path,
+            caller_semantic_attestation=sequence_strict.get("caller_semantic_attestation"),
+        )
+        gatk_input_vcf = gatk_projection_path
     gatk_log = gatk_dir / "validatevariants.stdout.log"
     gatk_evidence = run_command(
-        [gatk, "ValidateVariants", "-R", reference["fasta_path"], "-V", str(sequence_vcf)],
+        [gatk, "ValidateVariants", "-R", reference["fasta_path"], "-V", str(gatk_input_vcf)],
         timeout=6 * 60 * 60,
         stdout_path=gatk_log,
     )
     result["gates"]["gatk_validate_variants"] = {
         **gatk_evidence,
+        "input_path": str(gatk_input_vcf),
+        "input_sha256": sha256_file(gatk_input_vcf),
         "input_scope": "REFERENCE_RESOLVED_SEQUENCE_RECORDS",
         "source_vcf_sha256": result["source_sha256"],
+        "compatibility_projection": gatk_projection_evidence,
     }
 
     ref_check = validate_vcf_reference_alleles(sequence_vcf, reference["fasta_path"])
