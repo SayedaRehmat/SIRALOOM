@@ -211,7 +211,7 @@ def verify_signed_caller_manifest(
         )
     return {
         "status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
-        "schema_version": 1,
+        "schema_version": manifest["schema_version"],
         "manifest_id": manifest["manifest_id"],
         "organization_id": manifest["organization_id"],
         "artifact_sha256": observed_sha256,
