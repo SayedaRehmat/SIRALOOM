@@ -1111,10 +1111,11 @@ def test_vcf42_gp_ebi_false_positive_is_nonblocking_but_raw_failure_is_preserved
 def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failures_preserved(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    path = tmp_path / "dragen-v42-targeted.vcf"
+    path = tmp_path / "dragen-v42.targeted.vcf"
     path.write_text(
         "##fileformat=VCFv4.2\n"
         "##source=DRAGEN_SNV\n"
+        "##source=DRAGEN_TARGETED\n"
         '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\n'
         '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\n'
         '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
