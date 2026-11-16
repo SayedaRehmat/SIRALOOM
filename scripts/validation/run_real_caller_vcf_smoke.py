@@ -22,6 +22,7 @@ from typing import Any
 
 from backend.app.config import settings
 from backend.app.domain.ebi_vcf_validator import (
+    assess_ebi_vcf_compatibility,
     run_ebi_vcf_assembly_checker,
     run_ebi_vcf_validator,
 )
@@ -435,7 +436,11 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
                     executable_name=settings.ebi_vcf_validator_executable,
                     timeout_seconds=3600,
                 )
-                projection_assessment = projection_ebi.get("compatibility_assessment") or {}
+                projection_assessment = assess_ebi_vcf_compatibility(
+                    projection_ebi,
+                    caller_semantic_attestation=semantic_attestation,
+                )
+                projection_ebi["compatibility_assessment"] = projection_assessment
                 result["whole_file_ebi_validation"]["compatibility_projection"] = {
                     **projection,
                     "projection_ebi_validation": projection_ebi,
