@@ -1776,9 +1776,12 @@ def _verify_dragen_42_fixture_attestation(
                 "DRAGEN EVENT extension attestation requires EVENT, EVENTTYPE and TARGETED INFO declarations",
                 code="VCF_CALLER_ATTESTATION_PROVENANCE_MISSING",
             )
-        if attestation.get("caller_extension_detected") is not True or attestation.get(
-            "targeted_output_provenance_status"
-        ) != "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS":
+        if (
+            attestation.get("caller_extension_detected") is not True
+            or attestation.get("targeted_output_provenance_status")
+            != "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS"
+            or attestation.get("output_mode") != "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE"
+        ):
             raise StrictVCFValidationError(
                 "DRAGEN EVENT extension attestation lacks source-header and TARGETED-field evidence",
                 code="VCF_CALLER_ATTESTATION_INVALID",
