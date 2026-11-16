@@ -456,9 +456,18 @@ def require_gatk(expected_version: str) -> dict[str, Any]:
         raise QualificationBlocked(
             f"GATK_VERSION_MISMATCH: expected {expected_version}, observed {observed_version}"
         )
+    executable_path = Path(executable).resolve()
+    lock_value = os.environ.get("SIRALOOM_GATK_EXPLICIT_LOCK")
+    if not lock_value:
+        raise QualificationBlocked("GATK_EXPLICIT_LOCK_REQUIRED")
+    lock_path = Path(lock_value).resolve()
+    if not lock_path.is_file():
+        raise QualificationBlocked(f"GATK_EXPLICIT_LOCK_MISSING: {lock_path}")
     return {
-        "executable": str(Path(executable).resolve()),
-        "executable_sha256": sha256_file(Path(executable)),
+        "executable": str(executable_path),
+        "executable_sha256": sha256_file(executable_path),
+        "explicit_environment_lock": str(lock_path),
+        "explicit_environment_lock_sha256": sha256_file(lock_path),
         "expected_version": expected_version,
         "observed_version": observed_version,
         "version_evidence": version_evidence,
