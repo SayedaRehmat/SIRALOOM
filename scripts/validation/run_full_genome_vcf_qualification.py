@@ -154,7 +154,9 @@ def load_reference(manifest_path: Path, fasta_arg: Path) -> dict[str, Any]:
     gzi_sha = None
     if schema_version == "1.3":
         gzi_value = manifest.get("gzi_path")
-        gzi_path = Path(str(gzi_value or ""))
+        declared_gzi = Path(str(gzi_value)) if gzi_value else None
+        adjacent_gzi = Path(str(fasta) + ".gzi")
+        gzi_path = declared_gzi if declared_gzi and declared_gzi.is_file() else adjacent_gzi
         if not gzi_path.is_file():
             raise QualificationBlocked("REFERENCE_GZI_MISSING")
         gzi_sha = sha256_file(gzi_path)
@@ -178,7 +180,13 @@ def load_reference(manifest_path: Path, fasta_arg: Path) -> dict[str, Any]:
             raise QualificationBlocked(f"REFERENCE_ASSEMBLY_IDENTITY_INCOMPLETE: {key}")
 
     dictionary_value = manifest.get("dictionary_path")
-    dictionary = Path(str(dictionary_value)) if dictionary_value else fasta.with_suffix(".dict")
+    declared_dictionary = Path(str(dictionary_value)) if dictionary_value else None
+    adjacent_dictionary = fasta.with_suffix(".dict")
+    dictionary = (
+        declared_dictionary
+        if declared_dictionary and declared_dictionary.is_file()
+        else adjacent_dictionary
+    )
     if not dictionary.is_file():
         raise QualificationBlocked("REFERENCE_DICTIONARY_MISSING")
     dictionary_sha = sha256_file(dictionary)
