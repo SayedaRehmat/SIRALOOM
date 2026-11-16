@@ -335,9 +335,9 @@ def validate_giab_manifest(
             raise QualificationBlocked(
                 f"GIAB_TRUTH_VCF_CONTIG_REFERENCE_MISMATCH: {contig}:{length}"
             )
-    if str(manifest["sample_id"]) not in sample_names:
+    if sample_names != [str(manifest["sample_id"])]:
         raise QualificationBlocked(
-            f"GIAB_TRUTH_SAMPLE_MISMATCH: expected {manifest['sample_id']!r}, observed {sample_names}"
+            f"GIAB_TRUTH_SAMPLE_MISMATCH: expected exactly {[manifest['sample_id']]!r}, observed {sample_names}"
         )
 
     reference_order = {name: index for index, name in enumerate(reference_contigs)}
