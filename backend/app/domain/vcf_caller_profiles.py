@@ -410,6 +410,25 @@ def inspect_caller_provenance(
         else "NOT_DECLARED"
     )
 
+    dragen_output_mode = "NOT_APPLICABLE"
+    dragen_output_mode_status = "NOT_APPLICABLE"
+    if profile_id == "dragen_snv_germline":
+        has_targeted_source = "DRAGEN_TARGETED" in source_set
+        has_snv_source = "DRAGEN_SNV" in source_set
+        has_targeted_info = "TARGETED" in info_fields
+        if has_snv_source and has_targeted_source and has_targeted_info:
+            dragen_output_mode = "SMALL_VARIANT_VCF_WITH_TARGETED_CALLS"
+            dragen_output_mode_status = "DECLARED_HEADER_EVIDENCE_UNVERIFIED"
+        elif has_snv_source and not has_targeted_source:
+            dragen_output_mode = "STANDARD_SMALL_VARIANT_VCF"
+            dragen_output_mode_status = "DECLARED_HEADER_EVIDENCE_UNVERIFIED"
+        elif has_targeted_source and has_targeted_info:
+            dragen_output_mode = "TARGETED_CALLER_VCF"
+            dragen_output_mode_status = "DECLARED_HEADER_EVIDENCE_UNVERIFIED"
+        else:
+            dragen_output_mode = "UNRESOLVED"
+            dragen_output_mode_status = "INSUFFICIENT_HEADER_EVIDENCE"
+
     field_declaration_checks: list[dict[str, str]] = []
     field_declaration_mismatches: list[dict[str, str]] = []
     if definition:
@@ -498,6 +517,8 @@ def inspect_caller_provenance(
         "caller_name": caller_name,
         "caller_version": caller_version,
         "version_status": version_status,
+        "dragen_output_mode": dragen_output_mode,
+        "dragen_output_mode_status": dragen_output_mode_status,
         "producer_stages": sorted({item["stage"] for item in gatk_stages}),
         "declared_source_values": sorted(source_set),
         "deepvariant_model_type": unique_models[0] if len(unique_models) == 1 else None,
