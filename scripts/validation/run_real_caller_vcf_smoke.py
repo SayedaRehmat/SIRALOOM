@@ -256,12 +256,13 @@ def write_reference_dictionary(reference: Path, contig: str, sequence: str) -> P
     dictionary = reference.with_suffix(".dict")
     sequence_md5 = hashlib.md5(sequence.encode("ascii")).hexdigest()
     dictionary.write_text(
-        "@HD\\tVN:1.6\\tSO:unsorted\\n"
-        f"@SQ\\tSN:{contig}\\tLN:{len(sequence)}\\tM5:{sequence_md5}\\n",
+        chr(10).join([
+            chr(9).join(["@HD", "VN:1.6", "SO:unsorted"]),
+            chr(9).join(["@SQ", f"SN:{contig}", f"LN:{len(sequence)}", f"M5:{sequence_md5}"]),
+        ]) + chr(10),
         encoding="ascii",
     )
     return dictionary
-
 
 def build_chr20_reference(root: Path) -> tuple[Path, int]:
     compressed = root / "chr20.fa.gz"
@@ -328,6 +329,10 @@ def require_gatk(expected_version: str) -> dict[str, Any]:
             f"GATK_VERSION_MISMATCH: expected={expected_version}; observed={observed}"
         )
     executable_path = Path(executable).resolve()
+    lock_value = os.environ.get("SIRALOOM_GATK_EXPLICIT_LOCK")
+    lock_path = Path(lock_value).resolve() if lock_value else None
+    if lock_path is not None and not lock_path.is_file():
+        raise RuntimeError(f"GATK_EXPLICIT_LOCK_MISSING: {lock_path}")
     return {
         "name": "GATK",
         "expected_version": expected_version,
@@ -338,6 +343,8 @@ def require_gatk(expected_version: str) -> dict[str, Any]:
         "version_stdout": version_result.stdout,
         "version_stderr": version_result.stderr,
         "version_exit_code": version_result.returncode,
+        "explicit_environment_lock": str(lock_path) if lock_path else None,
+        "explicit_environment_lock_sha256": digest(lock_path) if lock_path else None,
     }
 
 
@@ -622,7 +629,12 @@ def exercise_one(
 
     gatk_input = Path(sequence_path)
     gatk_projection = None
-    if caller == "DRAGEN":
+    if (
+        caller == "DRAGEN"
+        and isinstance(semantic_attestation, dict)
+        and semantic_attestation.get("caller_extension_detected") is True
+        and semantic_attestation.get("targeted_records_verified") is True
+    ):
         gatk_projection_path = root / f"{caller.lower()}.chr20.event-projected.vcf"
         gatk_projection = create_dragen_v42_event_projection(
             gatk_input,
