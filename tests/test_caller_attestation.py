@@ -163,6 +163,30 @@ def test_signed_v2_manifest_authorizes_declared_dragen_42_merged_targeted_mode(t
     assert result["caller_provenance"]["dragen_output_mode_status"] == "VERIFIED_LAB_SIGNED_RUN_MANIFEST"
 
 
+def test_signed_v2_dragen_v42_output_mode_rejects_other_caller_release(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-release-conflict.vcf"
+    digest = _write_dragen_merged_targeted_vcf(path)
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        caller_release="4.3.0",
+        schema_version=2,
+        output_mode="DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as error:
+        validate_vcf_strict(
+            path,
+            caller_attestation=envelope,
+            organization_id=organization_id,
+            artifact_sha256=digest,
+            expected_reference_build="GRCh38",
+        )
+    assert error.value.code == "CALLER_ATTESTATION_INVALID"
+
+
 def test_signed_v2_dragen_targeted_mode_rejects_records_without_targeted_flag(tmp_path, monkeypatch):
     organization_id = uuid4()
     path = tmp_path / "dragen-merged-targeted-invalid.vcf"
