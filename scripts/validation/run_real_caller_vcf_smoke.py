@@ -151,7 +151,6 @@ def dragen_gp_attestation(callset: dict[str, Any], artifact: Path) -> dict[str, 
         for line in header_lines
         if line.startswith("##INFO=<ID=") and "ID=" in line
     }
-    source_marked_targeted = "DRAGEN_TARGETED" in source_values
     targeted_filename = ".targeted.vcf" in artifact.name
     targeted_header_valid = (
         "TARGETED" in definitions
@@ -192,7 +191,7 @@ def dragen_gp_attestation(callset: dict[str, Any], artifact: Path) -> dict[str, 
         ),
         "output_mode": (
             "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE"
-            if targeted_provenance_verified and "hard-filtered" in artifact.name.lower()
+            if targeted_provenance_verified and callset.get("filename") == DRAGEN_KEY
             else "DRAGEN_V42_STANDALONE_TARGETED"
             if targeted_provenance_verified and targeted_filename
             else "DRAGEN_V42_OUTPUT_MODE_UNRESOLVED"
