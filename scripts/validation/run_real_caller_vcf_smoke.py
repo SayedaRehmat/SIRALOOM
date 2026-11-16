@@ -21,9 +21,13 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.config import settings
-from backend.app.domain.ebi_vcf_validator import run_ebi_vcf_assembly_checker
+from backend.app.domain.ebi_vcf_validator import (
+    run_ebi_vcf_assembly_checker,
+    run_ebi_vcf_validator,
+)
 from backend.app.domain.ingestion import validate_vcf
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
+from backend.app.domain.vcf_compatibility import create_dragen_v42_event_projection
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 from backend.app.domain.vcf_validation import (
     validate_vcf_reference_alleles,
@@ -411,6 +415,40 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
         }
         if not strict_passed:
             return result
+        semantic_attestation = intake_metadata.get("caller_semantic_attestation")
+        if (
+            caller == "DRAGEN"
+            and intake_metadata.get("caller_semantic_compatibility_review_required")
+        ):
+            try:
+                projection_path = root / "dragen.event-projected.vcf"
+                projection = create_dragen_v42_event_projection(
+                    source,
+                    projection_path,
+                    caller_semantic_attestation=semantic_attestation,
+                )
+                projection_ebi = run_ebi_vcf_validator(
+                    projection_path,
+                    caller_provenance=provenance,
+                    expected_version=settings.ebi_vcf_validator_version,
+                    profile_id=settings.ebi_vcf_validator_profile_id,
+                    executable_name=settings.ebi_vcf_validator_executable,
+                    timeout_seconds=3600,
+                )
+                projection_assessment = projection_ebi.get("compatibility_assessment") or {}
+                result["whole_file_ebi_validation"]["compatibility_projection"] = {
+                    **projection,
+                    "projection_ebi_validation": projection_ebi,
+                    "projection_ebi_effective_status": projection_assessment.get(
+                        "effective_status", projection_ebi.get("status")
+                    ),
+                }
+            except Exception as projection_error:
+                result["whole_file_ebi_validation"]["compatibility_projection"] = {
+                    "status": "ERROR",
+                    "error_type": type(projection_error).__name__,
+                    "error": str(projection_error),
+                }
     except Exception as error:
         result["whole_file_intake_validation"] = {
             "status": "ERROR",
@@ -537,6 +575,15 @@ def main() -> int:
             failures.append(f"{callset['caller']}: EBI chr20 assembly validation did not pass")
         if callset["caller"] == "DRAGEN" and not (result.get("whole_file_strict_validation") or {}).get("caller_semantic_compatibility_review_required"):
             failures.append("DRAGEN: documented VCFv4.2 EVENT/EVENTTYPE caller extension was not retained as review-required")
+        if callset["caller"] == "DRAGEN":
+            projection_evidence = (
+                result.get("whole_file_ebi_validation") or {}
+            ).get("compatibility_projection") or {}
+            projection_status = projection_evidence.get("projection_ebi_effective_status")
+            if projection_status not in {
+                "PASS", "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+            }:
+                failures.append("DRAGEN: EBI validation did not pass on the lossless EVENT compatibility projection")
         if (result.get("reference_validation") or {}).get("result") not in {"PASS", "PARTIAL"}:
             failures.append(f"{callset['caller']}: selected-reference validation did not pass")
         if (result.get("normalization") or {}).get("status") != "PASS":
