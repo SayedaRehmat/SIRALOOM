@@ -30,6 +30,9 @@ def test_full_genome_runner_requires_exact_gatk_version_and_records_binary_ident
     module = _load_runner()
     executable = tmp_path / "gatk"
     executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    lock_file = tmp_path / "gatk-explicit.lock"
+    lock_file.write_text("@EXPLICIT\\nhttps://conda.example/gatk-4.6.2.0.conda\\n", encoding="utf-8")
+    monkeypatch.setenv("SIRALOOM_GATK_EXPLICIT_LOCK", str(lock_file))
     monkeypatch.setattr(module.shutil, "which", lambda name: str(executable) if name == "gatk" else None)
     monkeypatch.setattr(
         module,
@@ -55,6 +58,9 @@ def test_full_genome_runner_rejects_gatk_version_mismatch(tmp_path: Path, monkey
     module = _load_runner()
     executable = tmp_path / "gatk"
     executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    lock_file = tmp_path / "gatk-explicit.lock"
+    lock_file.write_text("@EXPLICIT\\nhttps://conda.example/gatk-4.6.2.0.conda\\n", encoding="utf-8")
+    monkeypatch.setenv("SIRALOOM_GATK_EXPLICIT_LOCK", str(lock_file))
     monkeypatch.setattr(module.shutil, "which", lambda _name: str(executable))
     monkeypatch.setattr(
         module,
