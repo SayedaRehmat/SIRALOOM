@@ -2659,6 +2659,20 @@ def validate_vcf_strict(
         sample_record_count=sample_record_count,
         sample_records_without_gt=sample_records_without_gt,
     )
+    if caller_run_attestation:
+        caller_provenance["caller_version"] = caller_run_attestation["caller_release"]
+        caller_provenance["version_status"] = "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST"
+        caller_provenance["identity_status"] = "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST"
+        caller_provenance["identity_source"] = "LAB_SIGNED_RUN_MANIFEST_AND_VCF_HEADER"
+        caller_provenance["profile_match_status"] = "SIGNED_RUN_MANIFEST_MATCH"
+    elif (
+        caller_semantic_attestation
+        and caller_semantic_attestation.get("status") == "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE"
+    ):
+        caller_provenance["caller_version"] = caller_semantic_attestation["caller_release"]
+        caller_provenance["version_status"] = "PINNED_PUBLIC_DATASET_FIXTURE"
+        caller_provenance["identity_status"] = "PINNED_PUBLIC_DATASET_FIXTURE"
+        caller_provenance["identity_source"] = "PINNED_PUBLIC_DATASET_FIXTURE_AND_VCF_HEADER"
     if caller_semantic_attestation and caller_semantic_attestation.get("output_mode"):
         caller_provenance["dragen_output_mode"] = caller_semantic_attestation["output_mode"]
         caller_provenance["dragen_output_mode_status"] = caller_semantic_attestation.get(
