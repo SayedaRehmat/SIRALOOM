@@ -354,6 +354,7 @@ def test_signed_manifest_v3_binds_exact_reference_package_identity(tmp_path, mon
         organization_id,
         monkeypatch,
         schema_version=3,
+        caller_release="4.2.4",
         output_mode="DRAGEN_V42_STANDARD_HARD_FILTERED",
     )
 
