@@ -691,8 +691,8 @@ def main() -> int:
     reference, reference_length = build_chr20_reference(args.work_dir)
 
     report: dict[str, Any] = {
-        "schema_version": 1,
-        "scope": "real sample-level germline SNV/indel caller VCF intake, validation, routing, GRCh38 chr20 REF validation, and reference-aware normalization",
+        "schema_version": 2,
+        "scope": "real sample-level germline SNV/indel caller VCF intake, SIRALOOM and EBI validation, GATK ValidateVariants, routing, GRCh38 chr20 REF validation, and reference-aware normalization",
         "reference": {
             "source": REFERENCE_URL,
             "contig": "chr20",
