@@ -125,7 +125,12 @@ def _reference_package_checksum(manifest: dict[str, Any]) -> str:
     ).hexdigest()
 
 
-def load_reference(manifest_path: Path, fasta_arg: Path) -> dict[str, Any]:
+def load_reference(
+    manifest_path: Path,
+    fasta_arg: Path,
+    *,
+    expected_package_checksum: str,
+) -> dict[str, Any]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     schema_version = str(manifest.get("schema_version") or "")
     if schema_version not in {"1.2", "1.3"}:
@@ -204,8 +209,10 @@ def load_reference(manifest_path: Path, fasta_arg: Path) -> dict[str, Any]:
     if sequence_identity["sequence_collection_digest"] != manifest.get("sequence_collection_digest"):
         raise QualificationBlocked("REFERENCE_SEQUENCE_COLLECTION_DIGEST_MISMATCH")
 
-    expected_package_checksum = _reference_package_checksum(manifest)
-    if not manifest.get("package_checksum") or manifest["package_checksum"] != expected_package_checksum:
+    computed_package_checksum = _reference_package_checksum(manifest)
+    if not expected_package_checksum or manifest.get("package_checksum") != expected_package_checksum:
+        raise QualificationBlocked("REFERENCE_PACKAGE_APPROVAL_CHECKSUM_MISMATCH")
+    if computed_package_checksum != expected_package_checksum:
         raise QualificationBlocked("REFERENCE_PACKAGE_CHECKSUM_MISMATCH")
 
     return {
@@ -224,7 +231,7 @@ def load_reference(manifest_path: Path, fasta_arg: Path) -> dict[str, Any]:
         "reference_source": manifest["reference_source"],
         "sequence_scope": manifest["sequence_scope"],
         "package_version": manifest["package_version"],
-        "package_checksum": expected_package_checksum,
+        "package_checksum": computed_package_checksum,
         "contigs_sha256": contigs_sha,
         "sequence_manifest": sequence_identity["sequences"],
         "sequence_collection_digest": sequence_identity["sequence_collection_digest"],
@@ -246,8 +253,13 @@ def validate_giab_manifest(
     truth_vcf: Path,
     confident_bed: Path,
     reference: dict[str, Any],
+    *,
+    expected_manifest_sha256: str,
 ) -> dict[str, Any]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    actual_manifest_sha256 = sha256_file(manifest_path)
+    if not expected_manifest_sha256 or actual_manifest_sha256 != expected_manifest_sha256:
+        raise QualificationBlocked("GIAB_MANIFEST_APPROVAL_CHECKSUM_MISMATCH")
     required = (
         "dataset_id", "dataset_version", "sample_id", "variant_scope",
         "assembly_accession", "reference_package_checksum", "reference_fasta_sha256",
@@ -342,7 +354,7 @@ def validate_giab_manifest(
 
     return {
         "manifest_path": str(manifest_path.resolve()),
-        "manifest_sha256": sha256_file(manifest_path),
+        "manifest_sha256": actual_manifest_sha256,
         "schema_version": 1,
         "dataset_id": manifest["dataset_id"],
         "dataset_version": manifest["dataset_version"],
@@ -775,9 +787,11 @@ def main() -> int:
     parser.add_argument("--work-dir", type=Path, required=True)
     parser.add_argument("--reference-fasta", type=Path, required=True)
     parser.add_argument("--reference-manifest", type=Path, required=True)
+    parser.add_argument("--expected-reference-package-checksum", required=True)
     parser.add_argument("--giab-truth-vcf", type=Path, required=True)
     parser.add_argument("--giab-confident-bed", type=Path, required=True)
     parser.add_argument("--giab-manifest", type=Path, required=True)
+    parser.add_argument("--expected-giab-manifest-sha256", required=True)
     parser.add_argument("--gatk-version", required=True)
     parser.add_argument("--caller-attestation-dir", type=Path)
     parser.add_argument("--report", type=Path, required=True)
@@ -793,13 +807,18 @@ def main() -> int:
         "failures": [],
     }
     try:
-        reference = load_reference(args.reference_manifest, args.reference_fasta)
+        reference = load_reference(
+            args.reference_manifest,
+            args.reference_fasta,
+            expected_package_checksum=args.expected_reference_package_checksum,
+        )
         report["reference"] = reference
         giab_evidence = validate_giab_manifest(
             args.giab_manifest,
             args.giab_truth_vcf,
             args.giab_confident_bed,
             reference,
+            expected_manifest_sha256=args.expected_giab_manifest_sha256,
         )
         report["giab"] = giab_evidence
         gatk = require_gatk(args.gatk_version)
