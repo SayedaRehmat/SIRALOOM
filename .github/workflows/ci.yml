@@ -42,6 +42,18 @@ jobs:
             <(micromamba list --explicit --md5 --prefix "$EBI_VCF_VALIDATOR_PREFIX" | grep '^https://' | sort)
           test "$(vcf_validator --version)" = "vcf_validator version 0.10.2"
           test "$(vcf_assembly_checker --version)" = "vcf-assembly-checker version 0.10.2"
+      - name: Install and attest pinned GATK ValidateVariants runtime
+        run: |
+          mkdir -p artifacts
+          prefix="$RUNNER_TEMP/gatk4-4.6.2.0"
+          micromamba create --yes --strict-channel-priority --prefix "$prefix" \
+            --file configs/bioinformatics/profiles/gatk4-main-4.6.2.0-linux-64.yml
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          echo "SIRALOOM_GATK_EXPECTED_VERSION=4.6.2.0" >> "$GITHUB_ENV"
+          echo "SIRALOOM_GATK_EXPLICIT_LOCK=$GITHUB_WORKSPACE/artifacts/gatk4-4.6.2.0-linux-64.explicit.lock" >> "$GITHUB_ENV"
+          micromamba list --explicit --md5 --prefix "$prefix" > artifacts/gatk4-4.6.2.0-linux-64.explicit.lock
+          gatk --version | tee artifacts/gatk4-version.txt
+          grep -F "v4.6.2.0" artifacts/gatk4-version.txt
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Verify pinned BCFtools/HTSlib
@@ -239,11 +251,19 @@ jobs:
       - name: Preserve real caller validation and compatibility artifacts
         if: always()
         run: |
-          mkdir -p artifacts
-          projection=/tmp/siraloom-real-caller-vcfs/dragen.event-projected.vcf
-          if [ -f "$projection" ]; then
-            cp "$projection" artifacts/dragen.event-projected.vcf
-          fi
+          mkdir -p artifacts/gatk-validatevariants
+          for projection in \
+            /tmp/siraloom-real-caller-vcfs/dragen.event-projected.vcf \
+            /tmp/siraloom-real-caller-vcfs/dragen.chr20.event-projected.vcf; do
+            if [ -f "$projection" ]; then
+              cp "$projection" artifacts/
+            fi
+          done
+          for log_dir in /tmp/siraloom-real-caller-vcfs/*_gatk_validatevariants; do
+            if [ -d "$log_dir" ]; then
+              cp -a "$log_dir" artifacts/gatk-validatevariants/
+            fi
+          done
       - name: Upload real caller validation and compatibility artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -252,6 +272,10 @@ jobs:
           path: |
             artifacts/real-caller-vcf-report.json
             artifacts/dragen.event-projected.vcf
+            artifacts/dragen.chr20.event-projected.vcf
+            artifacts/gatk4-4.6.2.0-linux-64.explicit.lock
+            artifacts/gatk4-version.txt
+            artifacts/gatk-validatevariants/**
           if-no-files-found: warn
 
   frontend:
