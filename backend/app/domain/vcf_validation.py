@@ -2713,7 +2713,6 @@ def validate_vcf_strict(
     )
     targeted_records_verified = bool(
         dragen_event_extension_detected
-        and event_records > 0
         and event_records == targeted_event_records
         and targeted_eventtype_records <= event_records
     )
