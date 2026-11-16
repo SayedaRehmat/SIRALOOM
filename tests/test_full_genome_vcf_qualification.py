@@ -140,6 +140,14 @@ def test_full_genome_reference_loader_verifies_dictionary_refget_seqcol_and_pack
     assert result["package_checksum"] == manifest["package_checksum"]
 
 
+def test_full_genome_reference_loader_requires_external_approved_package_checksum(tmp_path: Path):
+    module = _load_runner()
+    fasta, manifest_path, _manifest = _write_reference_package(tmp_path, module)
+
+    with pytest.raises(module.QualificationBlocked, match="REFERENCE_PACKAGE_APPROVAL_CHECKSUM_MISMATCH"):
+        module.load_reference(manifest_path, fasta, expected_package_checksum="0" * 64)
+
+
 def test_full_genome_reference_loader_rejects_dictionary_checksum_mismatch(tmp_path: Path):
     module = _load_runner()
     fasta, manifest_path, manifest = _write_reference_package(tmp_path, module)
@@ -215,6 +223,31 @@ def test_giab_manifest_requires_exact_reference_and_validates_sample_contigs_and
     assert result["truth_vcf"]["sample_names"] == ["HG002"]
     assert result["confident_bed"]["interval_count"] == 1
     assert result["clinical_approval_status"] == "NOT_ESTABLISHED"
+
+
+def test_giab_manifest_requires_external_approved_manifest_checksum(tmp_path: Path):
+    module = _load_runner()
+    fasta, reference_manifest_path, _reference_manifest = _write_reference_package(tmp_path, module)
+    reference = module.load_reference(
+        reference_manifest_path, fasta,
+        expected_package_checksum=_reference_manifest["package_checksum"],
+    )
+    truth = tmp_path / "HG002.truth.vcf"
+    truth.write_text(
+        "##fileformat=VCFv4.2\\n##contig=<ID=chr1,length=5>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tHG002\\n",
+        encoding="utf-8",
+    )
+    bed = tmp_path / "HG002.confident.bed"
+    bed.write_text("chr1\\t0\\t5\\n", encoding="utf-8")
+    manifest_path = tmp_path / "giab-manifest.json"
+    manifest_path.write_text("{}", encoding="utf-8")
+
+    with pytest.raises(module.QualificationBlocked, match="GIAB_MANIFEST_APPROVAL_CHECKSUM_MISMATCH"):
+        module.validate_giab_manifest(
+            manifest_path, truth, bed, reference,
+            expected_manifest_sha256="0" * 64,
+        )
 
 
 def test_giab_manifest_rejects_reference_package_mismatch(tmp_path: Path):
