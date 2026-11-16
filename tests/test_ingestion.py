@@ -1138,8 +1138,10 @@ def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failure
             "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
             "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
             "caller_extension_detected": True,
-            "targeted_output_filename_verified": True,
-            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FILENAME",
+            "targeted_output_filename_verified": False,
+            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
+            "output_mode": "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+            "output_mode_status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
             "clinical_review_required": True,
         },
     )
