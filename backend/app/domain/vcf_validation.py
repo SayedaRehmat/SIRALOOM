@@ -1824,6 +1824,10 @@ def validate_vcf_strict(
     organization_id: UUID | None = None,
     artifact_sha256: str | None = None,
     expected_reference_build: str | None = None,
+    expected_reference_assembly_accession: str | None = None,
+    expected_reference_fasta_sha256: str | None = None,
+    expected_reference_package_checksum: str | None = None,
+    expected_reference_sequence_collection_digest: str | None = None,
 ) -> dict:
     source = Path(path)
     caller_semantic_attestation = None
@@ -1853,6 +1857,18 @@ def validate_vcf_strict(
                     raise StrictVCFValidationError(
                         "Signed caller run manifest reference build conflicts with the artifact assembly selection.",
                         code="VCF_CALLER_ATTESTATION_BUILD_CONFLICT",
+                    )
+            expected_reference_identity = {
+                "reference_assembly_accession": expected_reference_assembly_accession,
+                "reference_fasta_sha256": expected_reference_fasta_sha256,
+                "reference_package_checksum": expected_reference_package_checksum,
+                "reference_sequence_collection_digest": expected_reference_sequence_collection_digest,
+            }
+            for field, expected_value in expected_reference_identity.items():
+                if expected_value is not None and caller_run_attestation.get(field) != expected_value:
+                    raise StrictVCFValidationError(
+                        f"Signed caller run manifest {field} conflicts with the selected reference package.",
+                        code="VCF_CALLER_ATTESTATION_REFERENCE_IDENTITY_CONFLICT",
                     )
             if header_provenance.get("caller_profile_id") != manifest["caller_profile_id"]:
                 raise StrictVCFValidationError(
