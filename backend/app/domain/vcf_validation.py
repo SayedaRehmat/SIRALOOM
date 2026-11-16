@@ -1753,12 +1753,38 @@ def _verify_dragen_42_fixture_attestation(
     declared_release = provenance.get("caller_version")
     if declared_release:
         normalized_release = declared_release.removeprefix("v")
-        if normalized_release not in {"4.2", "4.2.0"}:
+        if normalized_release not in {"4.2", "4.2.0", "4.2.4"}:
             raise StrictVCFValidationError(
                 "DRAGEN GP semantic attestation conflicts with the VCF-declared caller release",
                 code="VCF_CALLER_ATTESTATION_RELEASE_CONFLICT",
             )
-    return {
+
+    event_extension_claimed = (
+        attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
+        and attestation.get("compatibility_profile_id") == DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID
+    )
+    if event_extension_claimed:
+        declared_sources = set(provenance.get("declared_source_values") or [])
+        declared_info = set(provenance.get("declared_info_fields") or [])
+        if not {"DRAGEN_SNV", "DRAGEN_TARGETED"}.issubset(declared_sources):
+            raise StrictVCFValidationError(
+                "DRAGEN EVENT extension attestation requires both DRAGEN_SNV and DRAGEN_TARGETED source declarations",
+                code="VCF_CALLER_ATTESTATION_PROVENANCE_MISSING",
+            )
+        if not {"EVENT", "EVENTTYPE", "TARGETED"}.issubset(declared_info):
+            raise StrictVCFValidationError(
+                "DRAGEN EVENT extension attestation requires EVENT, EVENTTYPE and TARGETED INFO declarations",
+                code="VCF_CALLER_ATTESTATION_PROVENANCE_MISSING",
+            )
+        if attestation.get("caller_extension_detected") is not True or attestation.get(
+            "targeted_output_provenance_status"
+        ) != "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS":
+            raise StrictVCFValidationError(
+                "DRAGEN EVENT extension attestation lacks source-header and TARGETED-field evidence",
+                code="VCF_CALLER_ATTESTATION_INVALID",
+            )
+
+    result = {
         "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
         "caller_profile_id": expected["caller_profile_id"],
         "caller_release": expected["caller_release"],
@@ -1772,6 +1798,17 @@ def _verify_dragen_42_fixture_attestation(
         "source_sha256": source_sha256,
         "artifact_sha256": observed_sha256,
     }
+    if event_extension_claimed:
+        result.update({
+            "field": "FORMAT/GP;INFO/EVENT;INFO/EVENTTYPE",
+            "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
+            "caller_extension_detected": True,
+            "targeted_records_verified": False,
+            "targeted_output_provenance_status": attestation["targeted_output_provenance_status"],
+            "clinical_review_required": True,
+        })
+    return result
 
 
 def validate_vcf_strict(
@@ -1854,8 +1891,8 @@ def validate_vcf_strict(
         and caller_semantic_attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
         and caller_semantic_attestation.get("compatibility_profile_id") == DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID
         and caller_semantic_attestation.get("caller_extension_detected") is True
-        and caller_semantic_attestation.get("targeted_output_filename_verified") is True
-        and caller_semantic_attestation.get("targeted_output_provenance_status") == "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FILENAME"
+        and caller_semantic_attestation.get("targeted_output_provenance_status")
+        == "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS"
     )
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
