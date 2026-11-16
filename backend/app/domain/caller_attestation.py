@@ -71,14 +71,19 @@ def validate_attestation_envelope(value: Any) -> dict[str, Any]:
         output_mode = manifest.get("output_mode")
         if not isinstance(output_mode, str) or not output_mode.strip():
             raise CallerAttestationError("Caller run manifest output_mode is required.")
-        if manifest.get("caller_profile_id") == "dragen_snv_germline" and output_mode not in {
-            "DRAGEN_V42_STANDARD_HARD_FILTERED",
-            "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
-            "DRAGEN_V42_STANDALONE_TARGETED",
-        }:
-            raise CallerAttestationError(
-                "DRAGEN v4.2 manifest output_mode is not an approved compatibility-profile mode."
-            )
+        if manifest.get("caller_profile_id") == "dragen_snv_germline":
+            if output_mode not in {
+                "DRAGEN_V42_STANDARD_HARD_FILTERED",
+                "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+                "DRAGEN_V42_STANDALONE_TARGETED",
+            }:
+                raise CallerAttestationError(
+                    "DRAGEN v4.2 manifest output_mode is not an approved compatibility-profile mode."
+                )
+            if manifest.get("caller_release") not in {"4.2", "4.2.0", "4.2.4"}:
+                raise CallerAttestationError(
+                    "DRAGEN_V42 output_mode is incompatible with the signed caller_release."
+                )
     for field in (
         "manifest_id", "organization_id", "artifact_sha256", "caller_profile_id",
         "caller_release", "pipeline_run_id", "assay_id", "reference_build",
