@@ -286,13 +286,30 @@ def validate_giab_manifest(
         if not isinstance(entry, dict):
             raise QualificationBlocked(f"GIAB_{key.upper()}_MANIFEST_INVALID")
         source_url = str(entry.get("source_url") or "")
+        publisher_checksum_url = str(entry.get("publisher_checksum_source_url") or "")
         if not source_url.startswith("https://"):
             raise QualificationBlocked(f"GIAB_{key.upper()}_SOURCE_URL_REQUIRED")
+        if not publisher_checksum_url.startswith("https://"):
+            raise QualificationBlocked(f"GIAB_{key.upper()}_PUBLISHER_CHECKSUM_SOURCE_REQUIRED")
         if Path(str(entry.get("filename") or "")).name != artifact.name:
             raise QualificationBlocked(f"GIAB_{key.upper()}_FILENAME_MISMATCH")
         actual_sha = sha256_file(artifact)
         if actual_sha != str(entry.get("sha256") or ""):
             raise QualificationBlocked(f"GIAB_{key.upper()}_CHECKSUM_MISMATCH")
+        checksum_algorithm = str(entry.get("publisher_checksum_algorithm") or "").upper()
+        publisher_checksum = str(entry.get("publisher_checksum") or "").lower()
+        if checksum_algorithm not in {"MD5", "SHA256"} or not publisher_checksum:
+            raise QualificationBlocked(f"GIAB_{key.upper()}_PUBLISHER_CHECKSUM_MISSING")
+        if checksum_algorithm == "SHA256":
+            observed_publisher_checksum = actual_sha
+        else:
+            md5_digest = hashlib.md5(usedforsecurity=False)
+            with artifact.open("rb") as checksum_handle:
+                for chunk in iter(lambda: checksum_handle.read(1024 * 1024), b""):
+                    md5_digest.update(chunk)
+            observed_publisher_checksum = md5_digest.hexdigest()
+        if observed_publisher_checksum != publisher_checksum:
+            raise QualificationBlocked(f"GIAB_{key.upper()}_PUBLISHER_CHECKSUM_MISMATCH")
 
     reference_contigs = {str(item["name"]): int(item["length"]) for item in reference["contigs"]}
     sample_names: list[str] = []
@@ -368,6 +385,9 @@ def validate_giab_manifest(
             "path": str(truth_vcf.resolve()),
             "sha256": sha256_file(truth_vcf),
             "source_url": manifest["truth_vcf"]["source_url"],
+            "publisher_checksum_algorithm": manifest["truth_vcf"]["publisher_checksum_algorithm"],
+            "publisher_checksum": manifest["truth_vcf"]["publisher_checksum"],
+            "publisher_checksum_source_url": manifest["truth_vcf"]["publisher_checksum_source_url"],
             "sample_names": sample_names,
             "declared_contig_count": len(declared_contigs),
         },
@@ -375,6 +395,9 @@ def validate_giab_manifest(
             "path": str(confident_bed.resolve()),
             "sha256": sha256_file(confident_bed),
             "source_url": manifest["confident_bed"]["source_url"],
+            "publisher_checksum_algorithm": manifest["confident_bed"]["publisher_checksum_algorithm"],
+            "publisher_checksum": manifest["confident_bed"]["publisher_checksum"],
+            "publisher_checksum_source_url": manifest["confident_bed"]["publisher_checksum_source_url"],
             "interval_count": bed_intervals,
         },
         "technical_compatibility_status": "VERIFIED_AGAINST_EXACT_REFERENCE_PACKAGE",
