@@ -1873,8 +1873,14 @@ def validate_vcf_strict(
                 )
             if (
                 manifest["caller_profile_id"] == "dragen_snv_germline"
-                and manifest["caller_release"] in {"4.2", "4.2.0"}
-                and "GP" in header_provenance.get("declared_format_fields", [])
+                and manifest["caller_release"] in {"4.2", "4.2.0", "4.2.4"}
+                and (
+                    "GP" in header_provenance.get("declared_format_fields", [])
+                    or manifest.get("output_mode") in {
+                        "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+                        "DRAGEN_V42_STANDALONE_TARGETED",
+                    }
+                )
             ):
                 caller_semantic_attestation = {
                     "status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
@@ -1887,6 +1893,41 @@ def validate_vcf_strict(
                     "manifest_id": manifest["manifest_id"],
                     "signer_id": manifest["signer_id"],
                 }
+                output_mode = manifest.get("output_mode")
+                if output_mode in {
+                    "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+                    "DRAGEN_V42_STANDALONE_TARGETED",
+                }:
+                    declared_sources = set(header_provenance.get("declared_source_values") or [])
+                    required_sources = (
+                        {"DRAGEN_SNV", "DRAGEN_TARGETED"}
+                        if output_mode == "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE"
+                        else {"DRAGEN_TARGETED"}
+                    )
+                    declared_info = set(header_provenance.get("declared_info_fields") or [])
+                    if not required_sources.issubset(declared_sources):
+                        raise StrictVCFValidationError(
+                            "Signed DRAGEN output_mode conflicts with the VCF source declarations.",
+                            code="VCF_CALLER_ATTESTATION_OUTPUT_MODE_CONFLICT",
+                        )
+                    if not {"TARGETED", "EVENT", "EVENTTYPE"}.issubset(declared_info):
+                        raise StrictVCFValidationError(
+                            "Signed DRAGEN targeted output_mode requires TARGETED, EVENT and EVENTTYPE INFO declarations.",
+                            code="VCF_CALLER_ATTESTATION_OUTPUT_MODE_CONFLICT",
+                        )
+                    caller_semantic_attestation.update({
+                        "field": "FORMAT/GP;INFO/EVENT;INFO/EVENTTYPE",
+                        "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+                        "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
+                        "caller_extension_detected": True,
+                        "targeted_records_verified": False,
+                        "targeted_output_provenance_status": (
+                            "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST_AND_SOURCE_HEADER"
+                        ),
+                        "output_mode": output_mode,
+                        "output_mode_status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
+                        "clinical_review_required": True,
+                    })
         else:
             # Retain the exact public HG002 fixture attestation used by the
             # real-caller regression harness. It is not a production trust path.
@@ -1896,8 +1937,10 @@ def validate_vcf_strict(
         and caller_semantic_attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
         and caller_semantic_attestation.get("compatibility_profile_id") == DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID
         and caller_semantic_attestation.get("caller_extension_detected") is True
-        and caller_semantic_attestation.get("targeted_output_provenance_status")
-        == "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS"
+        and caller_semantic_attestation.get("targeted_output_provenance_status") in {
+            "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
+            "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST_AND_SOURCE_HEADER",
+        }
     )
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
