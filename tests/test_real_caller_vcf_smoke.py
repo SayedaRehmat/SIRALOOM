@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import gzip
+import subprocess
 from pathlib import Path
 
+import pytest
+
+from scripts.validation import run_real_caller_vcf_smoke as smoke
 from scripts.validation.run_real_caller_vcf_smoke import dragen_gp_attestation
 
 
@@ -75,3 +79,88 @@ def test_dragen_targeted_source_without_targeted_field_definitions_is_not_attest
     assert attestation is not None
     assert "caller_extension" not in attestation
     assert attestation["output_mode"] == "DRAGEN_V42_OUTPUT_MODE_UNRESOLVED"
+
+
+def test_gatk_runtime_requires_exact_observed_version_and_records_executable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    executable = tmp_path / "gatk"
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.delenv("SIRALOOM_GATK_EXPLICIT_LOCK", raising=False)
+    monkeypatch.setattr(smoke.shutil, "which", lambda name: str(executable) if name == "gatk" else None)
+    monkeypatch.setattr(
+        smoke.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(
+            args[0], 0, stdout="The Genome Analysis Toolkit (GATK) v4.6.2.0\n", stderr=""
+        ),
+    )
+
+    runtime = smoke.require_gatk("4.6.2.0")
+
+    assert runtime["observed_version"] == "4.6.2.0"
+    assert runtime["expected_version"] == "4.6.2.0"
+    assert runtime["executable_sha256"] == smoke.digest(executable)
+
+
+def test_gatk_runtime_rejects_version_mismatch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    executable = tmp_path / "gatk"
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    monkeypatch.delenv("SIRALOOM_GATK_EXPLICIT_LOCK", raising=False)
+    monkeypatch.setattr(smoke.shutil, "which", lambda _name: str(executable))
+    monkeypatch.setattr(
+        smoke.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(
+            args[0], 0, stdout="The Genome Analysis Toolkit (GATK) v4.6.1.0\n", stderr=""
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="GATK_VERSION_MISMATCH"):
+        smoke.require_gatk("4.6.2.0")
+
+
+def test_reference_dictionary_uses_sequence_md5_and_valid_sam_fields(tmp_path: Path):
+    reference = tmp_path / "chr20.reference.fa"
+    sequence = "ACGTN"
+    dictionary = smoke.write_reference_dictionary(reference, "chr20", sequence)
+
+    lines = dictionary.read_text(encoding="ascii").splitlines()
+    assert lines[0] == "@HD\tVN:1.6\tSO:unsorted"
+    assert lines[1].startswith("@SQ\tSN:chr20\tLN:5\tM5:")
+    assert lines[1].endswith(smoke.hashlib.md5(sequence.encode("ascii")).hexdigest())
+
+
+def test_gatk_validatevariants_persists_command_input_reference_and_exit_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    input_vcf = tmp_path / "caller.chr20.vcf"
+    input_vcf.write_text("##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n", encoding="utf-8")
+    reference = tmp_path / "chr20.reference.fa"
+    reference.write_text(">chr20\nACGT\n", encoding="ascii")
+    Path(str(reference) + ".fai").write_text("chr20\t4\t7\t4\t5\n", encoding="ascii")
+    dictionary = smoke.write_reference_dictionary(reference, "chr20", "ACGT")
+    runtime = {
+        "executable": "/opt/gatk/bin/gatk",
+        "observed_version": "4.6.2.0",
+        "executable_sha256": "a" * 64,
+    }
+    monkeypatch.setattr(
+        smoke.subprocess,
+        "run",
+        lambda command, **kwargs: subprocess.CompletedProcess(
+            command, 0, stdout="ValidateVariants completed successfully\n", stderr=""
+        ),
+    )
+
+    result = smoke.run_gatk_validate_variants(
+        runtime, "GATK_HAPLOTYPECALLER", input_vcf, reference, tmp_path,
+        source_vcf_sha256="b" * 64,
+    )
+
+    assert result["status"] == "PASS"
+    assert result["exit_code"] == 0
+    assert result["command"][1] == "ValidateVariants"
+    assert result["input_sha256"] == smoke.digest(input_vcf)
+    assert result["reference_dictionary_sha256"] == smoke.digest(dictionary)
+    assert Path(result["stdout_path"]).read_text(encoding="utf-8").startswith("ValidateVariants")
