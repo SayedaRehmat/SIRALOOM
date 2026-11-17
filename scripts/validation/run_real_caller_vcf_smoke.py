@@ -432,8 +432,10 @@ def run_gatk_validate_variants(
         })
     stdout_path = log_dir / "validatevariants.stdout.log"
     stderr_path = log_dir / "validatevariants.stderr.log"
-    stdout_path.write_text("\n".join(aggregate_stdout), encoding="utf-8")
-    stderr_path.write_text("\n".join(aggregate_stderr), encoding="utf-8")
+    stdout_payload = aggregate_stdout[0] if len(aggregate_stdout) == 1 else "\n".join(aggregate_stdout)
+    stderr_payload = aggregate_stderr[0] if len(aggregate_stderr) == 1 else "\n".join(aggregate_stderr)
+    stdout_path.write_text(stdout_payload, encoding="utf-8")
+    stderr_path.write_text(stderr_payload, encoding="utf-8")
     failed = any(item.get("status") == "FAIL" for item in runs)
     review_required = partition["unobserved_alt_record_count"] > 0
     return {
@@ -452,7 +454,9 @@ def run_gatk_validate_variants(
         "review_required": review_required,
         "allele_observation_partition": partition,
         "partition_runs": runs,
-        "command": [item.get("command") for item in runs if item.get("command")],
+        "command": next((item["command"] for item in runs if item.get("command")), []),
+        "commands": [item["command"] for item in runs if item.get("command")],
+        "exit_code": 1 if failed else 0,
         "input_path": str(input_vcf.resolve()),
         "input_sha256": digest(input_vcf),
         "input_bytes": input_vcf.stat().st_size,

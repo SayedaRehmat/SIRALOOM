@@ -88,7 +88,7 @@ def test_gatk_runtime_requires_exact_observed_version_and_records_executable(
     executable = tmp_path / "gatk"
     executable.write_text("#!/bin/sh\n", encoding="utf-8")
     lock_file = tmp_path / "gatk-explicit.lock"
-    lock_file.write_text("@EXPLICIT\\nhttps://conda.example/gatk-4.6.2.0.conda\\n", encoding="utf-8")
+    lock_file.write_text("@EXPLICIT\nhttps://conda.example/gatk-4.6.2.0.conda\n", encoding="utf-8")
     monkeypatch.setenv("SIRALOOM_GATK_EXPLICIT_LOCK", str(lock_file))
     monkeypatch.setattr(smoke.shutil, "which", lambda name: str(executable) if name == "gatk" else None)
     monkeypatch.setattr(
@@ -110,7 +110,7 @@ def test_gatk_runtime_rejects_version_mismatch(tmp_path: Path, monkeypatch: pyte
     executable = tmp_path / "gatk"
     executable.write_text("#!/bin/sh\n", encoding="utf-8")
     lock_file = tmp_path / "gatk-explicit.lock"
-    lock_file.write_text("@EXPLICIT\\nhttps://conda.example/gatk-4.6.2.0.conda\\n", encoding="utf-8")
+    lock_file.write_text("@EXPLICIT\nhttps://conda.example/gatk-4.6.2.0.conda\n", encoding="utf-8")
     monkeypatch.setenv("SIRALOOM_GATK_EXPLICIT_LOCK", str(lock_file))
     monkeypatch.setattr(smoke.shutil, "which", lambda _name: str(executable))
     monkeypatch.setattr(
@@ -185,10 +185,10 @@ def test_gatk_validatevariants_persists_command_input_reference_and_exit_evidenc
 def test_record_partition_is_lossless_and_reconciles_unobserved_alt(tmp_path: Path) -> None:
     source = tmp_path / "multi.vcf"
     source.write_text(
-        "##fileformat=VCFv4.2\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\\n"
-        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT\\t0/1\\n"
-        "1\\t11\\t.\\tA\\tT\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
+        "##fileformat=VCFv4.2\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\n"
+        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT\\t0/1\n"
+        "1\\t11\\t.\\tA\\tT\\t.\\tPASS\\t.\\tGT\\t0/1\n",
         encoding="utf-8",
     )
     result = partition_vcf_by_alt_observation(source, output_dir=tmp_path / "parts")
@@ -204,9 +204,9 @@ def test_record_partition_is_lossless_and_reconciles_unobserved_alt(tmp_path: Pa
 def test_record_partition_rejects_out_of_range_gt_index(tmp_path: Path) -> None:
     source = tmp_path / "invalid.vcf"
     source.write_text(
-        "##fileformat=VCFv4.2\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\\n"
-        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT\\t0/2\\n",
+        "##fileformat=VCFv4.2\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\n"
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT\\t0/2\n",
         encoding="utf-8",
     )
     with pytest.raises(VCFAlleleObservationAuditError, match="exceeds ALT count"):
@@ -218,15 +218,15 @@ def test_gatk_alleles_exclusion_is_scoped_to_unobserved_alt_partition(
 ) -> None:
     input_vcf = tmp_path / "caller.chr20.vcf"
     input_vcf.write_text(
-        "##fileformat=VCFv4.2\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\\n"
-        "chr20\\t1\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT\\t0/1\\n"
-        "chr20\\t2\\t.\\tA\\tT\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
+        "##fileformat=VCFv4.2\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\n"
+        "chr20\\t1\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT\\t0/1\n"
+        "chr20\\t2\\t.\\tA\\tT\\t.\\tPASS\\t.\\tGT\\t0/1\n",
         encoding="utf-8",
     )
     reference = tmp_path / "chr20.reference.fa"
-    reference.write_text(">chr20\\nAA\\n", encoding="ascii")
-    Path(str(reference) + ".fai").write_text("chr20\\t2\\t7\\t2\\t3\\n", encoding="ascii")
+    reference.write_text(">chr20\nAA\n", encoding="ascii")
+    Path(str(reference) + ".fai").write_text("chr20\\t2\\t7\\t2\\t3\n", encoding="ascii")
     smoke.write_reference_dictionary(reference, "chr20", "AA")
     runtime = {"executable": "/opt/gatk/bin/gatk", "observed_version": "4.6.2.0", "executable_sha256": "a" * 64}
     commands = []
