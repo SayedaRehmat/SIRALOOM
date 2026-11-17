@@ -44,7 +44,6 @@ from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_compatibility import create_dragen_v42_event_projection
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 from backend.app.domain.vcf_validation import validate_vcf_reference_alleles, validate_vcf_strict
-from backend.app.domain.vcf_gatk_allele_audit import audit_vcf_alt_observation
 from scripts.validation.run_real_caller_vcf_smoke import (
     download_callsets,
     EXPECTED_PROFILES,

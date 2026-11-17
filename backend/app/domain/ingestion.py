@@ -381,7 +381,7 @@ def validate_vcf(
             )
         if ebi_validation and ebi_validation.get("compatibility_assessment", {}).get("effective_status") == "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS":
             warnings.append(
-                "EBI vcf-validator diagnostics were classified under an explicit "
+                "EBI vcf-validator returned a raw FAIL containing diagnostics classified under an explicit "
                 "version/caller-specific compatibility profile. Raw results remain preserved."
             )
         if ebi_validation and ebi_validation.get("compatibility_assessment", {}).get("effective_status") == "PASS_WITH_REVIEW_REQUIRED":

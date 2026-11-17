@@ -172,7 +172,8 @@ def test_gatk_validatevariants_persists_command_input_reference_and_exit_evidenc
     assert result["exit_code"] == 0
     assert result["command"][1] == "ValidateVariants"
     assert result["command"] == [
-        "/opt/gatk/bin/gatk", "ValidateVariants", "-R", str(reference), "-V", str(input_vcf),
+        "/opt/gatk/bin/gatk", "ValidateVariants", "-R", str(reference),
+        "-V", result["allele_observation_partition"]["all_alt_observed_path"],
     ]
     assert result["validation_types_excluded"] == []
     assert result["validation_profile"] == "GATK_STRICT_ALL_CHECKS"
