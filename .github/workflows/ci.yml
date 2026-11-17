@@ -183,10 +183,15 @@ jobs:
         run: uv run --locked pytest -q tests/integration
 
   real-caller-vcf:
-    # The multi-gigabyte real-caller benchmark is an explicit qualification gate.
-    # Run fast unit/integration/preflight CI on every PR update; invoke this job
-    # with workflow_dispatch only after those gates pass.
-    if: github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'feat/vcf-full-genome-qualification-')
+    needs: [backend, frontend, postgres-integration]
+    # Run the expensive real-caller benchmark only after all fast gates pass.
+    if: >-
+      (github.event_name == 'pull_request' &&
+       (startsWith(github.head_ref, 'test/real-caller-vcf-') ||
+        startsWith(github.head_ref, 'feat/vcf-full-genome-qualification-')))
+      ||
+      (github.event_name == 'workflow_dispatch' &&
+       startsWith(github.ref_name, 'feat/vcf-full-genome-qualification-'))
     runs-on: ubuntu-latest
     defaults:
       run:
