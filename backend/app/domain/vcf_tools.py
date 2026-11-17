@@ -1103,8 +1103,6 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
             line = raw.rstrip("\r\n")
             if line.startswith("##INFO=<ID=SIRALOOM_SOURCE,"):
                 continue
-            if line.startswith("#CHROM\t") and version not in {"VCFv4.4", "VCFv4.5"}:
-                return []
             if line.startswith("#"):
                 continue
             fields = line.split("\t")
@@ -1507,6 +1505,8 @@ def detect_unsupported_normalization_format_fields(path: str | Path) -> list[str
                     continue
                 format_numbers[field_id] = definition.get("Number", "")
                 continue
+            if line.startswith("#CHROM\t") and version not in {"VCFv4.4", "VCFv4.5"}:
+                return []
             if line.startswith("#"):
                 continue
             fields = line.split("\t")
