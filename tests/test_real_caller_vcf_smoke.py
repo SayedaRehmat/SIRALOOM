@@ -186,9 +186,9 @@ def test_record_partition_is_lossless_and_reconciles_unobserved_alt(tmp_path: Pa
     source = tmp_path / "multi.vcf"
     source.write_text(
         "##fileformat=VCFv4.2\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\n"
-        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT\\t0/1\n"
-        "1\\t11\\t.\\tA\\tT\\t.\\tPASS\\t.\\tGT\\t0/1\n",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t10\t.\tA\tC,G\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t11\t.\tA\tT\t.\tPASS\t.\tGT\t0/1\n",
         encoding="utf-8",
     )
     result = partition_vcf_by_alt_observation(source, output_dir=tmp_path / "parts")
@@ -197,16 +197,16 @@ def test_record_partition_is_lossless_and_reconciles_unobserved_alt(tmp_path: Pa
     assert result["unobserved_alt_record_count"] == 1
     assert result["unobserved_alt_allele_count"] == 1
     assert result["partition_reconciliation"]["balanced"] is True
-    assert "1\\t11" in Path(result["all_alt_observed_path"]).read_text()
-    assert "1\\t10" in Path(result["unobserved_alt_path"]).read_text()
+    assert "1\t11" in Path(result["all_alt_observed_path"]).read_text()
+    assert "1\t10" in Path(result["unobserved_alt_path"]).read_text()
 
 
 def test_record_partition_rejects_out_of_range_gt_index(tmp_path: Path) -> None:
     source = tmp_path / "invalid.vcf"
     source.write_text(
         "##fileformat=VCFv4.2\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\n"
-        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT\\t0/2\n",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT\t0/2\n",
         encoding="utf-8",
     )
     with pytest.raises(VCFAlleleObservationAuditError, match="exceeds ALT count"):
@@ -219,14 +219,14 @@ def test_gatk_alleles_exclusion_is_scoped_to_unobserved_alt_partition(
     input_vcf = tmp_path / "caller.chr20.vcf"
     input_vcf.write_text(
         "##fileformat=VCFv4.2\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\n"
-        "chr20\\t1\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT\\t0/1\n"
-        "chr20\\t2\\t.\\tA\\tT\\t.\\tPASS\\t.\\tGT\\t0/1\n",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "chr20\t1\t.\tA\tC,G\t.\tPASS\t.\tGT\t0/1\n"
+        "chr20\t2\t.\tA\tT\t.\tPASS\t.\tGT\t0/1\n",
         encoding="utf-8",
     )
     reference = tmp_path / "chr20.reference.fa"
     reference.write_text(">chr20\nAA\n", encoding="ascii")
-    Path(str(reference) + ".fai").write_text("chr20\\t2\\t7\\t2\\t3\n", encoding="ascii")
+    Path(str(reference) + ".fai").write_text("chr20\t2\t7\t2\t3\n", encoding="ascii")
     smoke.write_reference_dictionary(reference, "chr20", "AA")
     runtime = {"executable": "/opt/gatk/bin/gatk", "observed_version": "4.6.2.0", "executable_sha256": "a" * 64}
     commands = []
