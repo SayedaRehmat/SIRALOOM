@@ -38,7 +38,7 @@ from backend.app.domain.vcf_validation import (
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
-from backend.app.domain.vcf_gatk_allele_audit import audit_vcf_alt_observation
+from backend.app.domain.vcf_gatk_allele_audit import partition_vcf_by_alt_observation
 
 ZENODO_API = "https://zenodo.org/api/records"
 DRAGEN_RECORD = "8350256"
@@ -360,60 +360,104 @@ def run_gatk_validate_variants(
     *,
     source_vcf_sha256: str,
     projection: dict[str, Any] | None = None,
+    input_scope: str = "CHR20_REFERENCE_RESOLVED_SEQUENCE_RECORDS",
 ) -> dict[str, Any]:
+    """Run GATK on lossless record partitions; exclude ALLELES only per affected records."""
     log_dir = root / f"{caller.lower()}_gatk_validatevariants"
     log_dir.mkdir(parents=True, exist_ok=True)
+    partition = partition_vcf_by_alt_observation(
+        input_vcf, output_dir=log_dir / "record-partitions"
+    )
+    if not partition["source_record_count"]:
+        raise RuntimeError("GATK validation input contains no records.")
+    runs = []
+    aggregate_stdout = []
+    aggregate_stderr = []
+    run_specs = [
+        ("ALL_ALT_OBSERVED", Path(partition["all_alt_observed_path"]),
+         partition["all_alt_observed_record_count"], []),
+        ("UNOBSERVED_ALT_PRESENT", Path(partition["unobserved_alt_path"]),
+         partition["unobserved_alt_record_count"], ["ALLELES"]),
+    ]
+    for label, partition_path, record_count, excluded in run_specs:
+        if not record_count:
+            runs.append({
+                "partition": label, "status": "NOT_RUN_EMPTY_PARTITION",
+                "record_count": 0, "validation_types_excluded": excluded,
+            })
+            continue
+        stdout_path = log_dir / f"{label.lower()}.stdout.log"
+        stderr_path = log_dir / f"{label.lower()}.stderr.log"
+        command = [
+            runtime["executable"], "ValidateVariants",
+            "-R", str(reference), "-V", str(partition_path),
+        ]
+        if excluded:
+            command.extend(["--validation-type-to-exclude", *excluded])
+        started = datetime.now(timezone.utc).isoformat()
+        clock = time.monotonic()
+        try:
+            completed = subprocess.run(
+                command, check=False, capture_output=True, text=True, timeout=6 * 60 * 60
+            )
+            stdout = completed.stdout or ""
+            stderr = completed.stderr or ""
+            exit_code = completed.returncode
+            error = None
+        except Exception as exc:
+            stdout, stderr = "", f"{type(exc).__name__}: {exc}"
+            exit_code = None
+            error = stderr
+        stdout_path.write_text(stdout, encoding="utf-8")
+        stderr_path.write_text(stderr, encoding="utf-8")
+        aggregate_stdout.append(f"## {label}\n{stdout}")
+        aggregate_stderr.append(f"## {label}\n{stderr}")
+        runs.append({
+            "partition": label,
+            "status": "PASS" if exit_code == 0 else "FAIL",
+            "record_count": record_count,
+            "input_path": str(partition_path),
+            "input_sha256": digest(partition_path),
+            "input_bytes": partition_path.stat().st_size,
+            "validation_types_excluded": excluded,
+            "command": command,
+            "started_at": started,
+            "elapsed_seconds": round(time.monotonic() - clock, 3),
+            "exit_code": exit_code,
+            "error": error,
+            "stdout_path": str(stdout_path.resolve()),
+            "stdout_sha256": digest(stdout_path),
+            "stderr_path": str(stderr_path.resolve()),
+            "stderr_sha256": digest(stderr_path),
+        })
     stdout_path = log_dir / "validatevariants.stdout.log"
     stderr_path = log_dir / "validatevariants.stderr.log"
-    allele_audit = audit_vcf_alt_observation(
-        input_vcf, evidence_path=log_dir / "unobserved-alt-alleles.jsonl"
-    )
-    command = [runtime["executable"], "ValidateVariants", "-R", str(reference), "-V", str(input_vcf)]
-    excluded_validation_types = []
-    if allele_audit["unobserved_alt_allele_count"]:
-        command.extend(["--validation-type-to-exclude", "ALLELES"])
-        excluded_validation_types.append("ALLELES")
-    started = datetime.now(timezone.utc).isoformat()
-    start_clock = time.monotonic()
-    try:
-        completed = subprocess.run(
-            command, check=False, capture_output=True, text=True, timeout=6 * 60 * 60
-        )
-        stdout_path.write_text(completed.stdout or "", encoding="utf-8")
-        stderr_path.write_text(completed.stderr or "", encoding="utf-8")
-        exit_code = completed.returncode
-        error = None
-    except Exception as exc:
-        stdout_path.write_text("", encoding="utf-8")
-        stderr_path.write_text(str(exc), encoding="utf-8")
-        exit_code = None
-        error = f"{type(exc).__name__}: {exc}"
-    elapsed = time.monotonic() - start_clock
+    stdout_path.write_text("\n".join(aggregate_stdout), encoding="utf-8")
+    stderr_path.write_text("\n".join(aggregate_stderr), encoding="utf-8")
+    failed = any(item.get("status") == "FAIL" for item in runs)
+    review_required = partition["unobserved_alt_record_count"] > 0
     return {
-        "status": "FAIL" if exit_code != 0 else ("PASS_WITH_REVIEW_REQUIRED" if excluded_validation_types else "PASS"),
+        "status": "FAIL" if failed else ("PASS_WITH_REVIEW_REQUIRED" if review_required else "PASS"),
         "caller": caller,
         "tool": "GATK ValidateVariants",
         "tool_version": runtime["observed_version"],
         "tool_executable_sha256": runtime["executable_sha256"],
-        "command": command,
-        "validation_profile": "GATK_STRICT_ALL_CHECKS" if not excluded_validation_types else "GATK_STRICT_WITH_RECORD_LEVEL_UNOBSERVED_ALT_AUDIT",
-        "validation_types_excluded": excluded_validation_types,
-        "allele_observation_audit": allele_audit,
-        "review_required": bool(excluded_validation_types),
+        "validation_profile": "GATK_RECORD_PARTITIONED_STRICT_VALIDATION_V1",
+        "validation_types_excluded": ["ALLELES"] if review_required else [],
         "validation_policy_reason": (
-            "All GATK strict checks were enabled because every ALT is observed in at least one sample GT."
-            if not excluded_validation_types else
-            "Only GATK ALLELES was excluded after an exhaustive record-level audit identified unobserved ALT alleles; SIRALOOM independently validated GT syntax/index bounds, and GATK VCF, REF and CHR_COUNTS checks remained enabled."
+            "GATK ALLELES remained enabled for every record whose ALT alleles were observed in sample GTs. "
+            "Only the lossless partition containing unobserved ALT alleles omitted ALLELES; all other GATK "
+            "validation checks ran on both partitions."
         ),
-        "started_at": started,
-        "elapsed_seconds": round(elapsed, 3),
-        "exit_code": exit_code,
-        "error": error,
+        "review_required": review_required,
+        "allele_observation_partition": partition,
+        "partition_runs": runs,
+        "command": [item.get("command") for item in runs if item.get("command")],
         "input_path": str(input_vcf.resolve()),
         "input_sha256": digest(input_vcf),
         "input_bytes": input_vcf.stat().st_size,
         "source_vcf_sha256": source_vcf_sha256,
-        "input_scope": "CHR20_REFERENCE_RESOLVED_SEQUENCE_RECORDS",
+        "input_scope": input_scope,
         "reference_fasta": str(reference.resolve()),
         "reference_fasta_sha256": digest(reference),
         "reference_fai_sha256": digest(Path(str(reference) + ".fai")),
@@ -423,7 +467,6 @@ def run_gatk_validate_variants(
         "stdout_sha256": digest(stdout_path),
         "stderr_path": str(stderr_path.resolve()),
         "stderr_sha256": digest(stderr_path),
-        "stderr_tail": stderr_path.read_text(encoding="utf-8")[-4000:],
         "compatibility_projection": projection,
     }
 

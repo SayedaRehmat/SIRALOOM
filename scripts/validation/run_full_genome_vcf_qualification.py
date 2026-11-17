@@ -49,6 +49,7 @@ from scripts.validation.run_real_caller_vcf_smoke import (
     download_callsets,
     EXPECTED_PROFILES,
     dragen_gp_attestation,
+    run_gatk_validate_variants,
 )
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 
@@ -738,40 +739,21 @@ def qualify_one(
             caller_semantic_attestation=source_semantic_attestation,
         )
         gatk_input_vcf = gatk_projection_path
-    gatk_log = gatk_dir / "validatevariants.stdout.log"
-    allele_audit = audit_vcf_alt_observation(
-        gatk_input_vcf, evidence_path=gatk_dir / "unobserved-alt-alleles.jsonl"
+    gatk_evidence = run_gatk_validate_variants(
+        gatk,
+        caller,
+        gatk_input_vcf,
+        Path(reference["fasta_path"]),
+        gatk_dir,
+        source_vcf_sha256=result["source_sha256"],
+        projection=gatk_projection_evidence,
+        input_scope="FULL_GENOME_REFERENCE_RESOLVED_SEQUENCE_RECORDS",
     )
-    gatk_validation_command = [
-        gatk["executable"], "ValidateVariants",
-        "-R", reference["fasta_path"], "-V", str(gatk_input_vcf),
-    ]
-    excluded_validation_types = []
-    if allele_audit["unobserved_alt_allele_count"]:
-        gatk_validation_command.extend(["--validation-type-to-exclude", "ALLELES"])
-        excluded_validation_types.append("ALLELES")
-    gatk_evidence = run_command(
-        gatk_validation_command, timeout=6 * 60 * 60, stdout_path=gatk_log,
-    )
-    result["gates"]["gatk_validate_variants"] = {
-        **gatk_evidence,
-        "status": "PASS_WITH_REVIEW_REQUIRED" if excluded_validation_types else "PASS",
-        "validation_profile": "GATK_STRICT_ALL_CHECKS" if not excluded_validation_types else "GATK_STRICT_WITH_RECORD_LEVEL_UNOBSERVED_ALT_AUDIT",
-        "validation_types_excluded": excluded_validation_types,
-        "allele_observation_audit": allele_audit,
-        "review_required": bool(excluded_validation_types),
-        "validation_policy_reason": (
-            "All GATK strict checks were enabled because every ALT is observed in at least one sample GT."
-            if not excluded_validation_types else
-            "Only GATK ALLELES was excluded after an exhaustive record-level audit identified unobserved ALT alleles; SIRALOOM independently validated GT syntax/index bounds, and GATK VCF, REF and CHR_COUNTS checks remained enabled."
-        ),
-        "input_path": str(gatk_input_vcf),
-        "input_sha256": sha256_file(gatk_input_vcf),
-        "input_scope": "REFERENCE_RESOLVED_SEQUENCE_RECORDS",
-        "source_vcf_sha256": result["source_sha256"],
-        "gatk_runtime": gatk,
-        "compatibility_projection": gatk_projection_evidence,
-    }
+    result["gates"]["gatk_validate_variants"] = gatk_evidence
+    if gatk_evidence.get("status") == "FAIL":
+        raise QualificationBlocked(
+            f"{caller}: GATK ValidateVariants failed in one or more record partitions"
+        )
 
     ref_check = validate_vcf_reference_alleles(sequence_vcf, reference["fasta_path"])
     result["gates"]["siraloom_reference_check"] = {
