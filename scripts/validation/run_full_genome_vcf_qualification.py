@@ -44,6 +44,7 @@ from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_compatibility import create_dragen_v42_event_projection
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 from backend.app.domain.vcf_validation import validate_vcf_reference_alleles, validate_vcf_strict
+from backend.app.domain.vcf_gatk_allele_audit import audit_vcf_alt_observation
 from scripts.validation.run_real_caller_vcf_smoke import (
     download_callsets,
     EXPECTED_PROFILES,
@@ -738,27 +739,31 @@ def qualify_one(
         )
         gatk_input_vcf = gatk_projection_path
     gatk_log = gatk_dir / "validatevariants.stdout.log"
-    # Exclude only GATK's extra-strict ALLELES genotype-observation test.
-    # A VCF may list an ALT allele that is not selected in this sample's GT;
-    # keep reference concordance and chromosome-count strict checks enabled.
+    allele_audit = audit_vcf_alt_observation(
+        gatk_input_vcf, evidence_path=gatk_dir / "unobserved-alt-alleles.jsonl"
+    )
     gatk_validation_command = [
         gatk["executable"], "ValidateVariants",
-        "-R", reference["fasta_path"],
-        "-V", str(gatk_input_vcf),
-        "--validation-type-to-exclude", "ALLELES",
+        "-R", reference["fasta_path"], "-V", str(gatk_input_vcf),
     ]
+    excluded_validation_types = []
+    if allele_audit["unobserved_alt_allele_count"]:
+        gatk_validation_command.extend(["--validation-type-to-exclude", "ALLELES"])
+        excluded_validation_types.append("ALLELES")
     gatk_evidence = run_command(
-        gatk_validation_command,
-        timeout=6 * 60 * 60,
-        stdout_path=gatk_log,
+        gatk_validation_command, timeout=6 * 60 * 60, stdout_path=gatk_log,
     )
     result["gates"]["gatk_validate_variants"] = {
         **gatk_evidence,
-        "validation_profile": "GATK_VALIDATEVARIANTS_STRICT_EXCEPT_UNOBSERVED_ALT_ALLELES",
-        "validation_types_excluded": ["ALLELES"],
+        "status": "PASS_WITH_REVIEW_REQUIRED" if excluded_validation_types else "PASS",
+        "validation_profile": "GATK_STRICT_ALL_CHECKS" if not excluded_validation_types else "GATK_STRICT_WITH_RECORD_LEVEL_UNOBSERVED_ALT_AUDIT",
+        "validation_types_excluded": excluded_validation_types,
+        "allele_observation_audit": allele_audit,
+        "review_required": bool(excluded_validation_types),
         "validation_policy_reason": (
-            "GATK ALLELES is an extra-strict genotype-observation check; "
-            "REF and CHR_COUNTS strict checks remain enabled."
+            "All GATK strict checks were enabled because every ALT is observed in at least one sample GT."
+            if not excluded_validation_types else
+            "Only GATK ALLELES was excluded after an exhaustive record-level audit identified unobserved ALT alleles; SIRALOOM independently validated GT syntax/index bounds, and GATK VCF, REF and CHR_COUNTS checks remained enabled."
         ),
         "input_path": str(gatk_input_vcf),
         "input_sha256": sha256_file(gatk_input_vcf),
@@ -853,6 +858,8 @@ def qualify_one(
     result["review_required"] = bool(
         strict.get("caller_semantic_compatibility_review_required")
         or external_count > 0
+        or result["gates"]["gatk_validate_variants"].get("review_required") is True
+        or ebi_effective_status == "PASS_WITH_REVIEW_REQUIRED"
     )
     result["status"] = "PASS_WITH_REVIEW_REQUIRED" if result["review_required"] else "PASS"
     result["finished_at"] = utc_now()

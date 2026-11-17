@@ -343,3 +343,24 @@ def test_assembly_checker_rejects_unknown_validation_scope(
             source_artifact_sha256=hashlib.sha256(b"source-vcf").hexdigest(),
             validation_input_scope="SOME_PROJECTION",
         )
+
+
+
+def test_zero_exit_with_unresolved_error_diagnostic_is_not_effective_pass() -> None:
+    assessed = ebi.assess_ebi_vcf_compatibility({
+        "status": "PASS", "validator_version_expected": "0.10.2", "vcf_version": "VCFv4.2",
+        "diagnostics": [{"severity": "ERROR", "message_template": "Malformed genotype field.", "occurrences": 1, "first_line": 17}],
+    })
+    assert assessed["raw_status"] == "PASS"
+    assert assessed["effective_status"] == "FAIL"
+    assert assessed["unresolved_error_count"] == 1
+
+
+def test_zero_exit_with_unresolved_warning_is_review_required_not_clean_pass() -> None:
+    assessed = ebi.assess_ebi_vcf_compatibility({
+        "status": "PASS", "validator_version_expected": "0.10.2", "vcf_version": "VCFv4.2",
+        "diagnostics": [{"severity": "WARNING", "message_template": "Reference and alternate alleles do not share the first nucleotide.", "occurrences": 6344, "first_line": 1035}],
+    })
+    assert assessed["effective_status"] == "PASS_WITH_REVIEW_REQUIRED"
+    assert assessed["review_required"] is True
+    assert assessed["unresolved_warning_count"] == 1

@@ -252,17 +252,26 @@ def assess_ebi_vcf_compatibility(
         else:
             blocking.append({**diagnostic, "classification": "UNRESOLVED", "blocking": True})
 
-    if raw_status == "PASS":
-        effective_status = "PASS"
-    elif raw_status == "FAIL" and diagnostics and not blocking:
-        effective_status = "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
-    elif raw_status == "NOT_SUPPORTED":
+    unresolved_errors = [item for item in blocking if str(item.get("severity", "ERROR")).upper() == "ERROR"]
+    unresolved_warnings = [item for item in blocking if str(item.get("severity", "ERROR")).upper() == "WARNING"]
+    if raw_status == "NOT_SUPPORTED":
         effective_status = "NOT_SUPPORTED"
-    else:
+    elif raw_status == "FAIL":
+        effective_status = "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS" if diagnostics and not blocking else "FAIL"
+    elif unresolved_errors:
         effective_status = "FAIL"
+    elif unresolved_warnings:
+        effective_status = "PASS_WITH_REVIEW_REQUIRED"
+    elif known_nonblocking:
+        effective_status = "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+    else:
+        effective_status = "PASS"
     return {
         "raw_status": raw_status,
         "effective_status": effective_status,
+        "review_required": effective_status == "PASS_WITH_REVIEW_REQUIRED",
+        "unresolved_error_count": len(unresolved_errors),
+        "unresolved_warning_count": len(unresolved_warnings),
         "vcf_version": vcf_version,
         "validator_version": validator_version,
         "known_exception_ids": sorted(exception_ids),

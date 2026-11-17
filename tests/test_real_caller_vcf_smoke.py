@@ -8,6 +8,7 @@ import pytest
 
 from scripts.validation import run_real_caller_vcf_smoke as smoke
 from scripts.validation.run_real_caller_vcf_smoke import dragen_gp_attestation
+from backend.app.domain.vcf_gatk_allele_audit import VCFAlleleObservationAuditError, audit_vcf_alt_observation
 
 
 def _write_vcf(path: Path, *, targeted: bool) -> None:
@@ -165,9 +166,64 @@ def test_gatk_validatevariants_persists_command_input_reference_and_exit_evidenc
     assert result["status"] == "PASS"
     assert result["exit_code"] == 0
     assert result["command"][1] == "ValidateVariants"
-    assert result["command"][-2:] == ["--validation-type-to-exclude", "ALLELES"]
-    assert result["validation_types_excluded"] == ["ALLELES"]
-    assert result["validation_profile"] == "GATK_VALIDATEVARIANTS_STRICT_EXCEPT_UNOBSERVED_ALT_ALLELES"
+    assert result["command"] == [
+        "/opt/gatk/bin/gatk", "ValidateVariants", "-R", str(reference), "-V", str(input_vcf),
+    ]
+    assert result["validation_types_excluded"] == []
+    assert result["validation_profile"] == "GATK_STRICT_ALL_CHECKS"
     assert result["input_sha256"] == smoke.digest(input_vcf)
     assert result["reference_dictionary_sha256"] == smoke.digest(dictionary)
     assert Path(result["stdout_path"]).read_text(encoding="utf-8").startswith("ValidateVariants")
+
+
+
+def test_alt_observation_audit_records_unobserved_alt_indexes(tmp_path: Path) -> None:
+    source = tmp_path / "multi.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.2\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\\n"
+        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
+        encoding="utf-8",
+    )
+    evidence = tmp_path / "unobserved.jsonl"
+    result = audit_vcf_alt_observation(source, evidence_path=evidence)
+    assert result["source_record_count"] == 1
+    assert result["unobserved_alt_allele_count"] == 1
+    assert result["examples"][0]["alt"] == "G"
+    assert result["examples"][0]["alt_index"] == 2
+    assert len(evidence.read_text(encoding="utf-8").splitlines()) == 1
+
+
+def test_alt_observation_audit_rejects_out_of_range_gt_index(tmp_path: Path) -> None:
+    source = tmp_path / "invalid.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.2\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\\n"
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT\\t0/2\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(VCFAlleleObservationAuditError, match="exceeds ALT count"):
+        audit_vcf_alt_observation(source, evidence_path=tmp_path / "bad.jsonl")
+
+
+def test_gatk_alleles_exclusion_requires_record_level_unobserved_alt_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    input_vcf = tmp_path / "caller.chr20.vcf"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.2\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\\n"
+        "chr20\\t1\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
+        encoding="utf-8",
+    )
+    reference = tmp_path / "chr20.reference.fa"
+    reference.write_text(">chr20\\nA\\n", encoding="ascii")
+    Path(str(reference) + ".fai").write_text("chr20\\t1\\t7\\t1\\t2\\n", encoding="ascii")
+    smoke.write_reference_dictionary(reference, "chr20", "A")
+    runtime = {"executable": "/opt/gatk/bin/gatk", "observed_version": "4.6.2.0", "executable_sha256": "a" * 64}
+    monkeypatch.setattr(smoke.subprocess, "run", lambda command, **kwargs: subprocess.CompletedProcess(command, 0, "", "done"))
+    result = smoke.run_gatk_validate_variants(runtime, "DEEPVARIANT", input_vcf, reference, tmp_path, source_vcf_sha256="b" * 64)
+    assert result["status"] == "PASS_WITH_REVIEW_REQUIRED"
+    assert result["validation_types_excluded"] == ["ALLELES"]
+    assert result["command"][-2:] == ["--validation-type-to-exclude", "ALLELES"]
+    assert result["allele_observation_audit"]["unobserved_alt_allele_count"] == 1

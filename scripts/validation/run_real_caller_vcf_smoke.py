@@ -38,6 +38,7 @@ from backend.app.domain.vcf_validation import (
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
+from backend.app.domain.vcf_gatk_allele_audit import audit_vcf_alt_observation
 
 ZENODO_API = "https://zenodo.org/api/records"
 DRAGEN_RECORD = "8350256"
@@ -364,17 +365,14 @@ def run_gatk_validate_variants(
     log_dir.mkdir(parents=True, exist_ok=True)
     stdout_path = log_dir / "validatevariants.stdout.log"
     stderr_path = log_dir / "validatevariants.stderr.log"
-    # GATK's ALLELES check is an extra-strict genotype-observation test,
-    # not VCF syntax or REF concordance. VCF callsets may contain a listed ALT
-    # that is not selected in this sample's genotype. Keep the other strict
-    # checks (including REF and CHR_COUNTS) enabled.
-    command = [
-        runtime["executable"],
-        "ValidateVariants",
-        "-R", str(reference),
-        "-V", str(input_vcf),
-        "--validation-type-to-exclude", "ALLELES",
-    ]
+    allele_audit = audit_vcf_alt_observation(
+        input_vcf, evidence_path=log_dir / "unobserved-alt-alleles.jsonl"
+    )
+    command = [runtime["executable"], "ValidateVariants", "-R", str(reference), "-V", str(input_vcf)]
+    excluded_validation_types = []
+    if allele_audit["unobserved_alt_allele_count"]:
+        command.extend(["--validation-type-to-exclude", "ALLELES"])
+        excluded_validation_types.append("ALLELES")
     started = datetime.now(timezone.utc).isoformat()
     start_clock = time.monotonic()
     try:
@@ -392,17 +390,20 @@ def run_gatk_validate_variants(
         error = f"{type(exc).__name__}: {exc}"
     elapsed = time.monotonic() - start_clock
     return {
-        "status": "PASS" if exit_code == 0 else "FAIL",
+        "status": "FAIL" if exit_code != 0 else ("PASS_WITH_REVIEW_REQUIRED" if excluded_validation_types else "PASS"),
         "caller": caller,
         "tool": "GATK ValidateVariants",
         "tool_version": runtime["observed_version"],
         "tool_executable_sha256": runtime["executable_sha256"],
         "command": command,
-        "validation_profile": "GATK_VALIDATEVARIANTS_STRICT_EXCEPT_UNOBSERVED_ALT_ALLELES",
-        "validation_types_excluded": ["ALLELES"],
+        "validation_profile": "GATK_STRICT_ALL_CHECKS" if not excluded_validation_types else "GATK_STRICT_WITH_RECORD_LEVEL_UNOBSERVED_ALT_AUDIT",
+        "validation_types_excluded": excluded_validation_types,
+        "allele_observation_audit": allele_audit,
+        "review_required": bool(excluded_validation_types),
         "validation_policy_reason": (
-            "GATK ALLELES is an extra-strict genotype-observation check; "
-            "REF and CHR_COUNTS strict checks remain enabled."
+            "All GATK strict checks were enabled because every ALT is observed in at least one sample GT."
+            if not excluded_validation_types else
+            "Only GATK ALLELES was excluded after an exhaustive record-level audit identified unobserved ALT alleles; SIRALOOM independently validated GT syntax/index bounds, and GATK VCF, REF and CHR_COUNTS checks remained enabled."
         ),
         "started_at": started,
         "elapsed_seconds": round(elapsed, 3),
@@ -683,6 +684,10 @@ def exercise_one(
         "index_exists": Path(str(normalized) + ".csi").is_file(),
         "normalized_records": normalized_strict["records"],
         "source_child_reconciliation": normalization.get("source_child_reconciliation"),
+        "normalization_evidence": normalization,
+        "normalization_command": normalization.get("command"),
+        "index_validation": normalization.get("index_validation"),
+        "reference_identity": normalization.get("reference_identity"),
     }
     return result
 
@@ -748,8 +753,8 @@ def main() -> int:
             .get("effective_status")
             or (result.get("whole_file_ebi_validation") or {}).get("status")
         )
-        if ebi_effective_status not in {"PASS", "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"}:
-            failures.append(f"{callset['caller']}: EBI whole-file validation has unresolved diagnostics")
+        if ebi_effective_status not in {"PASS", "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS", "PASS_WITH_REVIEW_REQUIRED"}:
+            failures.append(f"{callset['caller']}: EBI whole-file validation has blocking diagnostics")
         if (result.get("whole_file_strict_validation") or {}).get("status") != "PASS":
             failures.append(f"{callset['caller']}: whole-file strict VCF validation did not pass")
         if (result.get("ebi_assembly_validation") or {}).get("status") != "PASS":
@@ -767,7 +772,8 @@ def main() -> int:
                 failures.append("DRAGEN: EBI validation did not pass on the lossless EVENT compatibility projection")
         if (result.get("reference_validation") or {}).get("result") not in {"PASS", "PARTIAL"}:
             failures.append(f"{callset['caller']}: selected-reference validation did not pass")
-        if (result.get("gatk_validate_variants") or {}).get("status") != "PASS":
+        gatk_status = (result.get("gatk_validate_variants") or {}).get("status")
+        if gatk_status not in {"PASS", "PASS_WITH_REVIEW_REQUIRED"}:
             failures.append(f"{callset['caller']}: GATK ValidateVariants did not pass on reference-resolved chr20 records")
         if (result.get("normalization") or {}).get("status") != "PASS":
             failures.append(f"{callset['caller']}: reference-aware normalization did not pass")
@@ -775,7 +781,11 @@ def main() -> int:
     review_required_callers = sorted({
         result.get("caller")
         for result in report["results"]
-        if (result.get("whole_file_strict_validation") or {}).get("caller_semantic_compatibility_review_required")
+        if (
+            (result.get("whole_file_strict_validation") or {}).get("caller_semantic_compatibility_review_required")
+            or (result.get("whole_file_ebi_validation") or {}).get("compatibility_assessment", {}).get("effective_status") == "PASS_WITH_REVIEW_REQUIRED"
+            or (result.get("gatk_validate_variants") or {}).get("review_required") is True
+        )
     })
     report["review_required_callers"] = review_required_callers
     report["overall"] = (
