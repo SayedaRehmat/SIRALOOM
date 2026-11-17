@@ -738,13 +738,28 @@ def qualify_one(
         )
         gatk_input_vcf = gatk_projection_path
     gatk_log = gatk_dir / "validatevariants.stdout.log"
+    # Exclude only GATK's extra-strict ALLELES genotype-observation test.
+    # A VCF may list an ALT allele that is not selected in this sample's GT;
+    # keep reference concordance and chromosome-count strict checks enabled.
+    gatk_validation_command = [
+        gatk["executable"], "ValidateVariants",
+        "-R", reference["fasta_path"],
+        "-V", str(gatk_input_vcf),
+        "--validation-type-to-exclude", "ALLELES",
+    ]
     gatk_evidence = run_command(
-        [gatk["executable"], "ValidateVariants", "-R", reference["fasta_path"], "-V", str(gatk_input_vcf)],
+        gatk_validation_command,
         timeout=6 * 60 * 60,
         stdout_path=gatk_log,
     )
     result["gates"]["gatk_validate_variants"] = {
         **gatk_evidence,
+        "validation_profile": "GATK_VALIDATEVARIANTS_STRICT_EXCEPT_UNOBSERVED_ALT_ALLELES",
+        "validation_types_excluded": ["ALLELES"],
+        "validation_policy_reason": (
+            "GATK ALLELES is an extra-strict genotype-observation check; "
+            "REF and CHR_COUNTS strict checks remain enabled."
+        ),
         "input_path": str(gatk_input_vcf),
         "input_sha256": sha256_file(gatk_input_vcf),
         "input_scope": "REFERENCE_RESOLVED_SEQUENCE_RECORDS",

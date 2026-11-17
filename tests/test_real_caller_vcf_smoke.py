@@ -165,6 +165,9 @@ def test_gatk_validatevariants_persists_command_input_reference_and_exit_evidenc
     assert result["status"] == "PASS"
     assert result["exit_code"] == 0
     assert result["command"][1] == "ValidateVariants"
+    assert result["command"][-2:] == ["--validation-type-to-exclude", "ALLELES"]
+    assert result["validation_types_excluded"] == ["ALLELES"]
+    assert result["validation_profile"] == "GATK_VALIDATEVARIANTS_STRICT_EXCEPT_UNOBSERVED_ALT_ALLELES"
     assert result["input_sha256"] == smoke.digest(input_vcf)
     assert result["reference_dictionary_sha256"] == smoke.digest(dictionary)
     assert Path(result["stdout_path"]).read_text(encoding="utf-8").startswith("ValidateVariants")

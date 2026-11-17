@@ -364,11 +364,16 @@ def run_gatk_validate_variants(
     log_dir.mkdir(parents=True, exist_ok=True)
     stdout_path = log_dir / "validatevariants.stdout.log"
     stderr_path = log_dir / "validatevariants.stderr.log"
+    # GATK's ALLELES check is an extra-strict genotype-observation test,
+    # not VCF syntax or REF concordance. VCF callsets may contain a listed ALT
+    # that is not selected in this sample's genotype. Keep the other strict
+    # checks (including REF and CHR_COUNTS) enabled.
     command = [
         runtime["executable"],
         "ValidateVariants",
         "-R", str(reference),
         "-V", str(input_vcf),
+        "--validation-type-to-exclude", "ALLELES",
     ]
     started = datetime.now(timezone.utc).isoformat()
     start_clock = time.monotonic()
@@ -393,6 +398,12 @@ def run_gatk_validate_variants(
         "tool_version": runtime["observed_version"],
         "tool_executable_sha256": runtime["executable_sha256"],
         "command": command,
+        "validation_profile": "GATK_VALIDATEVARIANTS_STRICT_EXCEPT_UNOBSERVED_ALT_ALLELES",
+        "validation_types_excluded": ["ALLELES"],
+        "validation_policy_reason": (
+            "GATK ALLELES is an extra-strict genotype-observation check; "
+            "REF and CHR_COUNTS strict checks remain enabled."
+        ),
         "started_at": started,
         "elapsed_seconds": round(elapsed, 3),
         "exit_code": exit_code,
