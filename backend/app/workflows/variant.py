@@ -2065,15 +2065,27 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     str(routing["sequence_path"]),
                     reference_contigs=reference_contigs,
                 )
+                # Preserve a whole-source reference assessment for audit: external
+                # contigs and deferred records may make this PARTIAL. Only the
+                # reference-resolved sequence stream is eligible for PASS.
                 reference_allele_profile = validate_vcf_reference_alleles(
+                    str(input_path),
+                    reference_fasta_path,
+                )
+                reference_resolved_sequence_allele_profile = validate_vcf_reference_alleles(
                     str(routing["sequence_path"]),
                     reference_fasta_path,
                 )
+                if reference_resolved_sequence_allele_profile.get("result") != "PASS":
+                    raise StrictVCFValidationError(
+                        "Reference-resolved sequence records did not all pass selected-reference REF concordance.",
+                        code="VCF_REFERENCE_SEQUENCE_VALIDATION_FAILED",
+                    )
                 set_routed_reference_validation(
                     "PASS",
                     "SELECTED_REFERENCE_CHECKS_PASSED",
                     reference_package=reference_package,
-                    reference_profile=reference_allele_profile,
+                    reference_profile=reference_resolved_sequence_allele_profile,
                 )
                 if not routing["sequence_records"]:
                     finish_no_sequence_review(reference_validated=True)
@@ -2380,7 +2392,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "reference_fai_sha256": reference_package["fai_sha256"],
                         "reference_gzi_sha256": reference_package.get("gzi_sha256"),
                         "reference_contigs_sha256": reference_package["contigs_sha256"],
-                        "source_reference_allele_profile": reference_allele_profile,
+                        "source_reference_allele_profile": reference_allele_profile, "reference_resolved_sequence_allele_profile": reference_resolved_sequence_allele_profile,
                         "ebi_assembly_validation": ebi_assembly_validation,
                         "normalization_evidence": normalization_stats,
                         "normalization_tool": normalization_stats["tool"],
