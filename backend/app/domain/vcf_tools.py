@@ -1483,6 +1483,48 @@ def _strip_vcf45_number_m_format_fields(
     return sorted(source_only_fields)
 
 
+def detect_unsupported_normalization_format_fields(path: str | Path) -> list[str]:
+    """Find active local-allele/Number=P FORMAT values requiring a projection."""
+    source = Path(path)
+    opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
+    reserved_local = {"LAD", "LADF", "LADR", "LEC", "LGL", "LGP", "LPL", "LPP"}
+    reserved_ploidy = {"PSL", "PSO", "PSQ"}
+    version = None
+    format_numbers: dict[str, str] = {}
+    active: set[str] = set()
+    with opener(source, "rt", encoding="utf-8-sig") as handle:
+        for raw in handle:
+            line = raw.rstrip("\r\n")
+            if line.startswith("##fileformat="):
+                version = line.split("=", 1)[1].strip()
+                continue
+            if line.startswith("##FORMAT="):
+                try:
+                    field_id, definition = _parse_field_definition(line, "FORMAT", 0, version)
+                except StrictVCFValidationError:
+                    continue
+                format_numbers[field_id] = definition.get("Number", "")
+                continue
+            if line.startswith("#"):
+                continue
+            fields = line.split("\t")
+            if len(fields) < 9:
+                continue
+            keys = fields[8].split(":")
+            candidates = {
+                field_id for field_id, number in format_numbers.items()
+                if number in {"LA", "LR", "LG", "P"}
+            } | reserved_local | reserved_ploidy
+            for field_id in set(keys) & candidates:
+                field_index = keys.index(field_id)
+                if any(
+                    field_index < len(values) and values[field_index] not in {"", "."}
+                    for values in (sample.split(":") for sample in fields[9:])
+                ):
+                    active.add(field_id)
+    return sorted(active)
+
+
 def normalize_vcf_with_bcftools(
     input_path: str | Path,
     output_path: str | Path,
@@ -1517,6 +1559,13 @@ def normalize_vcf_with_bcftools(
     reference_identity_before = _reference_artifact_identity(reference_fasta)
     if output_path.suffixes[-2:] != [".vcf", ".gz"]:
         raise VCFToolError("Canonical normalized VCF output must use the .vcf.gz filename extension.")
+    unsupported_format_fields = detect_unsupported_normalization_format_fields(input_path)
+    if unsupported_format_fields:
+        raise VCFToolError(
+            "Reference-aware normalization is blocked for active VCF local-allele/Number=P FORMAT fields "
+            f"until a lossless local-to-global projection is qualified: {unsupported_format_fields}. "
+            "The original source VCF is preserved unchanged."
+        )
     has_existing_source_mapping = _reject_original_record_tag_collision(
         input_path, allow_existing=preserve_existing_source_mapping
     )

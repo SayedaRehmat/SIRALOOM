@@ -1402,3 +1402,38 @@ def test_router_defers_external_contig_classification_until_reference_is_resolve
     assert routed["sequence_records"] == 1
     assert routed["external_reference_contig_records"] == 0
     assert routed["external_reference_contigs_path"] is None
+
+
+
+def test_vcf45_local_allele_and_ploidy_fields_are_blocked_from_normalization(tmp_path: Path) -> None:
+    from backend.app.domain.vcf_tools import detect_unsupported_normalization_format_fields
+
+    source = tmp_path / "local-alleles.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local alleles">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local AD">\n'
+        '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local PL">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t10\t.\tG\tA,C,T\t.\tPASS\t.\tGT:LAA:LAD:LPL:PSL\t2/2:2:20,30:90,80,0:chr1*10*1\n",
+        encoding="utf-8",
+    )
+    assert detect_unsupported_normalization_format_fields(source) == ["LAD", "LPL", "PSL"]
+
+
+def test_missing_local_allele_and_ploidy_values_do_not_trigger_normalization_block(tmp_path: Path) -> None:
+    from backend.app.domain.vcf_tools import detect_unsupported_normalization_format_fields
+
+    source = tmp_path / "local-fields-missing.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local alleles">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local AD">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t10\t.\tG\tA,C,T\t.\tPASS\t.\tGT:LAA:LAD\t2/2:.:.\n",
+        encoding="utf-8",
+    )
+    assert detect_unsupported_normalization_format_fields(source) == []

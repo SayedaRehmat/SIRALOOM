@@ -96,6 +96,7 @@ from backend.app.domain.vcf_validation import (
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
+from backend.app.domain.ebi_vcf_validator import EBIValidatorUnavailable, run_ebi_vcf_assembly_checker
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
 from backend.app.infrastructure.artifacts.store import ArtifactStore
@@ -2061,11 +2062,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 # Re-validate against the selected package so build/contig compatibility
                 # is established before bcftools is allowed to transform the VCF.
                 package_profile = validate_vcf_strict(
-                    str(input_path),
+                    str(routing["sequence_path"]),
                     reference_contigs=reference_contigs,
                 )
                 reference_allele_profile = validate_vcf_reference_alleles(
-                    str(input_path),
+                    str(routing["sequence_path"]),
                     reference_fasta_path,
                 )
                 set_routed_reference_validation(
@@ -2077,6 +2078,41 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 if not routing["sequence_records"]:
                     finish_no_sequence_review(reference_validated=True)
                     return
+
+                try:
+                    ebi_assembly_validation = run_ebi_vcf_assembly_checker(
+                        routing["sequence_path"],
+                        reference_fasta_path,
+                        source_artifact_sha256=input_artifact.sha256,
+                        reference_build=reference_build,
+                        caller_provenance=profile,
+                        expected_version=settings.ebi_vcf_validator_version,
+                        profile_id=settings.ebi_vcf_validator_profile_id,
+                        executable_name=settings.ebi_vcf_assembly_checker_executable,
+                        timeout_seconds=6 * 60 * 60,
+                        validation_input_scope="REFERENCE_RESOLVED_SEQUENCE_RECORDS",
+                    )
+                except EBIValidatorUnavailable as exc:
+                    raise StrictVCFValidationError(
+                        f"EBI assembly checker could not be attested or executed: {exc}",
+                        code="EBI_ASSEMBLY_VALIDATION_UNAVAILABLE",
+                    ) from exc
+                if ebi_assembly_validation.get("status") == "FAIL":
+                    raise StrictVCFValidationError(
+                        "EBI assembly checker reported blocking diagnostics on reference-resolved sequence records.",
+                        code="EBI_ASSEMBLY_VALIDATION_FAILED",
+                    )
+                if ebi_assembly_validation.get("status") == "PASS_WITH_REVIEW_REQUIRED":
+                    raise StrictVCFValidationError(
+                        "EBI assembly checker emitted unresolved warnings; normalization is held for technical review.",
+                        code="EBI_ASSEMBLY_REVIEW_REQUIRED",
+                    )
+                if ebi_assembly_validation.get("status") == "NOT_SUPPORTED":
+                    ebi_assembly_validation["review_required"] = True
+                    ebi_assembly_validation["review_reason"] = (
+                        "The pinned EBI release does not declare support for this VCF version; "
+                        "SIRALOOM reference concordance and BCFtools REF checks remain active."
+                    )
             except UnsupportedVariantError as exc:
                 persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
                 set_routed_reference_validation("FAILED", exc.code)
@@ -2141,6 +2177,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 reference_mismatch = exc.code.startswith((
                     "VCF_REFERENCE_",
                     "VCF_BREAKEND_REFERENCE_",
+                    "EBI_ASSEMBLY_",
                 ))
                 next_step = (
                     "REFERENCE_OR_INPUT_REVIEW"
@@ -2227,6 +2264,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "reference_fai_sha256": reference_package["fai_sha256"],
                     "reference_gzi_sha256": reference_package.get("gzi_sha256"),
                     "bcftools_version": settings.bcftools_version,
+                    "ebi_assembly_validation": {
+                        "status": ebi_assembly_validation.get("status"),
+                        "validator_version": ebi_assembly_validation.get("validator_version_expected"),
+                        "profile_id": ebi_assembly_validation.get("validator_profile_id"),
+                        "validation_input_sha256": ebi_assembly_validation.get("validation_input_sha256"),
+                        "reference_fasta_sha256": ebi_assembly_validation.get("reference_fasta_sha256"),
+                        "reference_fai_sha256": ebi_assembly_validation.get("reference_fai_sha256"),
+                        "command": ebi_assembly_validation.get("command"),
+                    },
                     "execution_contract_hash": reference_execution.contract_hash,
                     "normalization_version": "6.0",
                     "source_record_mapping_tag": "SIRALOOM_ORIG",
@@ -2335,6 +2381,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "reference_gzi_sha256": reference_package.get("gzi_sha256"),
                         "reference_contigs_sha256": reference_package["contigs_sha256"],
                         "source_reference_allele_profile": reference_allele_profile,
+                        "ebi_assembly_validation": ebi_assembly_validation,
+                        "normalization_evidence": normalization_stats,
                         "normalization_tool": normalization_stats["tool"],
                         "normalization_tool_version": normalization_stats["tool_version"],
                         "normalization_expected_tool_version": normalization_stats["expected_tool_version"],
@@ -2380,8 +2428,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "fallback_used": resolution.used_fallback,
                     "decision_action": resolution.decision.action.value,
                 }
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": normalized_record_count, "source_record_count": profile["records"], "normalization_input_record_count": routing["sequence_records"], "source_child_reconciliation": source_child_reconciliation, "index_validation": index_validation, "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in (*routed_artifacts, *exclusion_manifest_artifacts)]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": normalized_record_count, "source_record_count": profile["records"], "normalization_input_record_count": routing["sequence_records"], "source_child_reconciliation": source_child_reconciliation, "index_validation": index_validation, "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": normalized_record_count, "source_record_count": profile["records"], "normalization_input_record_count": routing["sequence_records"], "source_child_reconciliation": source_child_reconciliation, "index_validation": index_validation, "ebi_assembly_validation": ebi_assembly_validation, "normalization_evidence": normalization_stats, "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in (*routed_artifacts, *exclusion_manifest_artifacts)]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": normalized_record_count, "source_record_count": profile["records"], "normalization_input_record_count": routing["sequence_records"], "source_child_reconciliation": source_child_reconciliation, "index_validation": index_validation, "ebi_assembly_validation": ebi_assembly_validation, "normalization_evidence": normalization_stats, "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 db.commit()
             except UnsupportedVariantError as exc:
                 mark_step(

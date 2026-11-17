@@ -364,3 +364,16 @@ def test_zero_exit_with_unresolved_warning_is_review_required_not_clean_pass() -
     assert assessed["effective_status"] == "PASS_WITH_REVIEW_REQUIRED"
     assert assessed["review_required"] is True
     assert assessed["unresolved_warning_count"] == 1
+
+
+
+def test_assembly_checker_zero_exit_with_error_diagnostic_is_failure() -> None:
+    assessed = ebi._assembly_checker_effective_status(0, [{"severity": "ERROR"}])
+    assert assessed["status"] == "FAIL"
+    assert assessed["unresolved_error_count"] == 1
+
+
+def test_assembly_checker_warning_diagnostic_requires_review() -> None:
+    assessed = ebi._assembly_checker_effective_status(0, [{"severity": "WARNING"}])
+    assert assessed["status"] == "PASS_WITH_REVIEW_REQUIRED"
+    assert assessed["review_required"] is True

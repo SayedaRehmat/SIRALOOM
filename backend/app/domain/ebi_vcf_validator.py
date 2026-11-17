@@ -412,6 +412,23 @@ def run_ebi_vcf_validator(
         ) from exc
 
 
+def _assembly_checker_effective_status(exit_code: int, diagnostics: list[dict]) -> dict:
+    errors = [item for item in diagnostics if str(item.get("severity", "")).upper() == "ERROR"]
+    warnings = [item for item in diagnostics if str(item.get("severity", "")).upper() == "WARNING"]
+    if exit_code != 0 or errors:
+        status = "FAIL"
+    elif warnings:
+        status = "PASS_WITH_REVIEW_REQUIRED"
+    else:
+        status = "PASS"
+    return {
+        "status": status,
+        "review_required": status == "PASS_WITH_REVIEW_REQUIRED",
+        "unresolved_error_count": len(errors),
+        "unresolved_warning_count": len(warnings),
+    }
+
+
 def run_ebi_vcf_assembly_checker(
     vcf_path: str | Path,
     reference_fasta: str | Path,
@@ -450,6 +467,32 @@ def run_ebi_vcf_assembly_checker(
         )
     if not source_artifact_sha256 or len(source_artifact_sha256) != 64:
         raise ValueError("The source artifact SHA-256 is required for EBI assembly evidence.")
+    vcf_version = _declared_fileformat(vcf)
+    if vcf_version not in SUPPORTED_VCF_VERSIONS:
+        return {
+            "validator": "EBI_VCF_ASSEMBLY_CHECKER",
+            "validator_version_expected": expected_version,
+            "validator_profile_id": profile_id,
+            "status": "NOT_SUPPORTED",
+            "execution_status": "NOT_EXECUTED",
+            "reason": (
+                f"EBI VCF Validation Suite {expected_version} supports "
+                f"{', '.join(sorted(SUPPORTED_VCF_VERSIONS))}; {vcf_version or 'unknown VCF version'} "
+                "is outside its declared support. SIRALOOM reference checks and BCFtools -c e remain required."
+            ),
+            "source_artifact_sha256": source_artifact_sha256,
+            "vcf_version": vcf_version,
+            "validation_input_sha256": _sha256(vcf),
+            "validation_input_scope": validation_input_scope,
+            "reference_build": reference_build,
+            "reference_fasta": str(fasta),
+            "reference_fasta_sha256": _sha256(fasta),
+            "reference_fai_sha256": _sha256(fai),
+            "caller_provenance": caller_provenance or {"identity_status": "UNKNOWN"},
+            "command": [],
+            "reports": [],
+            "diagnostics": [],
+        }
 
     executable = shutil.which(executable_name)
     if executable is None:
@@ -501,6 +544,7 @@ def run_ebi_vcf_assembly_checker(
                 env=runtime_env,
             )
             reports, diagnostics, _source_examples = _collect_report_evidence(report_dir)
+            assessment = _assembly_checker_effective_status(completed.returncode, diagnostics)
             return {
                 "validator": "EBI_VCF_ASSEMBLY_CHECKER",
                 "validator_version_expected": expected_version,
@@ -508,12 +552,12 @@ def run_ebi_vcf_assembly_checker(
                 "version_banner": version_output,
                 "executable_path": str(executable_path),
                 "executable_sha256": _sha256(executable_path),
-                "status": "PASS" if completed.returncode == 0 else "FAIL",
+                **assessment,
                 "exit_code": completed.returncode,
                 "started_at": started_at,
                 "finished_at": datetime.now(timezone.utc).isoformat(),
                 "source_artifact_sha256": source_artifact_sha256,
-                "vcf_version": _declared_fileformat(vcf),
+                "vcf_version": vcf_version,
                 "validation_input_sha256": _sha256(vcf),
                 "validation_input_scope": validation_input_scope,
                 "summary_evidence": {
