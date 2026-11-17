@@ -179,7 +179,7 @@ def test_gatk_validatevariants_persists_command_input_reference_and_exit_evidenc
     assert result["validation_profile"] == "GATK_RECORD_PARTITIONED_STRICT_VALIDATION_V1"
     assert result["input_sha256"] == smoke.digest(input_vcf)
     assert result["reference_dictionary_sha256"] == smoke.digest(dictionary)
-    assert Path(result["stdout_path"]).read_text(encoding="utf-8").startswith("ValidateVariants")
+    assert "ValidateVariants completed successfully" in Path(result["stdout_path"]).read_text(encoding="utf-8")
 
 
 
