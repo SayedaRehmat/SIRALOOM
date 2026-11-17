@@ -176,7 +176,7 @@ def test_gatk_validatevariants_persists_command_input_reference_and_exit_evidenc
         "-V", result["allele_observation_partition"]["all_alt_observed_path"],
     ]
     assert result["validation_types_excluded"] == []
-    assert result["validation_profile"] == "GATK_STRICT_ALL_CHECKS"
+    assert result["validation_profile"] == "GATK_RECORD_PARTITIONED_STRICT_VALIDATION_V1"
     assert result["input_sha256"] == smoke.digest(input_vcf)
     assert result["reference_dictionary_sha256"] == smoke.digest(dictionary)
     assert Path(result["stdout_path"]).read_text(encoding="utf-8").startswith("ValidateVariants")
