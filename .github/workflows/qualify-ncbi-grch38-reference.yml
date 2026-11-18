@@ -2,6 +2,9 @@ name: Qualify NCBI GRCh38 full-plus-hs38d1 reference
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feat/grch38-reference-registry-qualification
 
 permissions:
   contents: read
