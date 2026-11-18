@@ -59,6 +59,7 @@ from sqlalchemy.orm import Session
 from backend.app.domain.resource_staging import (
     create_staging_candidate,
     prepare_staging,
+    verify_existing_local_artifact,
     stage_local_artifact,
     transition_staging,
     validate_staging_destination,
@@ -262,6 +263,97 @@ def test_local_staging_accepts_registered_file_uri(tmp_path: Path):
         db.close()
         engine.dispose()
 
+
+
+def test_existing_local_artifact_uses_staging_lifecycle_and_rehashes(tmp_path: Path):
+    engine, db = _db()
+    try:
+        destination = tmp_path / "already-acquired" / "GRCh38.fa"
+        destination.parent.mkdir(parents=True)
+        payload = b">1\\nACGT\\n"
+        destination.write_bytes(payload)
+        resource = _resource()
+        db.add(resource)
+        db.flush()
+        row = create_staging_candidate(
+            db,
+            resource=resource,
+            source_uri="https://ftp.ncbi.nlm.nih.gov/reference/GRCh38.fa.gz",
+            destination_uri=str(destination),
+            expected_sha256=sha256(payload).hexdigest(),
+            expected_size_bytes=len(payload),
+        )
+
+        staged = verify_existing_local_artifact(db, row)
+
+        assert staged.status == "STAGED"
+        assert staged.attempt == 1
+        assert staged.started_at is not None
+        assert staged.completed_at is not None
+        assert staged.observed_sha256 == sha256(payload).hexdigest()
+        assert staged.observed_size_bytes == len(payload)
+        assert staged.metadata_json["acquisition"] == "PREACQUIRED_LOCAL_ARTIFACT"
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_existing_local_artifact_records_checksum_mismatch(tmp_path: Path):
+    engine, db = _db()
+    try:
+        destination = tmp_path / "GRCh38.fa"
+        payload = b">1\\nACGT\\n"
+        destination.write_bytes(payload)
+        resource = _resource()
+        db.add(resource)
+        db.flush()
+        row = create_staging_candidate(
+            db,
+            resource=resource,
+            source_uri="https://ftp.ncbi.nlm.nih.gov/reference/GRCh38.fa.gz",
+            destination_uri=str(destination),
+            expected_sha256="0" * 64,
+            expected_size_bytes=len(payload),
+        )
+
+        staged = verify_existing_local_artifact(db, row)
+
+        assert staged.status == "INTEGRITY_FAILED"
+        assert staged.error_code == "CHECKSUM_MISMATCH"
+        assert staged.observed_sha256 == sha256(payload).hexdigest()
+        assert staged.observed_size_bytes == len(payload)
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_existing_local_artifact_records_size_mismatch(tmp_path: Path):
+    engine, db = _db()
+    try:
+        destination = tmp_path / "GRCh38.fa"
+        payload = b">1\\nACGT\\n"
+        destination.write_bytes(payload)
+        resource = _resource()
+        db.add(resource)
+        db.flush()
+        row = create_staging_candidate(
+            db,
+            resource=resource,
+            source_uri="https://ftp.ncbi.nlm.nih.gov/reference/GRCh38.fa.gz",
+            destination_uri=str(destination),
+            expected_sha256=sha256(payload).hexdigest(),
+            expected_size_bytes=len(payload) + 1,
+        )
+
+        staged = verify_existing_local_artifact(db, row)
+
+        assert staged.status == "INTEGRITY_FAILED"
+        assert staged.error_code == "SIZE_MISMATCH"
+        assert staged.observed_sha256 == sha256(payload).hexdigest()
+        assert staged.observed_size_bytes == len(payload)
+    finally:
+        db.close()
+        engine.dispose()
 
 def test_worker_staging_destination_must_remain_under_owning_organization_root(tmp_path: Path):
     organization_id = uuid4()

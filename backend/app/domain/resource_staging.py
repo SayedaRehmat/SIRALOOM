@@ -419,6 +419,112 @@ def stage_local_artifact(
         raise
 
 
+def verify_existing_local_artifact(
+    db: Session,
+    row: ResourceStaging,
+) -> ResourceStaging:
+    """Record and verify an artifact already acquired at its registered destination.
+
+    This is for builders that download/decompress into the final package directory
+    before registry qualification. It does not copy or promote bytes: it runs the
+    governed staging state transitions and independently measures the existing
+    file before allowing the row to become STAGED.
+    """
+    if not row.expected_sha256 or row.expected_size_bytes is None:
+        raise ResourceStagingError(
+            "pre-acquired local artifacts require expected SHA-256 and byte size",
+            code="STAGING_EXPECTED_INTEGRITY_MISSING",
+            outcome="RESOURCE_REJECTED",
+        )
+    if row.expected_size_bytes <= 0:
+        raise ResourceStagingError(
+            "pre-acquired local artifact expected size must be positive",
+            code="STAGING_EXPECTED_SIZE_INVALID",
+            outcome="RESOURCE_REJECTED",
+        )
+    if row.status != "DISCOVERED":
+        raise ResourceStagingError(
+            f"pre-acquired local artifact must start in DISCOVERED state, got {row.status}"
+        )
+
+    destination = Path(row.destination_uri)
+    preflight = storage_preflight(destination, required_bytes=0)
+    row.metadata_json = {
+        **dict(row.metadata_json or {}),
+        "storage_preflight": {
+            "parent_exists": preflight.parent_exists,
+            "parent_writable": preflight.parent_writable,
+            "available_bytes": preflight.available_bytes,
+            "required_bytes": 0,
+            "passed": preflight.passed,
+            "mode": "VERIFY_EXISTING_ARTIFACT_NO_COPY",
+        },
+    }
+    if not preflight.passed:
+        return transition_staging(
+            db,
+            row,
+            "PREFLIGHT_FAILED",
+            error_code="STORAGE_PREFLIGHT_FAILED",
+            error_message="existing artifact destination is missing or its parent is not writable",
+        )
+
+    transition_staging(db, row, "READY_TO_STAGE")
+    transition_staging(db, row, "STAGING")
+    if not destination.is_file():
+        return transition_staging(
+            db,
+            row,
+            "INVALID",
+            error_code="SOURCE_ARTIFACT_MISSING",
+            error_message=f"pre-acquired artifact does not exist: {destination}",
+        )
+
+    try:
+        observed_size = destination.stat().st_size
+        observed_sha256 = _sha256(destination)
+    except OSError as exc:
+        transition_staging(
+            db,
+            row,
+            "INTEGRITY_FAILED",
+            error_code="STAGED_ARTIFACT_READ_FAILED",
+            error_message=str(exc),
+        )
+        raise ResourceStagingError(
+            f"could not read pre-acquired artifact: {exc}",
+            code="STAGED_ARTIFACT_READ_FAILED",
+            outcome="RETRYABLE_FAILURE",
+            retryable=True,
+        ) from exc
+
+    row.observed_size_bytes = observed_size
+    row.observed_sha256 = observed_sha256
+    if observed_size != row.expected_size_bytes:
+        return transition_staging(
+            db,
+            row,
+            "INTEGRITY_FAILED",
+            error_code="SIZE_MISMATCH",
+            error_message=f"expected {row.expected_size_bytes} bytes, observed {observed_size}",
+        )
+    if observed_sha256 != row.expected_sha256.lower():
+        return transition_staging(
+            db,
+            row,
+            "INTEGRITY_FAILED",
+            error_code="CHECKSUM_MISMATCH",
+            error_message="pre-acquired artifact SHA-256 does not match the registered expected digest",
+        )
+
+    row.metadata_json = {
+        **dict(row.metadata_json or {}),
+        "integrity": "SHA256_VERIFIED",
+        "acquisition": "PREACQUIRED_LOCAL_ARTIFACT",
+    }
+    return transition_staging(db, row, "STAGED")
+
+
 def cleanup_staging_temporary_files(row: ResourceStaging) -> None:
     """Remove incomplete sibling files for this resource's unique destination."""
     destination = Path(row.destination_uri)

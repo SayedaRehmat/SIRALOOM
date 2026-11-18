@@ -13,10 +13,15 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.domain.local_uri import local_path_from_uri
+from backend.app.domain.reference_package import ReferencePackageError, validate_reference_package
+from backend.app.domain.reference_provenance import PublisherChecksumError, verify_publisher_checksum_evidence
 from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
     validate_execution_contract,
     validate_source_contract,
+)
+from backend.app.domain.reference_toolchain_qualification import (
+    execute_bcftools_reference_check,
 )
 from backend.app.infrastructure.db.models import Resource, ResourceStaging
 
@@ -95,7 +100,31 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
         return
     checks["bcftools_version"] = version
     checks["bcftools_tool"] = "bcftools"
-    checks["bcftools_execution"] = "GOVERNED"
+    checks["bcftools_execution"] = "DECLARED_NOT_EXECUTED"
+    if not str(toolchain.get("samtools") or "").strip():
+        blockers.append("SAMTOOLS_VERSION_NOT_DECLARED")
+
+
+def _execute_reference_bcftools(
+    execution: Any,
+    package_identity: dict[str, Any],
+    blockers: list[str],
+    checks: dict[str, Any],
+) -> None:
+    """Run BCFtools against the exact FASTA whose package identity was verified."""
+    toolchain = dict(execution.toolchain or {})
+    bcftools = toolchain.get("bcftools")
+    expected_version = str(bcftools.get("version") or "").strip() if isinstance(bcftools, dict) else ""
+    evidence = execute_bcftools_reference_check(
+        package_identity["fasta_path"],
+        package_identity["contigs"],
+        expected_fasta_sha256=str(package_identity["fasta_sha256"]),
+        expected_bcftools_version=expected_version,
+        expected_samtools_version=str(toolchain.get("samtools") or "").strip() or None,
+    )
+    checks["bcftools_execution"] = evidence
+    if evidence.get("status") != "VERIFIED":
+        blockers.append("BCFTOOLS_REFERENCE_EXECUTION_FAILED")
 
 
 def _qualify_vep_runtime(execution: Any, blockers: list[str], checks: dict[str, Any]) -> None:
@@ -182,6 +211,53 @@ def qualify_resource(
     }
     if resource.resource_type == "REFERENCE_PACKAGE":
         _qualify_reference_toolchain(resource, execution, blockers, checks)
+        try:
+            package_identity = validate_reference_package(
+                resource,
+                expected_genome_build=str(resource.genome_build or ""),
+                allow_approved_qualified=True,
+                allow_candidate_for_qualification=True,
+            )
+            checks["reference_package"] = {
+                "status": "VERIFIED",
+                "package_checksum": package_identity["package_checksum"],
+                "assembly_accession": package_identity["assembly_accession"],
+                "sequence_scope": package_identity["sequence_scope"],
+                "contig_count": len(package_identity["contigs"]),
+                "contigs_sha256": package_identity["contigs_sha256"],
+                "fasta_sha256": package_identity["fasta_sha256"],
+                "fai_sha256": package_identity["fai_sha256"],
+                "gzi_sha256": package_identity["gzi_sha256"],
+                "dictionary_sha256": package_identity.get("dictionary_sha256"),
+                "sequence_collection_digest": package_identity.get("sequence_collection_digest"),
+            }
+            try:
+                checks["publisher_checksum_evidence"] = verify_publisher_checksum_evidence(
+                    metadata.get("source_contract") or {},
+                    artifact_path=package_identity["fasta_path"],
+                )
+            except PublisherChecksumError as exc:
+                blockers.append(exc.code)
+                checks["publisher_checksum_evidence"] = {
+                    "status": "BLOCKED",
+                    "error_code": exc.code,
+                    "error": str(exc)[:2000],
+                }
+            if checks.get("publisher_checksum_evidence", {}).get("status") == "VERIFIED":
+                _execute_reference_bcftools(execution, package_identity, blockers, checks)
+            else:
+                checks["bcftools_execution"] = {
+                    "status": "NOT_RUN_PUBLISHER_EVIDENCE_INVALID",
+                    "reason": "publisher checksum evidence must pass before reference-backed normalization",
+                }
+                blockers.append("BCFTOOLS_REFERENCE_EXECUTION_NOT_RUN")
+        except ReferencePackageError as exc:
+            blockers.append("REFERENCE_PACKAGE_VALIDATION_FAILED")
+            checks["reference_package"] = {
+                "status": "BLOCKED",
+                "error_code": exc.code,
+                "error": str(exc)[:2000],
+            }
     path = _local_path(resource)
     if (
         staging is not None
@@ -195,12 +271,54 @@ def qualify_resource(
         checks["staging"] = "PRESENT"
         checks["staged_sha256"] = actual
         checks["staged_size_bytes"] = path.stat().st_size
-        if resource.checksum:
-            checks["checksum_match"] = actual == resource.checksum.lower()
+        expected_artifact_sha256 = (
+            str((resource.metadata_json or {}).get("fasta_sha256") or "").lower()
+            if resource.resource_type == "REFERENCE_PACKAGE"
+            else str(resource.checksum or "").lower()
+        )
+        checks["expected_artifact_sha256"] = expected_artifact_sha256 or None
+        if expected_artifact_sha256:
+            checks["checksum_match"] = actual == expected_artifact_sha256
             if not checks["checksum_match"]:
                 blockers.append("CHECKSUM_MISMATCH")
+        if staging.expected_sha256:
+            checks["staging_expected_checksum_match"] = (
+                actual == str(staging.expected_sha256).lower()
+            )
+            if not checks["staging_expected_checksum_match"]:
+                blockers.append("STAGING_CHECKSUM_MISMATCH")
         elif contract.checksum_status == "PUBLISHED_AND_VERIFIED":
             blockers.append("PUBLISHED_CHECKSUM_MISSING")
+
+        if staging.observed_sha256:
+            checks["staging_observed_checksum_match"] = (
+                actual == str(staging.observed_sha256).lower()
+            )
+            if not checks["staging_observed_checksum_match"]:
+                blockers.append("STAGING_OBSERVED_CHECKSUM_MISMATCH")
+        else:
+            checks["staging_observed_checksum_match"] = False
+            blockers.append("STAGING_OBSERVED_CHECKSUM_MISSING")
+
+        if staging.observed_size_bytes is not None:
+            checks["staging_observed_size_match"] = (
+                path.stat().st_size == int(staging.observed_size_bytes)
+            )
+            if not checks["staging_observed_size_match"]:
+                blockers.append("STAGING_OBSERVED_SIZE_MISMATCH")
+        else:
+            checks["staging_observed_size_match"] = False
+            blockers.append("STAGING_OBSERVED_SIZE_MISSING")
+
+        if staging.expected_size_bytes is not None:
+            checks["staging_expected_size_match"] = (
+                path.stat().st_size == int(staging.expected_size_bytes)
+            )
+            if not checks["staging_expected_size_match"]:
+                blockers.append("STAGING_EXPECTED_SIZE_MISMATCH")
+        elif resource.resource_type == "REFERENCE_PACKAGE":
+            checks["staging_expected_size_match"] = False
+            blockers.append("STAGING_EXPECTED_SIZE_MISSING")
     elif staging is None:
         blockers.append("STAGING_RECORD_REQUIRED")
     elif staging.status != "STAGED":

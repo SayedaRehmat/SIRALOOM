@@ -35,6 +35,8 @@ def _resource(tmp_path: Path, *, checksum: str | None, license_status: str = "NO
 
 
 def _staging(resource: Resource, *, status: str = "STAGED") -> ResourceStaging:
+    artifact_path = Path(str(resource.location))
+    artifact_bytes = artifact_path.read_bytes() if artifact_path.is_file() else b""
     return ResourceStaging(
         id=uuid4(),
         resource_id=resource.id,
@@ -45,7 +47,9 @@ def _staging(resource: Resource, *, status: str = "STAGED") -> ResourceStaging:
         storage_backend="LOCAL_FILESYSTEM",
         status=status,
         expected_sha256=resource.checksum,
-        expected_size_bytes=None,
+        observed_sha256=sha256(artifact_bytes).hexdigest() if artifact_bytes else None,
+        expected_size_bytes=artifact_path.stat().st_size if artifact_path.is_file() else None,
+        observed_size_bytes=artifact_path.stat().st_size if artifact_path.is_file() else None,
         metadata_json={},
     )
 
@@ -157,7 +161,59 @@ def test_reference_qualification_records_governed_bcftools_version(tmp_path):
     result = qualify_resource(resource, staging=_staging(resource))
     assert result.checks["bcftools_tool"] == "bcftools"
     assert result.checks["bcftools_version"] == "1.19"
-    assert result.checks["bcftools_execution"] == "GOVERNED"
+    assert result.checks["bcftools_execution"] == "DECLARED_NOT_EXECUTED"
+
+
+
+def test_qualification_blocks_missing_observed_staging_evidence(tmp_path):
+    resource = _resource(tmp_path, checksum=None)
+    actual = sha256(Path(resource.location).read_bytes()).hexdigest()
+    resource.checksum = actual
+    staging = _staging(resource)
+    staging.observed_sha256 = None
+    staging.observed_size_bytes = None
+
+    result = qualify_resource(resource, staging=staging)
+
+    assert result.passed is False
+    assert "STAGING_OBSERVED_CHECKSUM_MISSING" in result.blockers
+    assert "STAGING_OBSERVED_SIZE_MISSING" in result.blockers
+
+
+def test_qualification_blocks_mismatched_observed_staging_checksum(tmp_path):
+    resource = _resource(tmp_path, checksum=None)
+    resource.checksum = sha256(Path(resource.location).read_bytes()).hexdigest()
+    staging = _staging(resource)
+    staging.observed_sha256 = "0" * 64
+
+    result = qualify_resource(resource, staging=staging)
+
+    assert result.passed is False
+    assert "STAGING_OBSERVED_CHECKSUM_MISMATCH" in result.blockers
+
+
+def test_qualification_blocks_mismatched_observed_staging_size(tmp_path):
+    resource = _resource(tmp_path, checksum=None)
+    resource.checksum = sha256(Path(resource.location).read_bytes()).hexdigest()
+    staging = _staging(resource)
+    staging.observed_size_bytes += 1
+
+    result = qualify_resource(resource, staging=staging)
+
+    assert result.passed is False
+    assert "STAGING_OBSERVED_SIZE_MISMATCH" in result.blockers
+
+
+def test_qualification_blocks_mismatched_expected_staging_size(tmp_path):
+    resource = _resource(tmp_path, checksum=None)
+    resource.checksum = sha256(Path(resource.location).read_bytes()).hexdigest()
+    staging = _staging(resource)
+    staging.expected_size_bytes += 1
+
+    result = qualify_resource(resource, staging=staging)
+
+    assert result.passed is False
+    assert "STAGING_EXPECTED_SIZE_MISMATCH" in result.blockers
 
 
 def test_qualification_blocks_unverified_staging(tmp_path):

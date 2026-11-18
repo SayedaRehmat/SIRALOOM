@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from backend.app.domain.reference_package import (
-    REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+    REFERENCE_PACKAGE_LEGACY_BGZF_SCHEMA_VERSION,
     contig_manifest_sha256,
     contigs_from_fai,
     package_checksum,
@@ -44,7 +44,7 @@ def _pinned_ncbi_reference_resource():
         assembly_accession="GCF_000001405.40",
         reference_source="NCBI RefSeq EFetch NC_000007.14",
         sequence_scope=REFERENCE_VERSION,
-        schema_version=REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+        schema_version=REFERENCE_PACKAGE_LEGACY_BGZF_SCHEMA_VERSION,
     )
     return SimpleNamespace(
         id="22222222-2222-2222-2222-222222222222",
@@ -56,7 +56,7 @@ def _pinned_ncbi_reference_resource():
         status="ACTIVE",
         checksum=checksum,
         metadata_json={
-            "schema_version": REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+            "schema_version": REFERENCE_PACKAGE_LEGACY_BGZF_SCHEMA_VERSION,
             "assembly_name": "GRCh38.p14",
             "assembly_accession": "GCF_000001405.40",
             "reference_source": "NCBI RefSeq EFetch NC_000007.14",
