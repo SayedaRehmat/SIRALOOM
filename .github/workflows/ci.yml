@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat/grch38-reference-registry-qualification
   pull_request:
 
 concurrency:
