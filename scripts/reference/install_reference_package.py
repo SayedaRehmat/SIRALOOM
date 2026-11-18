@@ -52,7 +52,7 @@ def _safe_asset(value: Any, field: str, base: Path) -> Path:
     return resolved
 
 
-def _copy_verified(source: Path, destination: Path, relative: Path) -> dict[str, Any]:
+def _copy_verified(\n    source: Path, destination: Path, relative: Path, *,\n    expected_sha256: str, expected_size_bytes: int | None = None,\n) -> dict[str, Any]:
     if not source.is_file():
         raise InstallError(f"reference package asset is missing: {source}")
     destination.parent.mkdir(parents=True, exist_ok=True)
