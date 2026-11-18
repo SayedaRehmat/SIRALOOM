@@ -1383,9 +1383,10 @@ def _strip_vcf45_number_m_format_fields(
 
     source_only_fields: set[str] = set(source_only_format_fields or [])
     fileformat = "VCFv4.5"
-    if source_only_format_fields is None:
-        try:
-            with source_file_opener(source_vcf_path, "rt", encoding="utf-8-sig") as source_handle:
+    # Explicit profile fields are additive. An empty profile list must not
+    # disable automatic discovery of VCFv4.5 Number=M and reserved base-modification fields.
+    try:
+        with source_file_opener(source_vcf_path, "rt", encoding="utf-8-sig") as source_handle:
                 for line_no, raw in enumerate(source_handle, 1):
                     line = raw.rstrip("\r\n")
                     if line.startswith("##FORMAT="):
@@ -1401,10 +1402,10 @@ def _strip_vcf45_number_m_format_fields(
                                 key for key in fields[8].split(":")
                                 if _base_modification_field_kind(key) is not None
                             )
-        except (OSError, StrictVCFValidationError) as exc:
-            raise VCFToolError(
-                f"Unable to discover source VCFv4.5 Number=M FORMAT fields: {exc}"
-            ) from exc
+    except (OSError, StrictVCFValidationError) as exc:
+        raise VCFToolError(
+            f"Unable to discover source VCFv4.5 Number=M FORMAT fields: {exc}"
+        ) from exc
     policy_line = (
         "##SIRALOOM_SOURCE_ONLY_FORMAT_FIELDS_POLICY="
         "VCFv4.5_Number_M_fields_are_retained_in_immutable_source_VCF_and_omitted_from_normalized_small_variant_artifact"
