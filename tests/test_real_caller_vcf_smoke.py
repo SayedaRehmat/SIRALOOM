@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
 import subprocess
 from pathlib import Path
 
@@ -243,3 +244,102 @@ def test_gatk_alleles_exclusion_is_scoped_to_unobserved_alt_partition(
     assert commands[1][-2:] == ["--validation-type-to-exclude", "ALLELES"]
     assert result["partition_runs"][0]["status"] == "PASS"
     assert result["partition_runs"][1]["status"] == "PASS"
+
+
+
+class _FakeDownloadResponse:
+    def __init__(self, chunks: list[bytes], status: int, headers: dict[str, str], interrupt: bool = False):
+        self._chunks = iter(chunks)
+        self._interrupt = interrupt
+        self.status = status
+        self.headers = headers
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def getcode(self):
+        return self.status
+
+    def read(self, _size: int = -1) -> bytes:
+        try:
+            return next(self._chunks)
+        except StopIteration:
+            if self._interrupt:
+                self._interrupt = False
+                raise TimeoutError("simulated interrupted response")
+            return b""
+
+
+def test_download_resumes_interrupted_transfer_and_verifies_publisher_checksum(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    payload = b"abcdef"
+    destination = tmp_path / "dataset.vcf.gz"
+    requests = []
+
+    def fake_urlopen(request, timeout):
+        requests.append((request.headers, timeout))
+        if len(requests) == 1:
+            return _FakeDownloadResponse([b"abc"], 200, {}, interrupt=True)
+        assert request.headers.get("Range") == "bytes=3-"
+        return _FakeDownloadResponse([b"def"], 206, {"Content-Range": "bytes 3-5/6"})
+
+    monkeypatch.setattr(smoke.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(smoke.time, "sleep", lambda _seconds: None)
+    smoke.download(
+        "https://zenodo.example/dataset.vcf.gz",
+        destination,
+        expected_size=len(payload),
+        expected_checksum=f"sha256:{hashlib.sha256(payload).hexdigest()}",
+        max_attempts=2,
+    )
+
+    assert destination.read_bytes() == payload
+    assert not destination.with_name(destination.name + ".part").exists()
+    assert len(requests) == 2
+    assert requests[0][1] == 120
+
+
+def test_download_never_publishes_partial_file_after_retry_exhaustion(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    destination = tmp_path / "incomplete.vcf.gz"
+
+    def always_interrupt(_request, timeout):
+        return _FakeDownloadResponse([b"abc"], 200, {}, interrupt=True)
+
+    monkeypatch.setattr(smoke.urllib.request, "urlopen", always_interrupt)
+    monkeypatch.setattr(smoke.time, "sleep", lambda _seconds: None)
+    with pytest.raises(RuntimeError, match="Download failed after 2 attempts"):
+        smoke.download(
+            "https://zenodo.example/incomplete.vcf.gz",
+            destination,
+            expected_size=6,
+            max_attempts=2,
+        )
+
+    assert not destination.exists()
+    assert destination.with_name(destination.name + ".part").stat().st_size == 3
+
+
+def test_download_rejects_checksum_mismatch_without_publishing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    destination = tmp_path / "bad-checksum.vcf.gz"
+    monkeypatch.setattr(
+        smoke.urllib.request,
+        "urlopen",
+        lambda _request, timeout: _FakeDownloadResponse([b"abcdef"], 200, {}),
+    )
+    with pytest.raises(RuntimeError, match="Checksum mismatch"):
+        smoke.download(
+            "https://zenodo.example/bad-checksum.vcf.gz",
+            destination,
+            expected_size=6,
+            expected_checksum="md5:" + ("0" * 32),
+        )
+
+    assert not destination.exists()
