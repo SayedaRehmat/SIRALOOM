@@ -107,7 +107,7 @@ def install_reference_package(manifest_path: Path, storage_root: Path) -> dict[s
         raise InstallError("manifest must declare package_version and package_checksum")
     if len(package_checksum) != 64 or any(c not in "0123456789abcdef" for c in package_checksum):
         raise InstallError("manifest package_checksum must be a SHA-256 hex digest")
-    if any(part in {"", ".", ".."} for part in Path(package_version).parts) or "/" in package_version or "\\\\" in package_version:
+    if any(part in {"", ".", ".."} for part in Path(package_version).parts) or "/" in package_version or "\\" in package_version:
         raise InstallError("package_version is not a safe directory name")
 
     root = storage_root.expanduser().resolve()
