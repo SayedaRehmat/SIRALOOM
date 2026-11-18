@@ -343,3 +343,32 @@ def test_download_rejects_checksum_mismatch_without_publishing(
         )
 
     assert not destination.exists()
+
+
+
+def test_download_resumes_cleanly_truncated_response_using_range(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    destination = tmp_path / "truncated.vcf.gz"
+    requests = []
+
+    def fake_urlopen(request, timeout):
+        requests.append(request.headers)
+        if len(requests) == 1:
+            # Simulate a server closing a response early without raising a socket error.
+            return _FakeDownloadResponse([b"abc"], 200, {})
+        assert request.headers.get("Range") == "bytes=3-"
+        return _FakeDownloadResponse([b"def"], 206, {"Content-Range": "bytes 3-5/6"})
+
+    monkeypatch.setattr(smoke.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(smoke.time, "sleep", lambda _seconds: None)
+    smoke.download(
+        "https://zenodo.example/truncated.vcf.gz",
+        destination,
+        expected_size=6,
+        expected_checksum="sha256:" + hashlib.sha256(b"abcdef").hexdigest(),
+        max_attempts=2,
+    )
+
+    assert destination.read_bytes() == b"abcdef"
+    assert len(requests) == 2
