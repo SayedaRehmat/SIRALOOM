@@ -173,6 +173,16 @@ def install_reference_package(manifest_path: Path, storage_root: Path) -> dict[s
         raise InstallError("publisher checksum evidence must declare a valid MD5")
     if _digest(compressed_path, "md5") != expected_md5:
         raise InstallError("compressed publisher artifact does not match publisher MD5")
+    artifact_filename = str(publisher.get("artifact_filename") or "").strip()
+    if artifact_filename != compressed_path.name:
+        raise InstallError("publisher checksum evidence artifact filename does not match the acquired source")
+    checksum_matches: list[str] = []
+    for line in checksum_path.read_text(encoding="utf-8").splitlines():
+        fields = line.strip().lstrip("*").split()
+        if len(fields) >= 2 and Path(fields[-1]).name == artifact_filename:
+            checksum_matches.append(fields[0].lower())
+    if len(checksum_matches) != 1 or checksum_matches[0] != expected_md5:
+        raise InstallError("publisher checksum manifest does not uniquely attest the compressed source")
     sources.extend((
         ("evidence_file_path", checksum_path, Path("source") / checksum_path.name, checksum_sha, None),
         ("verified_artifact_path", compressed_path, Path("source") / compressed_path.name,
