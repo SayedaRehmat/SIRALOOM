@@ -27,6 +27,16 @@ def _vcf(path, gp_value: str, *, version: str = "VCFv4.2", event_extension: bool
     )
 
 
+def _mark_verified_targeted_output(path):
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "##source=DRAGEN_SNV\n",
+            "##source=DRAGEN_SNV\n##source=DRAGEN_TARGETED\n",
+        ),
+        encoding="utf-8",
+    )
+
+
 def test_vcf42_gp_phred_values_pass_without_caller_attestation(tmp_path):
     source = tmp_path / "vcf42-phred.vcf"
     _vcf(source, "3.1662,15.337,3.1125")
@@ -74,8 +84,9 @@ def test_dragen_v42_event_extension_requires_attestation(tmp_path):
 
 
 def test_verified_dragen_v42_event_extension_is_explicitly_review_required(tmp_path, monkeypatch):
-    source = tmp_path / "dragen-v42-event.vcf"
+    source = tmp_path / "dragen-v42.targeted.vcf"
     _vcf(source, "3.1662,15.337,3.1125", event_extension=True)
+    _mark_verified_targeted_output(source)
     monkeypatch.setattr(
         validation,
         "_verify_dragen_42_fixture_attestation",
@@ -88,6 +99,9 @@ def test_verified_dragen_v42_event_extension_is_explicitly_review_required(tmp_p
             "spec_conformance": "VCFv4.2_CONFORMANT",
             "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
             "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
+            "caller_extension_detected": True,
+            "targeted_output_filename_verified": True,
+            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
             "clinical_review_required": True,
         },
     )
@@ -123,8 +137,9 @@ def test_dragen_attestation_rejects_missing_source_binding(tmp_path):
     assert error.value.code == "VCF_CALLER_ATTESTATION_INVALID"
 
 def test_dragen_v42_event_extension_rejects_event_records_without_targeted_flag(tmp_path, monkeypatch):
-    source = tmp_path / "dragen-v42-event-without-targeted-flag.vcf"
+    source = tmp_path / "dragen-v42.targeted.vcf"
     _vcf(source, "3.1662,15.337,3.1125", event_extension=True)
+    _mark_verified_targeted_output(source)
     source.write_text(
         source.read_text(encoding="utf-8").replace("TARGETED;EVENT=", "EVENT="),
         encoding="utf-8",
@@ -140,6 +155,10 @@ def test_dragen_v42_event_extension_rejects_event_records_without_targeted_flag(
             "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
             "spec_conformance": "VCFv4.2_CONFORMANT",
             "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
+            "caller_extension_detected": True,
+            "targeted_output_filename_verified": True,
+            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
             "clinical_review_required": True,
         },
     )
@@ -148,8 +167,9 @@ def test_dragen_v42_event_extension_rejects_event_records_without_targeted_flag(
     assert error.value.code == "VCF_CALLER_EXTENSION_INVALID"
 
 def test_dragen_v42_event_extension_requires_targeted_flag_header(tmp_path, monkeypatch):
-    source = tmp_path / "dragen-v42-event-without-targeted-header.vcf"
+    source = tmp_path / "dragen-v42.targeted.vcf"
     _vcf(source, "3.1662,15.337,3.1125", event_extension=True)
+    _mark_verified_targeted_output(source)
     source.write_text(
         source.read_text(encoding="utf-8").replace(
             '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\n',
@@ -168,12 +188,28 @@ def test_dragen_v42_event_extension_requires_targeted_flag_header(tmp_path, monk
             "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
             "spec_conformance": "VCFv4.2_CONFORMANT",
             "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
+            "caller_extension_detected": True,
+            "targeted_output_filename_verified": True,
+            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
             "clinical_review_required": True,
         },
     )
     with pytest.raises(validation.StrictVCFValidationError) as error:
         validation.validate_vcf_strict(source, caller_attestation={"fixture": "pinned"})
     assert error.value.code == "VCF_CALLER_EXTENSION_INVALID"
+
+def test_dragen_profile_reports_embedded_targeted_output_mode_as_unverified_header_evidence(tmp_path):
+    source = tmp_path / "HG002_35x.hard-filtered.vcf"
+    _vcf(source, "3.1662,15.337,3.1125", event_extension=True)
+    _mark_verified_targeted_output(source)
+
+    provenance = validation.inspect_caller_provenance(source)
+
+    assert provenance["caller_profile_id"] == "dragen_snv_germline"
+    assert provenance["dragen_output_mode"] == "SMALL_VARIANT_VCF_WITH_TARGETED_CALLS"
+    assert provenance["dragen_output_mode_status"] == "DECLARED_HEADER_EVIDENCE_UNVERIFIED"
+
 
 def test_standard_vcf42_event_number_one_does_not_require_targeted_flag(tmp_path):
     source = tmp_path / "vcf42-standard-event.vcf"

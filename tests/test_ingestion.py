@@ -1111,10 +1111,11 @@ def test_vcf42_gp_ebi_false_positive_is_nonblocking_but_raw_failure_is_preserved
 def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failures_preserved(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    path = tmp_path / "dragen-v42-targeted.vcf"
+    path = tmp_path / "dragen-v42.targeted.vcf"
     path.write_text(
         "##fileformat=VCFv4.2\n"
         "##source=DRAGEN_SNV\n"
+        "##source=DRAGEN_TARGETED\n"
         '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\n'
         '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\n'
         '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
@@ -1136,6 +1137,11 @@ def test_attested_dragen_v42_targeted_extension_is_accepted_with_raw_ebi_failure
             "spec_conformance": "VCFv4.2_CONFORMANT",
             "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
             "compatibility_profile_id": "dragen-v4.2-targeted-merge-vcf42-compatibility",
+            "caller_extension_detected": True,
+            "targeted_output_filename_verified": False,
+            "targeted_output_provenance_status": "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
+            "output_mode": "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+            "output_mode_status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
             "clinical_review_required": True,
         },
     )

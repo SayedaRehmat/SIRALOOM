@@ -202,6 +202,10 @@ def validate_vcf(
     organization_id: UUID | None = None,
     artifact_sha256: str | None = None,
     expected_reference_build: str | None = None,
+    expected_reference_assembly_accession: str | None = None,
+    expected_reference_fasta_sha256: str | None = None,
+    expected_reference_package_checksum: str | None = None,
+    expected_reference_sequence_collection_digest: str | None = None,
 ) -> ValidationResult:
     p = Path(path)
     if classify_filename(p.name) != "VCF":
@@ -249,14 +253,29 @@ def validate_vcf(
             organization_id=organization_id,
             artifact_sha256=artifact_sha256,
             expected_reference_build=expected_reference_build,
+            expected_reference_assembly_accession=expected_reference_assembly_accession,
+            expected_reference_fasta_sha256=expected_reference_fasta_sha256,
+            expected_reference_package_checksum=expected_reference_package_checksum,
+            expected_reference_sequence_collection_digest=expected_reference_sequence_collection_digest,
         )
         ebi_compatibility = assess_ebi_vcf_compatibility(
             ebi_validation,
             caller_semantic_attestation=strict_profile.get("caller_semantic_attestation"),
         )
         ebi_validation["compatibility_assessment"] = ebi_compatibility
-        if ebi_failure_reason and ebi_compatibility["effective_status"] == "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS":
+        ebi_effective_status = ebi_compatibility.get("effective_status")
+        if ebi_effective_status in {"PASS", "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS", "PASS_WITH_REVIEW_REQUIRED", "NOT_SUPPORTED"}:
             ebi_failure_reason = None
+        elif ebi_effective_status == "FAIL":
+            report_text = "\n".join(
+                str(report.get("content") or report.get("content_preview") or "")
+                for report in ebi_validation.get("reports", [])
+                if isinstance(report, dict)
+            ).strip()
+            unresolved = ebi_compatibility.get("blocking_diagnostics") or []
+            ebi_failure_reason = ebi_validation.get("stderr") or report_text or (
+                f"EBI vcf-validator has {len(unresolved)} unresolved diagnostic class(es)."
+            )
         if bcftools_error:
             raise VCFValidationError(
                 "VCF structural validation failed in bcftools/htslib: "
@@ -362,10 +381,15 @@ def validate_vcf(
             )
         if ebi_validation and ebi_validation.get("compatibility_assessment", {}).get("effective_status") == "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS":
             warnings.append(
-                "EBI vcf-validator returned a raw FAIL containing only documented, "
-                "version/caller-specific compatibility exceptions. The raw EBI result "
-                "and diagnostics remain preserved; SIRALOOM applied the explicit "
-                "compatibility assessment and did not claim an EBI PASS."
+                "EBI vcf-validator returned a raw FAIL containing diagnostics classified under an explicit "
+                "version/caller-specific compatibility profile. Raw results remain preserved."
+            )
+        if ebi_validation and ebi_validation.get("compatibility_assessment", {}).get("effective_status") == "PASS_WITH_REVIEW_REQUIRED":
+            assessment = ebi_validation["compatibility_assessment"]
+            warnings.append(
+                "EBI vcf-validator exited successfully but emitted unresolved warning "
+                f"diagnostics ({assessment.get('unresolved_warning_count', 0)} diagnostic classes); "
+                "intake is retained for technical review, not reported as a clean conformance PASS."
             )
         caller_provenance = strict_profile["caller_provenance"]
         if caller_provenance.get("caller_semantic_compatibility_review_required"):

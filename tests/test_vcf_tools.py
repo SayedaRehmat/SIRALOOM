@@ -521,6 +521,7 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
             "spanning_deletions": 0,
             "telomere_coordinates": 0,
             "after_contig_coordinates": 0,
+            "external_reference_contigs": 0,
             "reference_only": 1,
         },
     }
@@ -1347,3 +1348,92 @@ def test_normalization_uses_selected_executable_and_rejects_htslib_drift(tmp_pat
         )
 
     assert commands == [[str(selected), "--version"]]
+
+
+def test_router_preserves_contigs_outside_selected_reference_package(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "external-contigs.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##contig=<ID=chr1,length=100>\n'
+        '##contig=<ID=hs38d1_decoy,length=25>\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t10\trs1\tA\tC\t50\tPASS\t.\n"
+        "hs38d1_decoy\t3\tdecoy1\tG\tT\t40\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(
+        source,
+        tmp_path / "routed-external",
+        reference_contig_lengths={"chr1": 100},
+    )
+
+    external_path = Path(routed["external_reference_contigs_path"])
+    sequence_path = Path(routed["sequence_path"])
+    external_record = "hs38d1_decoy\t3\tdecoy1\tG\tT\t40\tPASS\t."
+
+    assert routed["source_record_count"] == 2
+    assert routed["records_total"] == 2
+    assert routed["record_reconciliation"]["balanced"] is True
+    assert routed["sequence_records"] == 1
+    assert routed["external_reference_contig_records"] == 1
+    assert external_record in external_path.read_text(encoding="utf-8")
+    assert external_record not in sequence_path.read_text(encoding="utf-8")
+    assert routed["external_contig_policy"] == (
+        "PRESERVE_UNCHANGED_AND_EXCLUDE_FROM_SELECTED_REFERENCE_NORMALIZATION"
+    )
+
+
+def test_router_defers_external_contig_classification_until_reference_is_resolved(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "unresolved-reference.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\trs1\tA\tC\t50\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / "routed-unresolved", reference_contig_lengths={})
+
+    assert routed["sequence_records"] == 1
+    assert routed["external_reference_contig_records"] == 0
+    assert routed["external_reference_contigs_path"] is None
+
+
+
+def test_vcf45_local_allele_and_ploidy_fields_are_blocked_from_normalization(tmp_path: Path) -> None:
+    from backend.app.domain.vcf_tools import detect_unsupported_normalization_format_fields
+
+    source = tmp_path / "local-alleles.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local alleles">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local AD">\n'
+        '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local PL">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t10\t.\tG\tA,C,T\t.\tPASS\t.\tGT:LAA:LAD:LPL:PSL\t2/2:2:20,30:90,80,0:chr1*10*1\n",
+        encoding="utf-8",
+    )
+    assert detect_unsupported_normalization_format_fields(source) == ["LAD", "LPL", "PSL"]
+
+
+def test_missing_local_allele_and_ploidy_values_do_not_trigger_normalization_block(tmp_path: Path) -> None:
+    from backend.app.domain.vcf_tools import detect_unsupported_normalization_format_fields
+
+    source = tmp_path / "local-fields-missing.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local alleles">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local AD">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t10\t.\tG\tA,C,T\t.\tPASS\t.\tGT:LAA:LAD\t2/2:.:.\n",
+        encoding="utf-8",
+    )
+    assert detect_unsupported_normalization_format_fields(source) == []

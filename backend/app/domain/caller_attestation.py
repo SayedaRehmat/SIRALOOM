@@ -31,6 +31,12 @@ REQUIRED_MANIFEST_FIELDS = frozenset({
     "issued_at",
     "signer_id",
 })
+REFERENCE_IDENTITY_MANIFEST_FIELDS = frozenset({
+    "reference_assembly_accession",
+    "reference_fasta_sha256",
+    "reference_package_checksum",
+    "reference_sequence_collection_digest",
+})
 
 
 class CallerAttestationError(ValueError):
@@ -51,12 +57,46 @@ def validate_attestation_envelope(value: Any) -> dict[str, Any]:
             "Caller attestation must contain exactly manifest, key_id and signature."
         )
     manifest = value.get("manifest")
-    if not isinstance(manifest, dict) or set(manifest) != REQUIRED_MANIFEST_FIELDS:
+    if not isinstance(manifest, dict):
+        raise CallerAttestationError("Caller run manifest must be an object.")
+    schema_version = manifest.get("schema_version")
+    expected_fields = (
+        REQUIRED_MANIFEST_FIELDS
+        if schema_version == 1
+        else REQUIRED_MANIFEST_FIELDS | {"output_mode"}
+        if schema_version == 2
+        else REQUIRED_MANIFEST_FIELDS | {"output_mode"} | REFERENCE_IDENTITY_MANIFEST_FIELDS
+        if schema_version == 3
+        else None
+    )
+    if expected_fields is None:
+        raise CallerAttestationError("Unsupported caller run manifest schema version.")
+    if set(manifest) != expected_fields:
         raise CallerAttestationError(
             "Caller run manifest has missing or unexpected fields."
         )
-    if manifest.get("schema_version") != 1:
-        raise CallerAttestationError("Unsupported caller run manifest schema version.")
+    if schema_version in {2, 3}:
+        output_mode = manifest.get("output_mode")
+        if not isinstance(output_mode, str) or not output_mode.strip():
+            raise CallerAttestationError("Caller run manifest output_mode is required.")
+        if manifest.get("caller_profile_id") == "dragen_snv_germline":
+            caller_release = manifest.get("caller_release")
+            if caller_release in {"4.2", "4.2.0", "4.2.4"}:
+                allowed_modes = {
+                    "DRAGEN_V42_STANDARD_HARD_FILTERED",
+                    "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+                    "DRAGEN_V42_STANDALONE_TARGETED",
+                }
+            elif caller_release in {"4.3", "4.3.0"}:
+                allowed_modes = {"DRAGEN_V43_STANDARD_HARD_FILTERED"}
+            else:
+                raise CallerAttestationError(
+                    "DRAGEN signed output mode is unsupported for this caller release."
+                )
+            if output_mode not in allowed_modes:
+                raise CallerAttestationError(
+                    f"DRAGEN {caller_release} manifest output_mode is not an approved mode for that release."
+                )
     for field in (
         "manifest_id", "organization_id", "artifact_sha256", "caller_profile_id",
         "caller_release", "pipeline_run_id", "assay_id", "reference_build",
@@ -66,6 +106,24 @@ def validate_attestation_envelope(value: Any) -> dict[str, Any]:
             raise CallerAttestationError(f"Caller run manifest field {field} is required.")
     if not re.fullmatch(r"[0-9a-f]{64}", manifest["artifact_sha256"]):
         raise CallerAttestationError("Caller run manifest artifact_sha256 must be lowercase SHA-256.")
+    if schema_version == 3:
+        for field in (
+            "reference_assembly_accession",
+            "reference_fasta_sha256",
+            "reference_package_checksum",
+            "reference_sequence_collection_digest",
+        ):
+            if not isinstance(manifest.get(field), str) or not manifest[field].strip():
+                raise CallerAttestationError(f"Caller run manifest field {field} is required.")
+        for field in ("reference_fasta_sha256", "reference_package_checksum"):
+            if not re.fullmatch(r"[0-9a-f]{64}", manifest[field]):
+                raise CallerAttestationError(
+                    f"Caller run manifest field {field} must be lowercase SHA-256."
+                )
+        if not re.fullmatch(r"[A-Za-z0-9_-]{32}", manifest["reference_sequence_collection_digest"]):
+            raise CallerAttestationError(
+                "Caller run manifest reference_sequence_collection_digest must be a GA4GH Seqcol digest."
+            )
     if not isinstance(value.get("key_id"), str) or not value["key_id"].strip():
         raise CallerAttestationError("Caller attestation key_id is required.")
     if not isinstance(value.get("signature"), str) or not re.fullmatch(r"[0-9a-f]{64}", value["signature"]):
@@ -153,7 +211,7 @@ def verify_signed_caller_manifest(
         )
     return {
         "status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
-        "schema_version": 1,
+        "schema_version": manifest["schema_version"],
         "manifest_id": manifest["manifest_id"],
         "organization_id": manifest["organization_id"],
         "artifact_sha256": observed_sha256,
@@ -164,6 +222,11 @@ def verify_signed_caller_manifest(
         "reference_build": manifest["reference_build"],
         "issued_at": manifest["issued_at"],
         "signer_id": manifest["signer_id"],
+        "output_mode": manifest.get("output_mode"),
+        "reference_assembly_accession": manifest.get("reference_assembly_accession"),
+        "reference_fasta_sha256": manifest.get("reference_fasta_sha256"),
+        "reference_package_checksum": manifest.get("reference_package_checksum"),
+        "reference_sequence_collection_digest": manifest.get("reference_sequence_collection_digest"),
         "key_id": envelope["key_id"],
         "signature_sha256": hashlib.sha256(envelope["signature"].encode("ascii")).hexdigest(),
     }

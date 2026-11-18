@@ -1689,7 +1689,6 @@ def _verify_dragen_42_fixture_attestation(
         "source_filename": "HG002_35x.hard-filtered.vcf.gz",
         "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
         "spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
-        "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
     }
     for key, value in expected.items():
         if attestation.get(key) != value:
@@ -1754,27 +1753,67 @@ def _verify_dragen_42_fixture_attestation(
     declared_release = provenance.get("caller_version")
     if declared_release:
         normalized_release = declared_release.removeprefix("v")
-        if normalized_release not in {"4.2", "4.2.0"}:
+        if normalized_release not in {"4.2", "4.2.0", "4.2.4"}:
             raise StrictVCFValidationError(
                 "DRAGEN GP semantic attestation conflicts with the VCF-declared caller release",
                 code="VCF_CALLER_ATTESTATION_RELEASE_CONFLICT",
             )
-    return {
+
+    event_extension_claimed = (
+        attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
+        and attestation.get("compatibility_profile_id") == DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID
+    )
+    if event_extension_claimed:
+        declared_sources = set(provenance.get("declared_source_values") or [])
+        declared_info = set(provenance.get("declared_info_fields") or [])
+        if not {"DRAGEN_SNV", "DRAGEN_TARGETED"}.issubset(declared_sources):
+            raise StrictVCFValidationError(
+                "DRAGEN EVENT extension attestation requires both DRAGEN_SNV and DRAGEN_TARGETED source declarations",
+                code="VCF_CALLER_ATTESTATION_PROVENANCE_MISSING",
+            )
+        if not {"EVENT", "EVENTTYPE", "TARGETED"}.issubset(declared_info):
+            raise StrictVCFValidationError(
+                "DRAGEN EVENT extension attestation requires EVENT, EVENTTYPE and TARGETED INFO declarations",
+                code="VCF_CALLER_ATTESTATION_PROVENANCE_MISSING",
+            )
+        if (
+            attestation.get("caller_extension_detected") is not True
+            or attestation.get("targeted_output_provenance_status")
+            != "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS"
+            or attestation.get("output_mode") != "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE"
+        ):
+            raise StrictVCFValidationError(
+                "DRAGEN EVENT extension attestation lacks source-header and TARGETED-field evidence",
+                code="VCF_CALLER_ATTESTATION_INVALID",
+            )
+
+    result = {
         "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
         "caller_profile_id": expected["caller_profile_id"],
         "caller_release": expected["caller_release"],
-        "field": "INFO/EVENT_AND_EVENTTYPE",
+        "field": "FORMAT/GP",
         "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
         "spec_conformance": "VCFv4.2_CONFORMANT",
-        "caller_extension": expected["caller_extension"],
-        "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
-        "clinical_review_required": True,
+        "clinical_review_required": False,
         "source_record_url": expected["source_record_url"],
         "source_filename": expected["source_filename"],
         "source_md5": expected["source_md5"],
         "source_sha256": source_sha256,
         "artifact_sha256": observed_sha256,
     }
+    if event_extension_claimed:
+        result.update({
+            "field": "FORMAT/GP;INFO/EVENT;INFO/EVENTTYPE",
+            "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+            "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
+            "caller_extension_detected": True,
+            "targeted_records_verified": False,
+            "targeted_output_provenance_status": attestation["targeted_output_provenance_status"],
+            "output_mode": attestation.get("output_mode", "DRAGEN_V42_OUTPUT_MODE_UNRESOLVED"),
+            "output_mode_status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
+            "clinical_review_required": True,
+        })
+    return result
 
 
 def validate_vcf_strict(
@@ -1785,6 +1824,10 @@ def validate_vcf_strict(
     organization_id: UUID | None = None,
     artifact_sha256: str | None = None,
     expected_reference_build: str | None = None,
+    expected_reference_assembly_accession: str | None = None,
+    expected_reference_fasta_sha256: str | None = None,
+    expected_reference_package_checksum: str | None = None,
+    expected_reference_sequence_collection_digest: str | None = None,
 ) -> dict:
     source = Path(path)
     caller_semantic_attestation = None
@@ -1815,6 +1858,18 @@ def validate_vcf_strict(
                         "Signed caller run manifest reference build conflicts with the artifact assembly selection.",
                         code="VCF_CALLER_ATTESTATION_BUILD_CONFLICT",
                     )
+            expected_reference_identity = {
+                "reference_assembly_accession": expected_reference_assembly_accession,
+                "reference_fasta_sha256": expected_reference_fasta_sha256,
+                "reference_package_checksum": expected_reference_package_checksum,
+                "reference_sequence_collection_digest": expected_reference_sequence_collection_digest,
+            }
+            for field, expected_value in expected_reference_identity.items():
+                if expected_value is not None and caller_run_attestation.get(field) != expected_value:
+                    raise StrictVCFValidationError(
+                        f"Signed caller run manifest {field} conflicts with the selected reference package.",
+                        code="VCF_CALLER_ATTESTATION_REFERENCE_IDENTITY_CONFLICT",
+                    )
             if header_provenance.get("caller_profile_id") != manifest["caller_profile_id"]:
                 raise StrictVCFValidationError(
                     "Signed caller run manifest conflicts with the VCF-declared caller family.",
@@ -1834,27 +1889,80 @@ def validate_vcf_strict(
                 )
             if (
                 manifest["caller_profile_id"] == "dragen_snv_germline"
-                and manifest["caller_release"] in {"4.2", "4.2.0"}
-                and "GP" in header_provenance.get("declared_format_fields", [])
+                and manifest["caller_release"] in {"4.2", "4.2.0", "4.2.4"}
+                and (
+                    "GP" in header_provenance.get("declared_format_fields", [])
+                    or manifest.get("output_mode") in {
+                        "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+                        "DRAGEN_V42_STANDALONE_TARGETED",
+                    }
+                )
             ):
                 caller_semantic_attestation = {
                     "status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
                     "caller_profile_id": manifest["caller_profile_id"],
                     "caller_release": manifest["caller_release"],
-                    "field": "INFO/EVENT_AND_EVENTTYPE",
+                    "field": "FORMAT/GP",
                     "gp_spec_semantics": "VCFv4.2_FORMAT_GP_PHRED_SCALED",
                     "spec_conformance": "VCFv4.2_CONFORMANT",
-                    "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
-                    "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
-                    "clinical_review_required": True,
+                    "clinical_review_required": False,
                     "manifest_id": manifest["manifest_id"],
                     "signer_id": manifest["signer_id"],
+                    "output_mode": manifest.get("output_mode"),
+                    "output_mode_status": (
+                        "VERIFIED_LAB_SIGNED_RUN_MANIFEST"
+                        if manifest.get("output_mode") else "NOT_ATTESTED"
+                    ),
                 }
+                output_mode = manifest.get("output_mode")
+                if output_mode in {
+                    "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+                    "DRAGEN_V42_STANDALONE_TARGETED",
+                }:
+                    declared_sources = set(header_provenance.get("declared_source_values") or [])
+                    required_sources = (
+                        {"DRAGEN_SNV", "DRAGEN_TARGETED"}
+                        if output_mode == "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE"
+                        else {"DRAGEN_TARGETED"}
+                    )
+                    declared_info = set(header_provenance.get("declared_info_fields") or [])
+                    if not required_sources.issubset(declared_sources):
+                        raise StrictVCFValidationError(
+                            "Signed DRAGEN output_mode conflicts with the VCF source declarations.",
+                            code="VCF_CALLER_ATTESTATION_OUTPUT_MODE_CONFLICT",
+                        )
+                    if not {"TARGETED", "EVENT", "EVENTTYPE"}.issubset(declared_info):
+                        raise StrictVCFValidationError(
+                            "Signed DRAGEN targeted output_mode requires TARGETED, EVENT and EVENTTYPE INFO declarations.",
+                            code="VCF_CALLER_ATTESTATION_OUTPUT_MODE_CONFLICT",
+                        )
+                    caller_semantic_attestation.update({
+                        "field": "FORMAT/GP;INFO/EVENT;INFO/EVENTTYPE",
+                        "caller_extension": "INFO/EVENT_AND_EVENTTYPE_NUMBER_A",
+                        "compatibility_profile_id": DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID,
+                        "caller_extension_detected": True,
+                        "targeted_records_verified": False,
+                        "targeted_output_provenance_status": (
+                            "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST_AND_SOURCE_HEADER"
+                        ),
+                        "output_mode": output_mode,
+                        "output_mode_status": "VERIFIED_LAB_SIGNED_RUN_MANIFEST",
+                        "clinical_review_required": True,
+                    })
         else:
             # Retain the exact public HG002 fixture attestation used by the
             # real-caller regression harness. It is not a production trust path.
             caller_semantic_attestation = _verify_dragen_42_fixture_attestation(source, caller_attestation)
-    dragen_v42_event_extension_applicable = caller_semantic_attestation is not None
+    dragen_v42_event_extension_applicable = bool(
+        caller_semantic_attestation is not None
+        and caller_semantic_attestation.get("caller_extension") == "INFO/EVENT_AND_EVENTTYPE_NUMBER_A"
+        and caller_semantic_attestation.get("compatibility_profile_id") == DRAGEN_V42_TARGETED_EXTENSION_PROFILE_ID
+        and caller_semantic_attestation.get("caller_extension_detected") is True
+        and caller_semantic_attestation.get("targeted_output_provenance_status") in {
+            "VERIFIED_BY_SOURCE_HEADER_AND_TARGETED_FIELD_DEFINITIONS",
+            "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST_AND_SOURCE_HEADER",
+        }
+    )
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
@@ -1971,7 +2079,7 @@ def validate_vcf_strict(
                         )
                     info_definitions[identifier] = definition
                 elif line.startswith("##FORMAT="):
-                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no, fileformat, allow_dragen_v42_event_extension=caller_semantic_attestation is not None)
+                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no, fileformat, allow_dragen_v42_event_extension=dragen_v42_event_extension_applicable)
                     if identifier in format_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate FORMAT definition for {identifier!r} at line {line_no}",
@@ -1998,7 +2106,7 @@ def validate_vcf_strict(
                         code="VCF_HEADER_INVALID",
                     )
                 if (
-                    caller_semantic_attestation is not None
+                    dragen_v42_event_extension_applicable
                     and fileformat == "VCFv4.2"
                     and info_definitions.get("EVENT", {}).get("Number") == "A"
                     and info_definitions.get("EVENT", {}).get("Type") == "String"
@@ -2112,7 +2220,7 @@ def validate_vcf_strict(
                     )
                 targeted_records += 1
             dragen_event_extension_header = bool(
-                caller_semantic_attestation is not None
+                dragen_v42_event_extension_applicable
                 and fileformat == "VCFv4.2"
                 and info_definitions.get("EVENT", {}).get("Number") == "A"
                 and info_definitions.get("EVENT", {}).get("Type") == "String"
@@ -2567,6 +2675,31 @@ def validate_vcf_strict(
         sample_record_count=sample_record_count,
         sample_records_without_gt=sample_records_without_gt,
     )
+    if caller_run_attestation:
+        caller_provenance["caller_version"] = caller_run_attestation["caller_release"]
+        caller_provenance["version_status"] = "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST"
+        caller_provenance["identity_status"] = "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST"
+        caller_provenance["identity_source"] = "LAB_SIGNED_RUN_MANIFEST_AND_VCF_HEADER"
+        caller_provenance["profile_match_status"] = "SIGNED_RUN_MANIFEST_MATCH"
+        if caller_run_attestation.get("output_mode"):
+            caller_provenance["output_mode"] = caller_run_attestation["output_mode"]
+            caller_provenance["output_mode_status"] = "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST"
+            if caller_run_attestation.get("caller_profile_id") == "dragen_snv_germline":
+                caller_provenance["dragen_output_mode"] = caller_run_attestation["output_mode"]
+                caller_provenance["dragen_output_mode_status"] = "VERIFIED_BY_LAB_SIGNED_RUN_MANIFEST"
+    elif (
+        caller_semantic_attestation
+        and caller_semantic_attestation.get("status") == "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE"
+    ):
+        caller_provenance["caller_version"] = caller_semantic_attestation["caller_release"]
+        caller_provenance["version_status"] = "PINNED_PUBLIC_DATASET_FIXTURE"
+        caller_provenance["identity_status"] = "PINNED_PUBLIC_DATASET_FIXTURE"
+        caller_provenance["identity_source"] = "PINNED_PUBLIC_DATASET_FIXTURE_AND_VCF_HEADER"
+    if caller_semantic_attestation and caller_semantic_attestation.get("output_mode"):
+        caller_provenance["dragen_output_mode"] = caller_semantic_attestation["output_mode"]
+        caller_provenance["dragen_output_mode_status"] = caller_semantic_attestation.get(
+            "output_mode_status", "FIXTURE_ATTESTED"
+        )
     gp_semantic_profile = None
     if "GP" in format_definitions:
         if fileformat in {"VCFv4.1", "VCFv4.2"}:
@@ -2594,7 +2727,7 @@ def validate_vcf_strict(
     event_definition = info_definitions.get("EVENT")
     eventtype_definition = info_definitions.get("EVENTTYPE")
     dragen_event_extension_detected = bool(
-        caller_semantic_attestation is not None
+        dragen_v42_event_extension_applicable
         and fileformat == "VCFv4.2"
         and event_definition is not None
         and event_definition.get("Number") == "A"
@@ -2602,7 +2735,6 @@ def validate_vcf_strict(
     )
     targeted_records_verified = bool(
         dragen_event_extension_detected
-        and event_records > 0
         and event_records == targeted_event_records
         and targeted_eventtype_records <= event_records
     )

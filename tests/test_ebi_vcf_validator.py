@@ -205,6 +205,21 @@ def test_large_ebi_reports_are_hashed_and_bounded_with_structured_diagnostics(
     assert any(item.get("info_targeted") is True and item.get("info_event") == "evt1" for item in result["source_record_examples"])
     assert any("ID=TARGETED" in item.get("text", "") for item in result["source_record_examples"])
     assert any("ID=EVENTTYPE" in item.get("text", "") for item in result["source_record_examples"])
+    # GP is a VCFv4.2 Phred-scaled field: EBI 0.10.2's [0,1] error
+    # is classified separately, but the un-attested EVENT extension remains
+    # blocking. Never turn the raw EBI FAIL into PASS.
+    assessment = result["compatibility_assessment"]
+    assert assessment["raw_status"] == "FAIL"
+    assert assessment["effective_status"] == "FAIL"
+    assert assessment["raw_ebi_result_preserved"] is True
+    assert any(
+        item["classification"] == "EBI_0_10_2_GP_RANGE_FALSE_POSITIVE_VCF41_VCF42"
+        for item in assessment["known_nonblocking_diagnostics"]
+    )
+    assert any(
+        item["classification"] == "UNRESOLVED"
+        for item in assessment["blocking_diagnostics"]
+    )
 
 def test_vcf42_gp_range_diagnostic_is_classified_as_known_ebi_defect() -> None:
     result = ebi.assess_ebi_vcf_compatibility({
@@ -277,3 +292,88 @@ def test_dragen_v42_event_extension_requires_verified_caller_attestation() -> No
     assert untrusted["effective_status"] == "FAIL"
     assert len(untrusted["blocking_diagnostics"]) == 2
 
+
+
+def test_assembly_checker_full_file_scope_retains_stdout_when_text_report_is_empty(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    vcf = _vcf(tmp_path / "whole-genome.vcf")
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">chr1\\nACGT\\n", encoding="ascii")
+    Path(str(fasta) + ".fai").write_text("chr1\\t4\\t6\\t4\\t5\\n", encoding="ascii")
+    executable = _fake_tool(tmp_path)
+    monkeypatch.setattr(ebi.shutil, "which", lambda _name: str(executable))
+
+    def fake_run(command, **kwargs):
+        if command[-1] == "--version":
+            return subprocess.CompletedProcess(
+                command, 0, "vcf-assembly-checker version 0.10.2\\n", ""
+            )
+        return subprocess.CompletedProcess(
+            command, 0, "100000 of 100000 records match reference (100%)\\n", ""
+        )
+
+    monkeypatch.setattr(ebi.subprocess, "run", fake_run)
+    result = ebi.run_ebi_vcf_assembly_checker(
+        vcf,
+        fasta,
+        source_artifact_sha256=hashlib.sha256(b"source-vcf").hexdigest(),
+        validation_input_scope="FULL_FILE",
+    )
+
+    assert result["status"] == "PASS"
+    assert result["validation_input_scope"] == "FULL_FILE"
+    assert result["summary_evidence"]["stdout"].startswith("100000 of 100000")
+    assert result["summary_evidence"]["text_report_files_present"] is False
+    assert result["summary_evidence"]["empty_text_report_files"] == []
+    assert "not treated as diagnostic evidence" in result["summary_evidence"]["interpretation"]
+
+
+def test_assembly_checker_rejects_unknown_validation_scope(
+    tmp_path: Path,
+) -> None:
+    vcf = _vcf(tmp_path / "sample.vcf")
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">chr1\\nACGT\\n", encoding="ascii")
+    Path(str(fasta) + ".fai").write_text("chr1\\t4\\t6\\t4\\t5\\n", encoding="ascii")
+    with pytest.raises(ValueError, match="validation_input_scope"):
+        ebi.run_ebi_vcf_assembly_checker(
+            vcf,
+            fasta,
+            source_artifact_sha256=hashlib.sha256(b"source-vcf").hexdigest(),
+            validation_input_scope="SOME_PROJECTION",
+        )
+
+
+
+def test_zero_exit_with_unresolved_error_diagnostic_is_not_effective_pass() -> None:
+    assessed = ebi.assess_ebi_vcf_compatibility({
+        "status": "PASS", "validator_version_expected": "0.10.2", "vcf_version": "VCFv4.2",
+        "diagnostics": [{"severity": "ERROR", "message_template": "Malformed genotype field.", "occurrences": 1, "first_line": 17}],
+    })
+    assert assessed["raw_status"] == "PASS"
+    assert assessed["effective_status"] == "FAIL"
+    assert assessed["unresolved_error_count"] == 1
+
+
+def test_zero_exit_with_unresolved_warning_is_review_required_not_clean_pass() -> None:
+    assessed = ebi.assess_ebi_vcf_compatibility({
+        "status": "PASS", "validator_version_expected": "0.10.2", "vcf_version": "VCFv4.2",
+        "diagnostics": [{"severity": "WARNING", "message_template": "Reference and alternate alleles do not share the first nucleotide.", "occurrences": 6344, "first_line": 1035}],
+    })
+    assert assessed["effective_status"] == "PASS_WITH_REVIEW_REQUIRED"
+    assert assessed["review_required"] is True
+    assert assessed["unresolved_warning_count"] == 1
+
+
+
+def test_assembly_checker_zero_exit_with_error_diagnostic_is_failure() -> None:
+    assessed = ebi._assembly_checker_effective_status(0, [{"severity": "ERROR"}])
+    assert assessed["status"] == "FAIL"
+    assert assessed["unresolved_error_count"] == 1
+
+
+def test_assembly_checker_warning_diagnostic_requires_review() -> None:
+    assessed = ebi._assembly_checker_effective_status(0, [{"severity": "WARNING"}])
+    assert assessed["status"] == "PASS_WITH_REVIEW_REQUIRED"
+    assert assessed["review_required"] is True

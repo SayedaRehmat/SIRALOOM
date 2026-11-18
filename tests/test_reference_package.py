@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from backend.app.domain.reference import FastaReference, ReferenceError, validate_bgzf_gzi_index
+from backend.app.domain.reference_identity import inspect_fasta_sequence_identity
 from backend.app.domain.reference_package import (
     CONTIG_POLICY_EXACT,
     REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
@@ -466,3 +467,87 @@ def test_fasta_index_consistency_accepts_multiline_crlf_fasta(tmp_path: Path):
     fai.write_text("1\t6\t16\t4\t6\n", encoding="utf-8")
     result = validate_fasta_index_consistency(fasta, fai)
     assert result == [{"name": "1", "length": 6}]
+
+
+def _add_sequence_identity(resource, fasta: Path, *, schema_version: str):
+    identity = inspect_fasta_sequence_identity(fasta)
+    dictionary = fasta.with_suffix(".dict")
+    dictionary_lines = ["@HD\tVN:1.6\tSO:unsorted"]
+    dictionary_lines.extend(
+        f"@SQ\tSN:{item['name']}\tLN:{item['length']}\tM5:{item['md5']}"
+        for item in identity["sequences"]
+    )
+    dictionary.write_text("\n".join(dictionary_lines) + "\n", encoding="ascii")
+    metadata = resource.metadata_json
+    metadata.update({
+        "schema_version": schema_version,
+        "dictionary_path": str(dictionary),
+        "dictionary_sha256": sha256_file(dictionary),
+        "sequence_manifest": identity["sequences"],
+        "sequence_collection_digest": identity["sequence_collection_digest"],
+    })
+    resource.checksum = package_checksum(
+        genome_build="GRCh38",
+        version=resource.version,
+        fasta_sha256=metadata["fasta_sha256"],
+        fai_sha256=metadata["fai_sha256"],
+        gzi_sha256=metadata.get("gzi_sha256"),
+        contigs_sha256=metadata["contigs_sha256"],
+        assembly_name=metadata["assembly_name"],
+        assembly_accession=metadata["assembly_accession"],
+        reference_source=metadata["reference_source"],
+        sequence_scope=metadata["sequence_scope"],
+        schema_version=schema_version,
+        dictionary_sha256=metadata["dictionary_sha256"],
+        sequence_collection_digest=metadata["sequence_collection_digest"],
+    )
+    return dictionary
+
+
+def test_reference_package_schema_12_verifies_dictionary_refget_and_seqcol(tmp_path: Path):
+    resource, fasta, _fai = make_package(tmp_path)
+    dictionary = _add_sequence_identity(resource, fasta, schema_version="1.2")
+
+    result = validate_reference_package(resource, expected_genome_build="GRCh38")
+
+    assert result["dictionary_path"] == str(dictionary)
+    assert result["dictionary_sha256"] == sha256_file(dictionary)
+    assert result["sequence_manifest"]
+    assert result["sequence_collection_digest"]
+
+
+def test_reference_package_schema_12_rejects_sequence_dictionary_mismatch(tmp_path: Path):
+    resource, fasta, _fai = make_package(tmp_path)
+    dictionary = _add_sequence_identity(resource, fasta, schema_version="1.2")
+    dictionary.write_text(dictionary.read_text(encoding="ascii").replace("LN:7", "LN:8"), encoding="ascii")
+
+    with pytest.raises(ReferencePackageError, match="sequence dictionary checksum mismatch"):
+        validate_reference_package(resource, expected_genome_build="GRCh38")
+
+
+def test_reference_package_schema_13_verifies_bgzf_refget_and_seqcol(tmp_path: Path):
+    resource, _plain_fasta, _plain_fai = make_package(tmp_path)
+    fasta = tmp_path / "GRCh38.fa.bgz"
+    gzi = _write_bgzf_with_gzi(fasta, b">1 description\nACGT\nACGT\nAC\n")
+    fai = Path(f"{fasta}.fai")
+    fai.write_text("1\t10\t15\t4\t5\n", encoding="ascii")
+    contigs = contigs_from_fai(fai)
+    metadata = resource.metadata_json
+    metadata.update({
+        "schema_version": "1.3",
+        "fasta_path": str(fasta),
+        "fai_path": str(fai),
+        "gzi_path": str(gzi),
+        "fasta_sha256": sha256_file(fasta),
+        "fai_sha256": sha256_file(fai),
+        "gzi_sha256": sha256_file(gzi),
+        "contigs": contigs,
+        "contigs_sha256": contig_manifest_sha256(contigs),
+    })
+    dictionary = _add_sequence_identity(resource, fasta, schema_version="1.3")
+
+    result = validate_reference_package(resource, expected_genome_build="GRCh38")
+
+    assert result["gzi_sha256"] == sha256_file(gzi)
+    assert result["dictionary_path"] == str(dictionary)
+    assert result["sequence_collection_digest"]

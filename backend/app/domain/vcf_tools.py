@@ -145,6 +145,7 @@ def route_vcf_records(
         "spanning_deletions": output / "spanning-deletion-records.vcf",
         "telomere": output / "telomere-records.vcf",
         "telomere_after": output / "telomere-after-contig-records.vcf",
+        "external_contigs": output / "external-reference-contigs.vcf",
         "exclusions": output / "excluded-source-records.jsonl",
     }
     opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
@@ -296,6 +297,14 @@ def route_vcf_records(
                 # semantics; this state distinguishes a spec-valid missing GT
                 # inside a preceding block from an unexplained missing call.
                 chrom = fields[0]
+                if reference_contig_lengths and chrom not in reference_contig_lengths:
+                    emit("external_contigs", line)
+                    record_exclusion(
+                        line,
+                        "CONTIG_OUTSIDE_SELECTED_REFERENCE_PACKAGE",
+                        "EXTERNAL_REFERENCE_CONTIG_RECORDS",
+                    )
+                    continue
                 if active_vcf45_block_chrom != chrom:
                     active_vcf45_reference_blocks.clear()
                     active_vcf45_block_chrom = chrom
@@ -444,6 +453,7 @@ def route_vcf_records(
         "spanning_deletions": counts["spanning_deletions"],
         "telomere_coordinates": counts["telomere"],
         "after_contig_coordinates": counts["telomere_after"],
+        "external_reference_contigs": counts["external_contigs"],
         "reference_only": counts["reference_only"],
     }
     routed_record_count = sum(record_disposition_counts.values())
@@ -479,12 +489,13 @@ def route_vcf_records(
         "unresolved_spanning_deletion_records": counts["unresolved_spanning_deletions"],
         "telomere_records": counts["telomere"],
         "telomere_after_contig_records": counts["telomere_after"],
+        "external_reference_contig_records": counts["external_contigs"],
         "reference_only_genotype_alleles": counts["reference_only_genotype_alleles"],
         "exclusion_manifest_path": str(names["exclusions"]) if exclusion_handle is not None else None,
         "exclusion_manifest_records": sum(counts[key] for key in (
             "reference_only", "gvcf_blocks", "gvcf_unresolved", "structural",
             "spanning_deletions", "telomere", "telomere_after",
-            "reference_only_genotype_alleles", "cnv", "repeat_expansions", "mitochondrial",
+            "reference_only_genotype_alleles", "cnv", "repeat_expansions", "mitochondrial", "external_contigs",
         )),
         "sequence_path": str(names["sequence"]) if counts["sequence"] else None,
         "gvcf_blocks_path": str(names["gvcf_blocks"]) if counts["gvcf_blocks"] else None,
@@ -496,6 +507,8 @@ def route_vcf_records(
         "spanning_deletions_path": str(names["spanning_deletions"]) if counts["spanning_deletions"] else None,
         "telomere_path": str(names["telomere"]) if counts["telomere"] else None,
         "telomere_after_contig_path": str(names["telomere_after"]) if counts["telomere_after"] else None,
+        "external_reference_contigs_path": str(names["external_contigs"]) if counts["external_contigs"] else None,
+        "external_contig_policy": "PRESERVE_UNCHANGED_AND_EXCLUDE_FROM_SELECTED_REFERENCE_NORMALIZATION",
         "gvcf_wildcard_policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
     }
 
@@ -1366,16 +1379,14 @@ def _strip_vcf45_number_m_format_fields(
         raise VCFToolError(f"Unable to inspect source VCF fileformat before Number=M handling: {exc}") from exc
     if source_fileformat_header != "##fileformat=VCFv4.5":
         return []
-    if source_only_format_fields is not None and not source_only_format_fields:
-        return []
-
     normalized_file_opener = gzip.open if normalized_path.name.lower().endswith((".gz", ".bgz")) else open
 
     source_only_fields: set[str] = set(source_only_format_fields or [])
     fileformat = "VCFv4.5"
-    if source_only_format_fields is None:
-        try:
-            with source_file_opener(source_vcf_path, "rt", encoding="utf-8-sig") as source_handle:
+    # Explicit profile fields are additive. An empty profile list must not
+    # disable automatic discovery of VCFv4.5 Number=M and reserved base-modification fields.
+    try:
+        with source_file_opener(source_vcf_path, "rt", encoding="utf-8-sig") as source_handle:
                 for line_no, raw in enumerate(source_handle, 1):
                     line = raw.rstrip("\r\n")
                     if line.startswith("##FORMAT="):
@@ -1391,10 +1402,10 @@ def _strip_vcf45_number_m_format_fields(
                                 key for key in fields[8].split(":")
                                 if _base_modification_field_kind(key) is not None
                             )
-        except (OSError, StrictVCFValidationError) as exc:
-            raise VCFToolError(
-                f"Unable to discover source VCFv4.5 Number=M FORMAT fields: {exc}"
-            ) from exc
+    except (OSError, StrictVCFValidationError) as exc:
+        raise VCFToolError(
+            f"Unable to discover source VCFv4.5 Number=M FORMAT fields: {exc}"
+        ) from exc
     policy_line = (
         "##SIRALOOM_SOURCE_ONLY_FORMAT_FIELDS_POLICY="
         "VCFv4.5_Number_M_fields_are_retained_in_immutable_source_VCF_and_omitted_from_normalized_small_variant_artifact"
@@ -1470,6 +1481,50 @@ def _strip_vcf45_number_m_format_fields(
     return sorted(source_only_fields)
 
 
+def detect_unsupported_normalization_format_fields(path: str | Path) -> list[str]:
+    """Find active local-allele/Number=P FORMAT values requiring a projection."""
+    source = Path(path)
+    opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
+    reserved_local = {"LAD", "LADF", "LADR", "LEC", "LGL", "LGP", "LPL", "LPP"}
+    reserved_ploidy = {"PSL", "PSO", "PSQ"}
+    version = None
+    format_numbers: dict[str, str] = {}
+    active: set[str] = set()
+    with opener(source, "rt", encoding="utf-8-sig") as handle:
+        for raw in handle:
+            line = raw.rstrip("\r\n")
+            if line.startswith("##fileformat="):
+                version = line.split("=", 1)[1].strip()
+                continue
+            if line.startswith("##FORMAT="):
+                try:
+                    field_id, definition = _parse_field_definition(line, "FORMAT", 0, version)
+                except StrictVCFValidationError:
+                    continue
+                format_numbers[field_id] = definition.get("Number", "")
+                continue
+            if line.startswith("#CHROM\t") and version not in {"VCFv4.4", "VCFv4.5"}:
+                return []
+            if line.startswith("#"):
+                continue
+            fields = line.split("\t")
+            if len(fields) < 9:
+                continue
+            keys = fields[8].split(":")
+            candidates = {
+                field_id for field_id, number in format_numbers.items()
+                if number in {"LA", "LR", "LG", "P"}
+            } | reserved_local | reserved_ploidy
+            for field_id in set(keys) & candidates:
+                field_index = keys.index(field_id)
+                if any(
+                    field_index < len(values) and values[field_index] not in {"", "."}
+                    for values in (sample.split(":") for sample in fields[9:])
+                ):
+                    active.add(field_id)
+    return sorted(active)
+
+
 def normalize_vcf_with_bcftools(
     input_path: str | Path,
     output_path: str | Path,
@@ -1504,6 +1559,13 @@ def normalize_vcf_with_bcftools(
     reference_identity_before = _reference_artifact_identity(reference_fasta)
     if output_path.suffixes[-2:] != [".vcf", ".gz"]:
         raise VCFToolError("Canonical normalized VCF output must use the .vcf.gz filename extension.")
+    unsupported_format_fields = detect_unsupported_normalization_format_fields(input_path)
+    if unsupported_format_fields:
+        raise VCFToolError(
+            "Reference-aware normalization is blocked for active VCF local-allele/Number=P FORMAT fields "
+            f"until a lossless local-to-global projection is qualified: {unsupported_format_fields}. "
+            "The original source VCF is preserved unchanged."
+        )
     has_existing_source_mapping = _reject_original_record_tag_collision(
         input_path, allow_existing=preserve_existing_source_mapping
     )

@@ -28,11 +28,21 @@ def _write_dragen_vcf(path: Path, *, version: str | None = None) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _signed_envelope(path: Path, organization_id, monkeypatch, *, caller_profile_id="dragen_snv_germline", caller_release="4.2", reference_build="GRCh38"):
+def _signed_envelope(
+    path: Path,
+    organization_id,
+    monkeypatch,
+    *,
+    caller_profile_id="dragen_snv_germline",
+    caller_release="4.2",
+    reference_build="GRCh38",
+    schema_version=1,
+    output_mode=None,
+):
     key = b"laboratory-test-signing-key-material-32bytes"
     key_id = "test-lab-run-signer-v1"
     manifest = {
-        "schema_version": 1,
+        "schema_version": schema_version,
         "manifest_id": str(uuid4()),
         "organization_id": str(organization_id),
         "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
@@ -44,6 +54,15 @@ def _signed_envelope(path: Path, organization_id, monkeypatch, *, caller_profile
         "issued_at": datetime.now(timezone.utc).isoformat(),
         "signer_id": "lab-pipeline-attestor",
     }
+    if schema_version in {2, 3}:
+        manifest["output_mode"] = output_mode
+    if schema_version == 3:
+        manifest.update({
+            "reference_assembly_accession": "GCA_000001405.15",
+            "reference_fasta_sha256": "1" * 64,
+            "reference_package_checksum": "2" * 64,
+            "reference_sequence_collection_digest": "A" * 32,
+        })
     monkeypatch.setattr(
         "backend.app.domain.caller_attestation.settings.caller_attestation_hmac_keys_json",
         json.dumps({str(organization_id): {key_id: key.hex()}}),
@@ -88,6 +107,122 @@ def test_signed_dragen42_manifest_binds_artifact_without_gp_deviation_review(tmp
         item["field_id"] == "GP"
         for item in result["caller_provenance"].get("field_semantic_deviations", [])
     )
+
+
+def _write_dragen_merged_targeted_vcf(path: Path) -> str:
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##source=DRAGEN_SNV\n"
+        "##source=DRAGEN_TARGETED\n"
+        '##INFO=<ID=TARGETED,Number=0,Type=Flag,Description="Targeted caller record">\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="Event name">\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Event type">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tG\t.\tPASS\tTARGETED;EVENT=evt1;EVENTTYPE=GENE_CONVERSION\tGT:GP\t0/1:3.1662,0.0,1.2\n",
+        encoding="utf-8",
+    )
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_signed_v1_manifest_without_output_mode_cannot_authorize_targeted_extension(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-merged-targeted-v1.vcf"
+    digest = _write_dragen_merged_targeted_vcf(path)
+    envelope = _signed_envelope(path, organization_id, monkeypatch, schema_version=1)
+
+    with pytest.raises(StrictVCFValidationError) as error:
+        validate_vcf_strict(
+            path,
+            caller_attestation=envelope,
+            organization_id=organization_id,
+            artifact_sha256=digest,
+            expected_reference_build="GRCh38",
+        )
+    assert error.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def test_signed_v2_manifest_authorizes_declared_dragen_42_merged_targeted_mode(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-merged-targeted.vcf"
+    digest = _write_dragen_merged_targeted_vcf(path)
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        schema_version=2,
+        output_mode="DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+    )
+
+    result = validate_vcf_strict(
+        path,
+        caller_attestation=envelope,
+        organization_id=organization_id,
+        artifact_sha256=digest,
+        expected_reference_build="GRCh38",
+    )
+
+    assert result["caller_run_attestation"]["output_mode"] == "DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE"
+    assert result["caller_semantic_attestation"]["status"] == "VERIFIED_LAB_SIGNED_RUN_MANIFEST"
+    assert result["caller_semantic_attestation"]["targeted_records_verified"] is True
+    assert result["caller_semantic_compatibility_review_required"] is True
+    assert result["caller_provenance"]["dragen_output_mode_status"] == "VERIFIED_LAB_SIGNED_RUN_MANIFEST"
+
+
+def test_signed_v2_dragen_v42_output_mode_rejects_other_caller_release(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-release-conflict.vcf"
+    digest = _write_dragen_merged_targeted_vcf(path)
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        caller_release="4.3.0",
+        schema_version=2,
+        output_mode="DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as error:
+        validate_vcf_strict(
+            path,
+            caller_attestation=envelope,
+            organization_id=organization_id,
+            artifact_sha256=digest,
+            expected_reference_build="GRCh38",
+        )
+    assert error.value.code == "CALLER_ATTESTATION_INVALID"
+
+
+def test_signed_v2_dragen_targeted_mode_rejects_records_without_targeted_flag(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-merged-targeted-invalid.vcf"
+    digest = _write_dragen_merged_targeted_vcf(path)
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "TARGETED;EVENT=", "EVENT="
+        ),
+        encoding="utf-8",
+    )
+    # Re-sign the mutated bytes so this test reaches record-level semantic checks.
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        schema_version=2,
+        output_mode="DRAGEN_V42_HARD_FILTERED_WITH_TARGETED_MERGE",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as error:
+        validate_vcf_strict(
+            path,
+            caller_attestation=envelope,
+            organization_id=organization_id,
+            artifact_sha256=digest,
+            expected_reference_build="GRCh38",
+        )
+    assert error.value.code == "VCF_CALLER_EXTENSION_INVALID"
 
 
 def test_signed_manifest_with_tampered_signature_is_rejected(tmp_path, monkeypatch) -> None:
@@ -208,3 +343,57 @@ def test_untrusted_signer_and_post_signing_artifact_mutation_are_rejected(tmp_pa
             artifact_sha256=digest, expected_reference_build="GRCh38",
         )
     assert digest_error.value.code == "CALLER_ATTESTATION_ARTIFACT_DIGEST_MISMATCH"
+
+
+def test_signed_manifest_v3_binds_exact_reference_package_identity(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-reference-bound.vcf"
+    digest = _write_dragen_vcf(path, version="4.2.4")
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        schema_version=3,
+        caller_release="4.2.4",
+        output_mode="DRAGEN_V42_STANDARD_HARD_FILTERED",
+    )
+
+    result = validate_vcf_strict(
+        path,
+        caller_attestation=envelope,
+        organization_id=organization_id,
+        artifact_sha256=digest,
+        expected_reference_build="GRCh38",
+        expected_reference_assembly_accession="GCA_000001405.15",
+        expected_reference_fasta_sha256="1" * 64,
+        expected_reference_package_checksum="2" * 64,
+        expected_reference_sequence_collection_digest="A" * 32,
+    )
+
+    assert result["caller_run_attestation"]["reference_assembly_accession"] == "GCA_000001405.15"
+    assert result["caller_run_attestation"]["reference_fasta_sha256"] == "1" * 64
+    assert result["caller_run_attestation"]["reference_package_checksum"] == "2" * 64
+
+
+def test_signed_manifest_v3_rejects_selected_reference_package_mismatch(tmp_path, monkeypatch):
+    organization_id = uuid4()
+    path = tmp_path / "dragen-reference-mismatch.vcf"
+    digest = _write_dragen_vcf(path, version="4.2.4")
+    envelope = _signed_envelope(
+        path,
+        organization_id,
+        monkeypatch,
+        schema_version=3,
+        output_mode="DRAGEN_V42_STANDARD_HARD_FILTERED",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as error:
+        validate_vcf_strict(
+            path,
+            caller_attestation=envelope,
+            organization_id=organization_id,
+            artifact_sha256=digest,
+            expected_reference_build="GRCh38",
+            expected_reference_package_checksum="3" * 64,
+        )
+    assert error.value.code == "VCF_CALLER_ATTESTATION_REFERENCE_IDENTITY_CONFLICT"

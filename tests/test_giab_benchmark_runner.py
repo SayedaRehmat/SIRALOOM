@@ -432,6 +432,7 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
                 "spanning_deletions": 0,
                 "telomere_coordinates": 0,
                 "after_contig_coordinates": 0,
+                "external_reference_contigs": 0,
                 "reference_only": 0,
             },
         },

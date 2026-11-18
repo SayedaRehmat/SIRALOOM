@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -182,7 +183,15 @@ jobs:
         run: uv run --locked pytest -q tests/integration
 
   real-caller-vcf:
-    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'test/real-caller-vcf-')
+    needs: [backend, frontend, postgres-integration]
+    # Run the expensive real-caller benchmark only after all fast gates pass.
+    if: >-
+      (github.event_name == 'pull_request' &&
+       (startsWith(github.head_ref, 'test/real-caller-vcf-') ||
+        startsWith(github.head_ref, 'feat/vcf-full-genome-qualification-')))
+      ||
+      (github.event_name == 'workflow_dispatch' &&
+       startsWith(github.ref_name, 'feat/vcf-full-genome-qualification-'))
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -218,6 +227,19 @@ jobs:
         run: |
           uv lock --check
           uv sync --locked --extra dev
+      - name: Install and attest pinned GATK ValidateVariants runtime
+        run: |
+          mkdir -p artifacts
+          prefix="$RUNNER_TEMP/gatk4-4.6.2.0"
+          micromamba create --yes --strict-channel-priority --prefix "$prefix" \
+            --file configs/bioinformatics/profiles/gatk4-main-4.6.2.0-linux-64.yml
+          export PATH="$prefix/bin:$PATH"
+          echo "$prefix/bin" >> "$GITHUB_PATH"
+          echo "SIRALOOM_GATK_EXPECTED_VERSION=4.6.2.0" >> "$GITHUB_ENV"
+          echo "SIRALOOM_GATK_EXPLICIT_LOCK=$GITHUB_WORKSPACE/artifacts/gatk4-4.6.2.0-linux-64.explicit.lock" >> "$GITHUB_ENV"
+          micromamba list --explicit --md5 --prefix "$prefix" > artifacts/gatk4-4.6.2.0-linux-64.explicit.lock
+          gatk --version 2>&1 | tee artifacts/gatk4-version.txt
+          grep -F "v4.6.2.0" artifacts/gatk4-version.txt
       - name: Download and exercise real caller-produced HG002 SNV/indel VCFs
         env:
           DATABASE_URL: sqlite:///./real-vcf-ci.db
@@ -229,12 +251,34 @@ jobs:
           uv run --locked python scripts/validation/run_real_caller_vcf_smoke.py \
             --work-dir /tmp/siraloom-real-caller-vcfs \
             --report artifacts/real-caller-vcf-report.json
-      - name: Preserve real caller VCF validation report
+      - name: Preserve real caller validation and compatibility artifacts
+        if: always()
+        run: |
+          mkdir -p artifacts/gatk-validatevariants
+          for projection in \
+            /tmp/siraloom-real-caller-vcfs/dragen.event-projected.vcf \
+            /tmp/siraloom-real-caller-vcfs/dragen.chr20.event-projected.vcf; do
+            if [ -f "$projection" ]; then
+              cp "$projection" artifacts/
+            fi
+          done
+          for log_dir in /tmp/siraloom-real-caller-vcfs/*_gatk_validatevariants; do
+            if [ -d "$log_dir" ]; then
+              cp -a "$log_dir" artifacts/gatk-validatevariants/
+            fi
+          done
+      - name: Upload real caller validation and compatibility artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: real-caller-vcf-validation-report
-          path: artifacts/real-caller-vcf-report.json
+          path: |
+            artifacts/real-caller-vcf-report.json
+            artifacts/dragen.event-projected.vcf
+            artifacts/dragen.chr20.event-projected.vcf
+            artifacts/gatk4-4.6.2.0-linux-64.explicit.lock
+            artifacts/gatk4-version.txt
+            artifacts/gatk-validatevariants/**
           if-no-files-found: warn
 
   frontend:

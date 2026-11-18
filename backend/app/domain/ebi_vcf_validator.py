@@ -252,17 +252,26 @@ def assess_ebi_vcf_compatibility(
         else:
             blocking.append({**diagnostic, "classification": "UNRESOLVED", "blocking": True})
 
-    if raw_status == "PASS":
-        effective_status = "PASS"
-    elif raw_status == "FAIL" and diagnostics and not blocking:
-        effective_status = "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
-    elif raw_status == "NOT_SUPPORTED":
+    unresolved_errors = [item for item in blocking if str(item.get("severity", "ERROR")).upper() == "ERROR"]
+    unresolved_warnings = [item for item in blocking if str(item.get("severity", "ERROR")).upper() == "WARNING"]
+    if raw_status == "NOT_SUPPORTED":
         effective_status = "NOT_SUPPORTED"
-    else:
+    elif raw_status == "FAIL":
+        effective_status = "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS" if diagnostics and not blocking else "FAIL"
+    elif unresolved_errors:
         effective_status = "FAIL"
+    elif unresolved_warnings:
+        effective_status = "PASS_WITH_REVIEW_REQUIRED"
+    elif known_nonblocking:
+        effective_status = "PASS_WITH_DOCUMENTED_COMPATIBILITY_EXCEPTIONS"
+    else:
+        effective_status = "PASS"
     return {
         "raw_status": raw_status,
         "effective_status": effective_status,
+        "review_required": effective_status == "PASS_WITH_REVIEW_REQUIRED",
+        "unresolved_error_count": len(unresolved_errors),
+        "unresolved_warning_count": len(unresolved_warnings),
         "vcf_version": vcf_version,
         "validator_version": validator_version,
         "known_exception_ids": sorted(exception_ids),
@@ -386,6 +395,10 @@ def run_ebi_vcf_validator(
                 "source_record_examples": source_record_examples,
                 "runtime_seconds_limit": timeout_seconds,
             }
+            # Keep the validator's raw result immutable. This separate,
+            # version-aware assessment recognizes only documented EBI defects
+            # and leaves every other diagnostic blocking.
+            evidence["compatibility_assessment"] = assess_ebi_vcf_compatibility(evidence)
             if completed.returncode == 0 and not reports:
                 evidence["report_warning"] = "EBI validator exited successfully but emitted no report files."
             return evidence
@@ -399,6 +412,23 @@ def run_ebi_vcf_validator(
         ) from exc
 
 
+def _assembly_checker_effective_status(exit_code: int, diagnostics: list[dict]) -> dict:
+    errors = [item for item in diagnostics if str(item.get("severity", "")).upper() == "ERROR"]
+    warnings = [item for item in diagnostics if str(item.get("severity", "")).upper() == "WARNING"]
+    if exit_code != 0 or errors:
+        status = "FAIL"
+    elif warnings:
+        status = "PASS_WITH_REVIEW_REQUIRED"
+    else:
+        status = "PASS"
+    return {
+        "status": status,
+        "review_required": status == "PASS_WITH_REVIEW_REQUIRED",
+        "unresolved_error_count": len(errors),
+        "unresolved_warning_count": len(warnings),
+    }
+
+
 def run_ebi_vcf_assembly_checker(
     vcf_path: str | Path,
     reference_fasta: str | Path,
@@ -410,8 +440,24 @@ def run_ebi_vcf_assembly_checker(
     profile_id: str = "ebi-vcf-validator-0.10.2-linux-64",
     executable_name: str = "vcf_assembly_checker",
     timeout_seconds: int = 3600,
+    validation_input_scope: str = "CHR20_PROJECTION_ONLY",
 ) -> dict:
-    """Run EBI's independent FASTA REF concordance checker for a defined VCF projection."""
+    """Run EBI's independent FASTA REF concordance checker for an explicit input scope.
+
+    The default remains the historical chr20 smoke-test scope. Full-genome
+    qualification callers must pass FULL_FILE explicitly; the returned evidence
+    records that scope so a projection can never be represented as whole-file
+    validation. EBI's assembly-checker summary is emitted on stdout/stderr in
+    some releases, so those streams are retained as first-class evidence even
+    when its text-report file is empty.
+    """
+    if validation_input_scope not in {
+        "CHR20_PROJECTION_ONLY", "FULL_FILE", "REFERENCE_RESOLVED_SEQUENCE_RECORDS"
+    }:
+        raise ValueError(
+            "validation_input_scope must be CHR20_PROJECTION_ONLY, FULL_FILE, "
+            "or REFERENCE_RESOLVED_SEQUENCE_RECORDS."
+        )
     vcf = Path(vcf_path)
     fasta = Path(reference_fasta)
     fai = Path(str(fasta) + ".fai")
@@ -421,6 +467,32 @@ def run_ebi_vcf_assembly_checker(
         )
     if not source_artifact_sha256 or len(source_artifact_sha256) != 64:
         raise ValueError("The source artifact SHA-256 is required for EBI assembly evidence.")
+    vcf_version = _declared_fileformat(vcf)
+    if vcf_version not in SUPPORTED_VCF_VERSIONS:
+        return {
+            "validator": "EBI_VCF_ASSEMBLY_CHECKER",
+            "validator_version_expected": expected_version,
+            "validator_profile_id": profile_id,
+            "status": "NOT_SUPPORTED",
+            "execution_status": "NOT_EXECUTED",
+            "reason": (
+                f"EBI VCF Validation Suite {expected_version} supports "
+                f"{', '.join(sorted(SUPPORTED_VCF_VERSIONS))}; {vcf_version or 'unknown VCF version'} "
+                "is outside its declared support. SIRALOOM reference checks and BCFtools -c e remain required."
+            ),
+            "source_artifact_sha256": source_artifact_sha256,
+            "vcf_version": vcf_version,
+            "validation_input_sha256": _sha256(vcf),
+            "validation_input_scope": validation_input_scope,
+            "reference_build": reference_build,
+            "reference_fasta": str(fasta),
+            "reference_fasta_sha256": _sha256(fasta),
+            "reference_fai_sha256": _sha256(fai),
+            "caller_provenance": caller_provenance or {"identity_status": "UNKNOWN"},
+            "command": [],
+            "reports": [],
+            "diagnostics": [],
+        }
 
     executable = shutil.which(executable_name)
     if executable is None:
@@ -472,6 +544,7 @@ def run_ebi_vcf_assembly_checker(
                 env=runtime_env,
             )
             reports, diagnostics, _source_examples = _collect_report_evidence(report_dir)
+            assessment = _assembly_checker_effective_status(completed.returncode, diagnostics)
             return {
                 "validator": "EBI_VCF_ASSEMBLY_CHECKER",
                 "validator_version_expected": expected_version,
@@ -479,14 +552,29 @@ def run_ebi_vcf_assembly_checker(
                 "version_banner": version_output,
                 "executable_path": str(executable_path),
                 "executable_sha256": _sha256(executable_path),
-                "status": "PASS" if completed.returncode == 0 else "FAIL",
+                **assessment,
                 "exit_code": completed.returncode,
                 "started_at": started_at,
                 "finished_at": datetime.now(timezone.utc).isoformat(),
                 "source_artifact_sha256": source_artifact_sha256,
-                "vcf_version": _declared_fileformat(vcf),
+                "vcf_version": vcf_version,
                 "validation_input_sha256": _sha256(vcf),
-                "validation_input_scope": "CHR20_PROJECTION_ONLY",
+                "validation_input_scope": validation_input_scope,
+                "summary_evidence": {
+                    "stdout": completed.stdout,
+                    "stderr": completed.stderr,
+                    "text_report_files_present": any(
+                        int(item.get("size_bytes", 0)) > 0 for item in reports
+                    ),
+                    "empty_text_report_files": [
+                        item["filename"] for item in reports
+                        if item.get("filename", "").lower().endswith((".txt", ".log"))
+                        and int(item.get("size_bytes", 0)) == 0
+                    ],
+                    "interpretation": (
+                        "EXECUTION_STREAMS_RETAINED; empty text reports are not treated as diagnostic evidence"
+                    ),
+                },
                 "caller": (
                     (caller_provenance or {}).get("caller_profile_id")
                     or (caller_provenance or {}).get("caller")

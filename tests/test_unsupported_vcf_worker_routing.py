@@ -184,6 +184,23 @@ def test_production_worker_preserves_valid_non_sequence_records_for_review(
     import importlib
 
     workflow = importlib.import_module("backend.app.workflows.variant")
+    monkeypatch.setattr(
+        workflow,
+        "run_ebi_vcf_assembly_checker",
+        lambda *_args, **_kwargs: {
+            "validator": "EBI_VCF_ASSEMBLY_CHECKER",
+            "validator_version_expected": "0.10.2",
+            "validator_profile_id": "ebi-vcf-validator-0.10.2-linux-64",
+            "status": "PASS",
+            "review_required": False,
+            "validation_input_sha256": "a" * 64,
+            "reference_fasta_sha256": "b" * 64,
+            "reference_fai_sha256": "c" * 64,
+            "command": ["fixture-ebi-vcf-assembly-checker"],
+            "reports": [],
+            "diagnostics": [],
+        },
+    )
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'routed-input.db'}")
     Base.metadata.create_all(engine)
@@ -400,6 +417,23 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     from backend.app.domain.vcf_tools import bcftools_available
 
     workflow = importlib.import_module("backend.app.workflows.variant")
+    monkeypatch.setattr(
+        workflow,
+        "run_ebi_vcf_assembly_checker",
+        lambda *_args, **_kwargs: {
+            "validator": "EBI_VCF_ASSEMBLY_CHECKER",
+            "validator_version_expected": "0.10.2",
+            "validator_profile_id": "ebi-vcf-validator-0.10.2-linux-64",
+            "status": "PASS",
+            "review_required": False,
+            "validation_input_sha256": "a" * 64,
+            "reference_fasta_sha256": "b" * 64,
+            "reference_fai_sha256": "c" * 64,
+            "command": ["fixture-ebi-vcf-assembly-checker"],
+            "reports": [],
+            "diagnostics": [],
+        },
+    )
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'gvcf-positive.db'}")
     Base.metadata.create_all(engine)
