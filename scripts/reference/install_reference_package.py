@@ -211,4 +211,17 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main())    required_bytes = 0
+    for field, _subdirectory in _ASSET_FIELDS:
+        source_value = manifest.get(field)
+        if source_value is None and field == "gzi_path":
+            continue
+        required_bytes += _safe_asset(
+            source_value, field, manifest_path.parent
+        ).stat().st_size
+    publisher_evidence = manifest.get("source_contract", {}).get("publisher_checksum_evidence", {})
+    for evidence_field in ("evidence_file_path", "verified_artifact_path"):
+        required_bytes += _safe_asset(
+            publisher_evidence.get(evidence_field), evidence_field, manifest_path.parent
+        ).stat().st_size
+
