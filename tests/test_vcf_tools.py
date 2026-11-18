@@ -991,6 +991,7 @@ def test_bcftools_125_multiallelic_normalization_keeps_number_m_fields_source_on
         output_vcf,
         reference_fasta=fasta,
         expected_bcftools_version=settings.bcftools_version,
+        source_only_format_fields=[],
     )
 
     assert result["tool_version"] == f"bcftools {settings.bcftools_version}"
