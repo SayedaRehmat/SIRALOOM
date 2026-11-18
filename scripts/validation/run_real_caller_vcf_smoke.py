@@ -162,7 +162,11 @@ def download(
     last_error: Exception | None = None
     for attempt in range(max_attempts):
         if part_path.is_file() and expected_size is not None and part_path.stat().st_size == expected_size:
-            verify(part_path)
+            try:
+                verify(part_path)
+            except RuntimeError:
+                part_path.unlink(missing_ok=True)
+                raise
             os.replace(part_path, destination)
             return
         offset = part_path.stat().st_size if part_path.exists() else 0
@@ -202,7 +206,28 @@ def download(
                     output.flush()
                     os.fsync(output.fileno())
 
-            verify(part_path)
+            observed_size = part_path.stat().st_size
+            if expected_size is not None and observed_size < expected_size:
+                last_error = RuntimeError(
+                    f"Incomplete response for {destination.name}: "
+                    f"expected={expected_size} bytes; received={observed_size}"
+                )
+                if attempt + 1 < max_attempts:
+                    delay = min(2 ** attempt, 16)
+                    print(
+                        f"Download incomplete for {destination.name} "
+                        f"(attempt {attempt + 1}/{max_attempts}); resuming in {delay}s",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                    time.sleep(delay)
+                    continue
+                break
+            try:
+                verify(part_path)
+            except RuntimeError:
+                part_path.unlink(missing_ok=True)
+                raise
             os.replace(part_path, destination)
             return
         except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
