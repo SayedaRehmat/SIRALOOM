@@ -21,10 +21,30 @@ from backend.app.domain.reference_registry import (
     validate_reference_registration,
 )
 from backend.app.domain.resource_qualification import qualify_resource
+from backend.app.domain import resource_qualification
 from backend.app.domain.resources import ResourceRegistryError
 from backend.app.domain.reference_identity import inspect_fasta_sequence_identity
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceStaging
+
+
+@pytest.fixture(autouse=True)
+def _isolate_registry_tests_from_external_toolchain(monkeypatch):
+    # These are registry/lifecycle unit tests. Real BCFtools + samtools execution
+    # is exercised by the dedicated NCBI reference qualification workflow.
+    monkeypatch.setattr(
+        resource_qualification,
+        "execute_bcftools_reference_check",
+        lambda fasta_path, contigs, **kwargs: {
+            "status": "VERIFIED",
+            "reference_fasta_sha256": kwargs["expected_fasta_sha256"],
+            "tests": {
+                "valid_snv": {"status": "PASS"},
+                "valid_small_indel": {"status": "PASS", "left_aligned": True},
+                "incorrect_ref_rejected": {"status": "PASS", "reference_mismatch_reported": True},
+            },
+        },
+    )
 
 
 def _reference_candidate(tmp_path: Path, *, version: str = "GRCh38-refseq-test.1"):

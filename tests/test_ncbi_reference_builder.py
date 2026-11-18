@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from backend.app.domain.reference_identity import inspect_fasta_sequence_identity
+from backend.app.domain import resource_qualification
 from backend.app.domain.reference_package import validate_reference_package
 from backend.app.domain.reference_provenance import PublisherChecksumError, verify_publisher_checksum_evidence
 from scripts.reference import build_ncbi_grch38_reference_package as builder
@@ -102,6 +103,20 @@ def test_ncbi_builder_verifies_publisher_md5_and_emits_qualified_package_manifes
     )
     assert package["sequence_collection_digest"] == manifest["sequence_collection_digest"]
     assert package["dictionary_identity"]["status"] == "VERIFIED"
+
+    monkeypatch.setattr(
+        resource_qualification,
+        "execute_bcftools_reference_check",
+        lambda fasta_path, contigs, **kwargs: {
+            "status": "VERIFIED",
+            "reference_fasta_sha256": kwargs["expected_fasta_sha256"],
+            "tests": {
+                "valid_snv": {"status": "PASS"},
+                "valid_small_indel": {"status": "PASS", "left_aligned": True},
+                "incorrect_ref_rejected": {"status": "PASS", "reference_mismatch_reported": True},
+            },
+        },
+    )
 
     registry_report = register_and_qualify(
         tmp_path / "built" / "reference-package.json",
