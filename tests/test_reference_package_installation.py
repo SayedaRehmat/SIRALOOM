@@ -44,7 +44,8 @@ def _fixture(tmp_path: Path) -> Path:
                 "evidence_file_path": str(checksum_file),
                 "verified_artifact_path": str(compressed),
                 "algorithm": "md5",
-                "expected_digest": publisher_md5,\n                "artifact_filename": "reference.fa.gz",
+                "expected_digest": publisher_md5,
+                "artifact_filename": "reference.fa.gz",
                 "evidence_file_sha256": _sha(checksum_file),
             }
         },
