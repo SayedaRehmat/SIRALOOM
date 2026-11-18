@@ -115,7 +115,7 @@ def _reference_candidate(tmp_path: Path, *, version: str = "GRCh38-refseq-test.1
                 "access_method": "LOCAL",
                 "location": str(fasta),
                 "toolchain": {
-                    "bcftools": {"version": "bcftools 1.21"},
+                    "bcftools": {"version": "bcftools 1.25"},
                     "samtools": "samtools 1.21",
                 },
             },
