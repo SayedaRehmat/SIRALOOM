@@ -15,9 +15,11 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from urllib.parse import quote
@@ -110,19 +112,120 @@ def file_url(item: dict[str, Any], record_id: str) -> str:
     return f"https://zenodo.org/records/{record_id}/files/{key}?download=1"
 
 
-def download(url: str, destination: Path) -> None:
-    if destination.exists() and destination.stat().st_size:
-        return
+def download(
+    url: str,
+    destination: Path,
+    *,
+    expected_size: int | None = None,
+    expected_checksum: str | None = None,
+    max_attempts: int = 5,
+    timeout: int = 120,
+) -> None:
+    """Resume interrupted transfers; verify publisher metadata before publishing."""
+    if max_attempts < 1:
+        raise ValueError("max_attempts must be at least one")
+    if expected_size is not None and expected_size <= 0:
+        raise ValueError("expected_size must be positive")
+
     destination.parent.mkdir(parents=True, exist_ok=True)
-    request = urllib.request.Request(url, headers={"User-Agent": "SIRALOOM-real-vcf-validation/1.0"})
-    with urllib.request.urlopen(request, timeout=120) as response, destination.open("wb") as output:
-        while True:
-            chunk = response.read(1024 * 1024)
-            if not chunk:
-                break
-            output.write(chunk)
-    if destination.stat().st_size == 0:
-        raise RuntimeError(f"Downloaded empty file: {destination}")
+    part_path = destination.with_name(destination.name + ".part")
+    checksum_algorithm = None
+    checksum_value = None
+    if expected_checksum:
+        checksum_algorithm, separator, checksum_value = expected_checksum.partition(":")
+        if not separator or checksum_algorithm not in {"md5", "sha1", "sha256"} or not checksum_value:
+            raise RuntimeError(f"Unsupported publisher checksum declaration: {expected_checksum}")
+
+    def verify(path: Path) -> None:
+        size = path.stat().st_size
+        if expected_size is not None and size != expected_size:
+            raise RuntimeError(
+                f"Download size mismatch for {destination.name}: expected={expected_size}; observed={size}"
+            )
+        if size == 0:
+            raise RuntimeError(f"Downloaded empty file: {destination}")
+        if checksum_algorithm:
+            observed = digest(path, checksum_algorithm)
+            if observed.lower() != str(checksum_value).lower():
+                raise RuntimeError(
+                    f"Checksum mismatch for {destination.name}: "
+                    f"expected={expected_checksum}; observed={checksum_algorithm}:{observed}"
+                )
+
+    if destination.is_file():
+        try:
+            verify(destination)
+            return
+        except RuntimeError:
+            destination.unlink()
+
+    last_error: Exception | None = None
+    for attempt in range(max_attempts):
+        if part_path.is_file() and expected_size is not None and part_path.stat().st_size == expected_size:
+            verify(part_path)
+            os.replace(part_path, destination)
+            return
+        offset = part_path.stat().st_size if part_path.exists() else 0
+        headers = {"User-Agent": "SIRALOOM-real-vcf-validation/1.0"}
+        if offset:
+            headers["Range"] = f"bytes={offset}-"
+        request = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                status = response.getcode()
+                if status == 206:
+                    content_range = response.headers.get("Content-Range", "")
+                    match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+|\*)", content_range)
+                    if not match or int(match.group(1)) != offset:
+                        raise RuntimeError(
+                            f"Invalid Content-Range while resuming {destination.name}: {content_range!r}"
+                        )
+                    if expected_size is not None and match.group(3) != "*" and int(match.group(3)) != expected_size:
+                        raise RuntimeError(
+                            f"Remote size changed while downloading {destination.name}: "
+                            f"expected={expected_size}; content_range={content_range}"
+                        )
+                    mode = "ab"
+                elif status == 200:
+                    # The server ignored Range; restart rather than append duplicate bytes.
+                    offset = 0
+                    mode = "wb"
+                else:
+                    raise RuntimeError(f"Unexpected HTTP status {status} downloading {destination.name}")
+
+                with part_path.open(mode) as output:
+                    while True:
+                        chunk = response.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        output.write(chunk)
+                    output.flush()
+                    os.fsync(output.fileno())
+
+            verify(part_path)
+            os.replace(part_path, destination)
+            return
+        except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
+            last_error = exc
+            if isinstance(exc, urllib.error.HTTPError) and exc.code not in {408, 425, 429, 500, 502, 503, 504}:
+                raise RuntimeError(
+                    f"Non-retryable HTTP {exc.code} downloading {destination.name}: {exc}"
+                ) from exc
+            if attempt + 1 < max_attempts:
+                delay = min(2 ** attempt, 16)
+                print(
+                    f"Download interrupted for {destination.name} "
+                    f"(attempt {attempt + 1}/{max_attempts}); retrying in {delay}s: {exc}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                time.sleep(delay)
+
+    raise RuntimeError(
+        f"Download failed after {max_attempts} attempts for {destination.name}; "
+        f"partial_bytes={part_path.stat().st_size if part_path.exists() else 0}; "
+        f"last_error={last_error}"
+    ) from last_error
 
 
 def digest(path: Path, algorithm: str = "sha256") -> str:
@@ -233,12 +336,16 @@ def download_callsets(root: Path) -> list[dict[str, Any]]:
         destination = root / f"{caller.lower()}_{Path(key).name}"
         source_url = file_url(item, DRAGEN_RECORD if caller == "DRAGEN" else CALLSET_RECORD)
         print(f"Downloading {caller} callset {key} from {source_url}", flush=True)
-        download(source_url, destination)
         expected = str(item.get("checksum") or "")
+        expected_size = int(item["size"]) if item.get("size") is not None else None
+        download(
+            source_url,
+            destination,
+            expected_size=expected_size,
+            expected_checksum=expected or None,
+        )
         algorithm, _, expected_value = expected.partition(":")
         observed = digest(destination, algorithm) if algorithm in {"md5", "sha1", "sha256"} else None
-        if expected_value and observed and observed.lower() != expected_value.lower():
-            raise RuntimeError(f"Checksum mismatch for {key}: expected {expected}, observed {algorithm}:{observed}")
         downloaded.append({
             "caller": caller,
             "filename": key,
