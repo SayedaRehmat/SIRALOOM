@@ -42,7 +42,9 @@ def _fixture(tmp_path: Path) -> Path:
             "publisher_checksum_evidence": {
                 "evidence_file_path": str(checksum_file),
                 "verified_artifact_path": str(compressed),
-                "algorithm": "md5",\n                "expected_digest": hashlib.md5(compressed.read_bytes(), usedforsecurity=False).hexdigest(),\n                "evidence_file_sha256": _sha(checksum_file),
+                "algorithm": "md5",
+                "expected_digest": hashlib.md5(compressed.read_bytes(), usedforsecurity=False).hexdigest(),
+                "evidence_file_sha256": _sha(checksum_file),
             }
         },
         "execution": {"location": str(fasta)},
