@@ -23,11 +23,12 @@ def _fixture(tmp_path: Path) -> Path:
     dictionary = source / "sequences" / "GRCh38.dict"
     checksum_file = source / "source" / "md5checksums.txt"
     compressed = source / "source" / "reference.fa.gz"
-    fasta.write_bytes(b">1\\nACGT\\n")
-    fai.write_text("1\\t4\\t3\\t4\\t5\\n", encoding="ascii")
-    dictionary.write_text("@HD\\tVN:1.6\\n@SQ\\tSN:1\\tLN:4\\n", encoding="ascii")
-    checksum_file.write_text("0123456789abcdef0123456789abcdef  reference.fa.gz\\n", encoding="ascii")
+    fasta.write_bytes(b">1\nACGT\n")
+    fai.write_text("1\t4\t3\t4\t5\n", encoding="ascii")
+    dictionary.write_text("@HD\tVN:1.6\n@SQ\tSN:1\tLN:4\n", encoding="ascii")
     compressed.write_bytes(b"publisher compressed bytes")
+    publisher_md5 = hashlib.md5(compressed.read_bytes(), usedforsecurity=False).hexdigest()
+    checksum_file.write_text(f"{publisher_md5}  reference.fa.gz\n", encoding="ascii")
     manifest = {
         "package_version": "ncbi-test-1",
         "package_checksum": "a" * 64,
@@ -43,7 +44,7 @@ def _fixture(tmp_path: Path) -> Path:
                 "evidence_file_path": str(checksum_file),
                 "verified_artifact_path": str(compressed),
                 "algorithm": "md5",
-                "expected_digest": hashlib.md5(compressed.read_bytes(), usedforsecurity=False).hexdigest(),
+                "expected_digest": publisher_md5,\n                "artifact_filename": "reference.fa.gz",
                 "evidence_file_sha256": _sha(checksum_file),
             }
         },
