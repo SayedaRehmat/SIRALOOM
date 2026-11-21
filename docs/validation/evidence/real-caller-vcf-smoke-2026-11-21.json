@@ -1,0 +1,460 @@
+{
+  "bcftools": [
+    "bcftools 1.25",
+    "Using htslib 1.25"
+  ],
+  "callsets": [
+    {
+      "bytes": 277234550,
+      "caller": "GATK_HAPLOTYPECALLER",
+      "download_url": "https://zenodo.org/records/10428664/files/HG002_GATK_BWA_SNV.vcf.gz?download=1",
+      "filename": "HG002_GATK_BWA_SNV.vcf.gz",
+      "local_path": "/home/usama/siraloom-vcf-smoke-2026-11-21/gatk_haplotypecaller_HG002_GATK_BWA_SNV.vcf.gz",
+      "sha256": "8bb3efe1ca18710bf6e657bfd5e80cff2de73685744f0384c5679b509c80ea6e",
+      "source_md5": "0bf16072fcd3e866fb825a18d5a42d7a",
+      "verified_source_checksum": true,
+      "zenodo_checksum": "md5:0bf16072fcd3e866fb825a18d5a42d7a"
+    },
+    {
+      "bytes": 139687753,
+      "caller": "DEEPVARIANT",
+      "download_url": "https://zenodo.org/records/10428664/files/HG002_DV_BWA_SNV.vcf.gz?download=1",
+      "filename": "HG002_DV_BWA_SNV.vcf.gz",
+      "local_path": "/home/usama/siraloom-vcf-smoke-2026-11-21/deepvariant_HG002_DV_BWA_SNV.vcf.gz",
+      "sha256": "686595c5bf56baf8b0bec13bb58b4687a16b0c7a107113973506cd9d90bbee9c",
+      "source_md5": "fbd5672b077c2a4844c0f4a8849ef37c",
+      "verified_source_checksum": true,
+      "zenodo_checksum": "md5:fbd5672b077c2a4844c0f4a8849ef37c"
+    },
+    {
+      "bytes": 435527905,
+      "caller": "DRAGEN",
+      "download_url": "https://zenodo.org/records/8350256/files/HG002_35x.hard-filtered.vcf.gz?download=1",
+      "filename": "HG002_35x.hard-filtered.vcf.gz",
+      "local_path": "/home/usama/siraloom-vcf-smoke-2026-11-21/dragen_HG002_35x.hard-filtered.vcf.gz",
+      "sha256": "ca709e24e99531494a10b225a057fa4ad172957367e84c6869ac457d5b1bb93f",
+      "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
+      "verified_source_checksum": true,
+      "zenodo_checksum": "md5:388f58faa52a8811fe19b06533d2c3d5"
+    }
+  ],
+  "datasets": {
+    "dragen": "https://zenodo.org/records/8350256",
+    "gatk_deepvariant": "https://zenodo.org/records/10428664"
+  },
+  "failures": [],
+  "overall": "PASS",
+  "reference": {
+    "accession": "NC_000020.11",
+    "contig": "chr20",
+    "fai_sha256": "7315b88bbb940d7fad942ead12558d64c3c7272af9f7033b5d00fbd1e12e6316",
+    "fasta_sha256": "f7c74feb64d3b2bded091e2a4bb4c2225d96cc37d77d5ca937b68542bdbbe20d",
+    "length": 64444167,
+    "source": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_000020.11&rettype=fasta&retmode=text",
+    "source_fasta": "/home/usama/siraloom-vcf-smoke-2026-11-21/NC_000020.11.fa",
+    "source_fasta_sha256": "0853cf2c2e00782afd8d4c3682c0f67aa8dcbc60dd1b205dbe14d631fc3d8c54"
+  },
+  "results": [
+    {
+      "bcftools": [
+        "bcftools 1.25",
+        "Using htslib 1.25"
+      ],
+      "caller": "GATK_HAPLOTYPECALLER",
+      "caller_profile_match": true,
+      "caller_provenance": {
+        "assay_mode_status": "NOT_ATTESTED_BY_VCF_HEADER",
+        "caller_profile_id": "gatk_haplotypecaller",
+        "caller_semantic_compatibility_review_required": false,
+        "caller_semantic_compatibility_status": "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED",
+        "caller_version": "4.2.5.0",
+        "clinical_qualification_status": "NOT_ESTABLISHED",
+        "gvcf_handling_status": "NO_GVCF_MARKER_DETECTED",
+        "identity_status": "DECLARED",
+        "profile_match_status": "METADATA_MATCH_ONLY",
+        "release_qualification_status": "NOT_ESTABLISHED",
+        "version_status": "DECLARED"
+      },
+      "caller_semantic_review_required": false,
+      "chr20_projection": {
+        "caller_semantic_attestation": null,
+        "caller_semantic_compatibility_review_required": false,
+        "contig": "chr20",
+        "records": 128200,
+        "sample_count": 1,
+        "strict_validation": "PASS"
+      },
+      "expected_profile": "gatk_haplotypecaller",
+      "normalization": {
+        "index_exists": true,
+        "normalized_records": 129423,
+        "output": "/home/usama/siraloom-vcf-smoke-2026-11-21/gatk_haplotypecaller.normalized.vcf.gz",
+        "output_bytes": 14799203,
+        "output_sha256": "7a102d7a303a8a51b3882ae7e2fdf0166c57275c8d25bd7a375c107d3ebe9629",
+        "source_child_reconciliation": {
+          "balanced": true,
+          "expected_child_records": 129423,
+          "method": "IMMUTABLE_SOURCE_PAYLOAD_VS_BCFTOOLS_OLD_RECORD_ALT_MAPPING",
+          "normalized_child_records": 129423,
+          "source_alt_mappings": 129423,
+          "source_records": 127739,
+          "status": "VALIDATED"
+        },
+        "status": "PASS"
+      },
+      "reference_sha256": "f7c74feb64d3b2bded091e2a4bb4c2225d96cc37d77d5ca937b68542bdbbe20d",
+      "reference_validation": {
+        "checked_breakend_mate_count": 0,
+        "checked_record_count": 128200,
+        "reference_fasta": "/home/usama/siraloom-vcf-smoke-2026-11-21/chr20.reference.fa",
+        "resolved_contig_aliases": {},
+        "result": "PASS",
+        "unvalidated_telomere_record_count": 0
+      },
+      "routing": {
+        "cnv_path": null,
+        "cnv_variant_records": 0,
+        "excluded_source_record_count": 461,
+        "exclusion_manifest_path": "/home/usama/siraloom-vcf-smoke-2026-11-21/gatk_haplotypecaller_routed/excluded-source-records.jsonl",
+        "exclusion_manifest_records": 461,
+        "gvcf_blocks_path": null,
+        "gvcf_reference_blocks": 0,
+        "gvcf_unresolved_path": null,
+        "gvcf_unresolved_variant_records": 0,
+        "gvcf_wildcard_policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
+        "mitochondrial_path": null,
+        "mitochondrial_variant_records": 0,
+        "record_reconciliation": {
+          "balanced": true,
+          "delta": 0,
+          "disposition_counts": {
+            "after_contig_coordinates": 0,
+            "copy_number_variants": 0,
+            "gvcf_reference_blocks": 0,
+            "gvcf_unresolved_variants": 0,
+            "mitochondrial_variants": 0,
+            "reference_only": 0,
+            "repeat_expansions": 0,
+            "sequence": 127739,
+            "spanning_deletions": 461,
+            "structural_variants": 0,
+            "telomere_coordinates": 0
+          },
+          "method": "SOURCE_RECORD_INDEX_VS_EXCLUSIVE_ROUTING_DISPOSITIONS",
+          "routed_records": 128200,
+          "source_records": 128200
+        },
+        "records_total": 128200,
+        "reference_only_genotype_alleles": 0,
+        "reference_only_records": 0,
+        "repeat_expansion_path": null,
+        "repeat_expansion_records": 0,
+        "routing_version": "3",
+        "sequence_path": "/home/usama/siraloom-vcf-smoke-2026-11-21/gatk_haplotypecaller_routed/sequence-input.vcf",
+        "sequence_records": 127739,
+        "source_record_count": 128200,
+        "spanning_deletion_records": 461,
+        "spanning_deletions_path": "/home/usama/siraloom-vcf-smoke-2026-11-21/gatk_haplotypecaller_routed/spanning-deletion-records.vcf",
+        "structural_path": null,
+        "structural_variant_records": 0,
+        "telomere_after_contig_path": null,
+        "telomere_after_contig_records": 0,
+        "telomere_path": null,
+        "telomere_records": 0,
+        "unresolved_spanning_deletion_records": 0
+      },
+      "source_bytes": 277234550,
+      "source_file": "HG002_GATK_BWA_SNV.vcf.gz",
+      "source_sha256": "8bb3efe1ca18710bf6e657bfd5e80cff2de73685744f0384c5679b509c80ea6e",
+      "whole_file_parser_validation": {
+        "method": "BCFTOOLS_STATS_HTSLIB_FULL_FILE_PARSE",
+        "records": 5124917,
+        "sample_count": 1,
+        "status": "PASS",
+        "summary": {
+          "number of MNPs": 0,
+          "number of SNPs": 4179972,
+          "number of indels": 950122,
+          "number of multiallelic SNP sites": 2405,
+          "number of multiallelic sites": 94475,
+          "number of no-ALTs": 0,
+          "number of others": 0,
+          "number of records": 5124917,
+          "number of samples": 1
+        }
+      }
+    },
+    {
+      "bcftools": [
+        "bcftools 1.25",
+        "Using htslib 1.25"
+      ],
+      "caller": "DEEPVARIANT",
+      "caller_profile_match": true,
+      "caller_provenance": {
+        "assay_mode_status": "NOT_ATTESTED_BY_VCF_HEADER",
+        "caller_profile_id": "deepvariant_germline",
+        "caller_semantic_compatibility_review_required": false,
+        "caller_semantic_compatibility_status": "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED",
+        "caller_version": "1.5.0",
+        "clinical_qualification_status": "NOT_ESTABLISHED",
+        "gvcf_handling_status": "NO_GVCF_MARKER_DETECTED",
+        "identity_status": "DECLARED",
+        "profile_match_status": "METADATA_MATCH_ONLY",
+        "release_qualification_status": "NOT_ESTABLISHED",
+        "version_status": "DECLARED"
+      },
+      "caller_semantic_review_required": false,
+      "chr20_projection": {
+        "caller_semantic_attestation": null,
+        "caller_semantic_compatibility_review_required": false,
+        "contig": "chr20",
+        "records": 204492,
+        "sample_count": 1,
+        "strict_validation": "PASS"
+      },
+      "expected_profile": "deepvariant_germline",
+      "normalization": {
+        "index_exists": true,
+        "normalized_records": 206422,
+        "output": "/home/usama/siraloom-vcf-smoke-2026-11-21/deepvariant.normalized.vcf.gz",
+        "output_bytes": 18665624,
+        "output_sha256": "d45523d65c6ca3fcaaa230095b183092a5c2aa1452219a022af97061e1f3d9b0",
+        "source_child_reconciliation": {
+          "balanced": true,
+          "expected_child_records": 206422,
+          "method": "IMMUTABLE_SOURCE_PAYLOAD_VS_BCFTOOLS_OLD_RECORD_ALT_MAPPING",
+          "normalized_child_records": 206422,
+          "source_alt_mappings": 206422,
+          "source_records": 204492,
+          "status": "VALIDATED"
+        },
+        "status": "PASS"
+      },
+      "reference_sha256": "f7c74feb64d3b2bded091e2a4bb4c2225d96cc37d77d5ca937b68542bdbbe20d",
+      "reference_validation": {
+        "checked_breakend_mate_count": 0,
+        "checked_record_count": 204492,
+        "reference_fasta": "/home/usama/siraloom-vcf-smoke-2026-11-21/chr20.reference.fa",
+        "resolved_contig_aliases": {},
+        "result": "PASS",
+        "unvalidated_telomere_record_count": 0
+      },
+      "routing": {
+        "cnv_path": null,
+        "cnv_variant_records": 0,
+        "excluded_source_record_count": 0,
+        "exclusion_manifest_path": "/home/usama/siraloom-vcf-smoke-2026-11-21/deepvariant_routed/excluded-source-records.jsonl",
+        "exclusion_manifest_records": 84875,
+        "gvcf_blocks_path": null,
+        "gvcf_reference_blocks": 0,
+        "gvcf_unresolved_path": null,
+        "gvcf_unresolved_variant_records": 0,
+        "gvcf_wildcard_policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
+        "mitochondrial_path": null,
+        "mitochondrial_variant_records": 0,
+        "record_reconciliation": {
+          "balanced": true,
+          "delta": 0,
+          "disposition_counts": {
+            "after_contig_coordinates": 0,
+            "copy_number_variants": 0,
+            "gvcf_reference_blocks": 0,
+            "gvcf_unresolved_variants": 0,
+            "mitochondrial_variants": 0,
+            "reference_only": 0,
+            "repeat_expansions": 0,
+            "sequence": 204492,
+            "spanning_deletions": 0,
+            "structural_variants": 0,
+            "telomere_coordinates": 0
+          },
+          "method": "SOURCE_RECORD_INDEX_VS_EXCLUSIVE_ROUTING_DISPOSITIONS",
+          "routed_records": 204492,
+          "source_records": 204492
+        },
+        "records_total": 204492,
+        "reference_only_genotype_alleles": 84875,
+        "reference_only_records": 0,
+        "repeat_expansion_path": null,
+        "repeat_expansion_records": 0,
+        "routing_version": "3",
+        "sequence_path": "/home/usama/siraloom-vcf-smoke-2026-11-21/deepvariant_routed/sequence-input.vcf",
+        "sequence_records": 204492,
+        "source_record_count": 204492,
+        "spanning_deletion_records": 0,
+        "spanning_deletions_path": null,
+        "structural_path": null,
+        "structural_variant_records": 0,
+        "telomere_after_contig_path": null,
+        "telomere_after_contig_records": 0,
+        "telomere_path": null,
+        "telomere_records": 0,
+        "unresolved_spanning_deletion_records": 0
+      },
+      "source_bytes": 139687753,
+      "source_file": "HG002_DV_BWA_SNV.vcf.gz",
+      "source_sha256": "686595c5bf56baf8b0bec13bb58b4687a16b0c7a107113973506cd9d90bbee9c",
+      "whole_file_parser_validation": {
+        "method": "BCFTOOLS_STATS_HTSLIB_FULL_FILE_PARSE",
+        "records": 7865446,
+        "sample_count": 1,
+        "status": "PASS",
+        "summary": {
+          "number of MNPs": 0,
+          "number of SNPs": 6599327,
+          "number of indels": 1271780,
+          "number of multiallelic SNP sites": 2294,
+          "number of multiallelic sites": 89695,
+          "number of no-ALTs": 0,
+          "number of others": 951,
+          "number of records": 7865446,
+          "number of samples": 1
+        }
+      }
+    },
+    {
+      "bcftools": [
+        "bcftools 1.25",
+        "Using htslib 1.25"
+      ],
+      "caller": "DRAGEN",
+      "caller_profile_match": true,
+      "caller_provenance": {
+        "assay_mode_status": "NOT_ATTESTED_BY_VCF_HEADER",
+        "caller_profile_id": "dragen_snv_germline",
+        "caller_semantic_compatibility_review_required": false,
+        "caller_semantic_compatibility_status": "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_UNVERIFIED",
+        "caller_version": null,
+        "clinical_qualification_status": "NOT_ESTABLISHED",
+        "gvcf_handling_status": "NO_GVCF_MARKER_DETECTED",
+        "identity_status": "PARTIAL",
+        "profile_match_status": "CALLER_FAMILY_MATCH_VERSION_MISSING",
+        "release_qualification_status": "NOT_ESTABLISHED",
+        "version_status": "MISSING"
+      },
+      "caller_semantic_review_required": true,
+      "chr20_projection": {
+        "caller_semantic_attestation": {
+          "artifact_sha256": "c1a2ca92cff4b597b4e759f76fe2f9cfc5a268b061a75c0001286408cd560e84",
+          "caller_profile_id": "dragen_snv_germline",
+          "caller_release": "4.2",
+          "clinical_review_required": true,
+          "field": "FORMAT/GP",
+          "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+          "source_filename": "HG002_35x.hard-filtered.vcf.gz",
+          "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
+          "source_record_url": "https://zenodo.org/records/8350256",
+          "source_sha256": "ca709e24e99531494a10b225a057fa4ad172957367e84c6869ac457d5b1bb93f",
+          "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE"
+        },
+        "caller_semantic_compatibility_review_required": true,
+        "contig": "chr20",
+        "records": 110397,
+        "sample_count": 1,
+        "strict_validation": "PASS"
+      },
+      "expected_profile": "dragen_snv_germline",
+      "normalization": {
+        "index_exists": true,
+        "normalized_records": 112422,
+        "output": "/home/usama/siraloom-vcf-smoke-2026-11-21/dragen.normalized.vcf.gz",
+        "output_bytes": 16214447,
+        "output_sha256": "c23e92c5e88220ddc80b7996e10878b94574a487208837a1f07c1f570921ac5f",
+        "source_child_reconciliation": {
+          "balanced": true,
+          "expected_child_records": 112422,
+          "method": "IMMUTABLE_SOURCE_PAYLOAD_VS_BCFTOOLS_OLD_RECORD_ALT_MAPPING",
+          "normalized_child_records": 112422,
+          "source_alt_mappings": 112422,
+          "source_records": 110397,
+          "status": "VALIDATED"
+        },
+        "status": "PASS"
+      },
+      "reference_sha256": "f7c74feb64d3b2bded091e2a4bb4c2225d96cc37d77d5ca937b68542bdbbe20d",
+      "reference_validation": {
+        "checked_breakend_mate_count": 0,
+        "checked_record_count": 110397,
+        "reference_fasta": "/home/usama/siraloom-vcf-smoke-2026-11-21/chr20.reference.fa",
+        "resolved_contig_aliases": {},
+        "result": "PASS",
+        "unvalidated_telomere_record_count": 0
+      },
+      "routing": {
+        "cnv_path": null,
+        "cnv_variant_records": 0,
+        "excluded_source_record_count": 0,
+        "exclusion_manifest_path": null,
+        "exclusion_manifest_records": 0,
+        "gvcf_blocks_path": null,
+        "gvcf_reference_blocks": 0,
+        "gvcf_unresolved_path": null,
+        "gvcf_unresolved_variant_records": 0,
+        "gvcf_wildcard_policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
+        "mitochondrial_path": null,
+        "mitochondrial_variant_records": 0,
+        "record_reconciliation": {
+          "balanced": true,
+          "delta": 0,
+          "disposition_counts": {
+            "after_contig_coordinates": 0,
+            "copy_number_variants": 0,
+            "gvcf_reference_blocks": 0,
+            "gvcf_unresolved_variants": 0,
+            "mitochondrial_variants": 0,
+            "reference_only": 0,
+            "repeat_expansions": 0,
+            "sequence": 110397,
+            "spanning_deletions": 0,
+            "structural_variants": 0,
+            "telomere_coordinates": 0
+          },
+          "method": "SOURCE_RECORD_INDEX_VS_EXCLUSIVE_ROUTING_DISPOSITIONS",
+          "routed_records": 110397,
+          "source_records": 110397
+        },
+        "records_total": 110397,
+        "reference_only_genotype_alleles": 0,
+        "reference_only_records": 0,
+        "repeat_expansion_path": null,
+        "repeat_expansion_records": 0,
+        "routing_version": "3",
+        "sequence_path": "/home/usama/siraloom-vcf-smoke-2026-11-21/dragen_routed/sequence-input.vcf",
+        "sequence_records": 110397,
+        "source_record_count": 110397,
+        "spanning_deletion_records": 0,
+        "spanning_deletions_path": null,
+        "structural_path": null,
+        "structural_variant_records": 0,
+        "telomere_after_contig_path": null,
+        "telomere_after_contig_records": 0,
+        "telomere_path": null,
+        "telomere_records": 0,
+        "unresolved_spanning_deletion_records": 0
+      },
+      "source_bytes": 435527905,
+      "source_file": "HG002_35x.hard-filtered.vcf.gz",
+      "source_sha256": "ca709e24e99531494a10b225a057fa4ad172957367e84c6869ac457d5b1bb93f",
+      "whole_file_parser_validation": {
+        "method": "BCFTOOLS_STATS_HTSLIB_FULL_FILE_PARSE",
+        "records": 4933952,
+        "sample_count": 1,
+        "status": "PASS",
+        "summary": {
+          "number of MNPs": 0,
+          "number of SNPs": 3977087,
+          "number of indels": 962448,
+          "number of multiallelic SNP sites": 2403,
+          "number of multiallelic sites": 92330,
+          "number of no-ALTs": 0,
+          "number of others": 0,
+          "number of records": 4933952,
+          "number of samples": 1
+        }
+      }
+    }
+  ],
+  "schema_version": 1,
+  "scope": "real sample-level germline SNV/indel caller VCF intake, validation, routing, GRCh38 chr20 REF validation, and reference-aware normalization"
+}

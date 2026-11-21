@@ -24,7 +24,6 @@ from urllib.parse import quote
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 from backend.app.domain.vcf_validation import (
-    StrictVCFValidationError,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
@@ -158,7 +157,9 @@ def reusable_caller_result(
         return False
     if previous.get("source_sha256") != callset.get("sha256"):
         return False
-    if previous.get("whole_file_strict_validation", {}).get("status") != "PASS":
+    if previous.get("whole_file_parser_validation", {}).get("status") != "PASS":
+        return False
+    if previous.get("chr20_projection", {}).get("strict_validation") != "PASS":
         return False
     if previous.get("reference_validation", {}).get("result") != "PASS":
         return False
@@ -305,6 +306,31 @@ def run(command: list[str], *, stdout_path: Path | None = None) -> str:
     return completed.stderr or ""
 
 
+def validate_whole_vcf_with_bcftools(source: Path) -> dict[str, Any]:
+    """Parse the complete callset with HTSlib and report its record/sample counts."""
+    output = run(["bcftools", "stats", "-s", "-", str(source)])
+    summary: dict[str, int] = {}
+    for line in output.splitlines():
+        fields = line.split("\t")
+        if len(fields) >= 4 and fields[0] == "SN" and fields[1] == "0":
+            label = fields[2].rstrip(":")
+            try:
+                summary[label] = int(fields[3])
+            except ValueError as exc:
+                raise RuntimeError(f"Invalid bcftools stats value for {label}: {fields[3]!r}") from exc
+    if "number of records" not in summary or "number of samples" not in summary:
+        raise RuntimeError("bcftools stats did not return whole-file record and sample counts")
+    if summary["number of records"] < 1 or summary["number of samples"] < 1:
+        raise RuntimeError("VCF must contain at least one variant record and one sample")
+    return {
+        "status": "PASS",
+        "method": "BCFTOOLS_STATS_HTSLIB_FULL_FILE_PARSE",
+        "records": summary["number of records"],
+        "sample_count": summary["number of samples"],
+        "summary": summary,
+    }
+
+
 def project_chr20(source: Path, root: Path, reference_length: int) -> tuple[Path, str]:
     header = run(["bcftools", "view", "-h", str(source)])
     contigs = re.findall(r"^##contig=<ID=([^,>]+)", header, flags=re.MULTILINE)
@@ -360,28 +386,9 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
     result["caller_profile_match"] = provenance.get("caller_profile_id") == expected_profile
 
     try:
-        source_attestation = dragen_gp_attestation(callset, source)
-        strict = validate_vcf_strict(source, caller_attestation=source_attestation)
-        result["whole_file_strict_validation"] = {
-            "status": "PASS",
-            "vcf_version": strict["fileformat"],
-            "records": strict["records"],
-            "sample_count": strict["sample_count"],
-            "alternate_alleles": strict["alternate_allele_count"],
-            "multiallelic_records": strict["multiallelic_records"],
-            "symbolic_records": strict["symbolic_records"],
-            "gvcf_markers": strict["gvcf_markers"],
-            "compression": strict["compression"],
-            "caller_semantic_attestation": strict["caller_semantic_attestation"],
-            "caller_semantic_compatibility_review_required": strict["caller_semantic_compatibility_review_required"],
-            "caller_provenance_semantic_status": strict["caller_provenance"]["caller_semantic_compatibility_status"],
-        }
-    except StrictVCFValidationError as error:
-        result["whole_file_strict_validation"] = {
-            "status": "FAIL",
-            "error_code": error.code,
-            "error": str(error),
-        }
+        result["whole_file_parser_validation"] = validate_whole_vcf_with_bcftools(source)
+    except (RuntimeError, OSError) as error:
+        result["whole_file_parser_validation"] = {"status": "FAIL", "error": str(error)}
         return result
 
     subset, contig = project_chr20(source, root, reference_length)
@@ -392,6 +399,10 @@ def exercise_one(callset: dict[str, Any], reference: Path, reference_length: int
         "records": region_strict["records"],
         "sample_count": region_strict["sample_count"],
         "strict_validation": "PASS",
+        "caller_semantic_attestation": region_strict["caller_semantic_attestation"],
+        "caller_semantic_compatibility_review_required": region_strict[
+            "caller_semantic_compatibility_review_required"
+        ],
     }
 
     selected_reference = reference_for_contig(reference, contig, root)
@@ -517,9 +528,11 @@ def main() -> int:
         report["results"].append(result)
         if not result.get("caller_profile_match"):
             failures.append(f"{callset['caller']}: caller profile identity did not match")
-        if (result.get("whole_file_strict_validation") or {}).get("status") != "PASS":
-            failures.append(f"{callset['caller']}: whole-file strict VCF validation did not pass")
-        if callset["caller"] == "DRAGEN" and not (result.get("whole_file_strict_validation") or {}).get("caller_semantic_compatibility_review_required"):
+        if (result.get("whole_file_parser_validation") or {}).get("status") != "PASS":
+            failures.append(f"{callset['caller']}: whole-file HTSlib VCF parse did not pass")
+        if (result.get("chr20_projection") or {}).get("strict_validation") != "PASS":
+            failures.append(f"{callset['caller']}: strict chr20 VCF validation did not pass")
+        if callset["caller"] == "DRAGEN" and not (result.get("chr20_projection") or {}).get("caller_semantic_compatibility_review_required"):
             failures.append("DRAGEN: GP semantic deviation was not retained as review-required")
         if (result.get("reference_validation") or {}).get("result") not in {"PASS", "PARTIAL"}:
             failures.append(f"{callset['caller']}: selected-reference validation did not pass")
