@@ -1447,6 +1447,18 @@ if Celery is not None:
                     if item.strip()
                 ]
                 resolved_source = local_source_path.expanduser().resolve(strict=False)
+                if (
+                    resource.resource_type == "REFERENCE_PACKAGE"
+                    and resolved_source == Path(row.destination_uri).expanduser().resolve(strict=False)
+                    and resource.organization_id is not None
+                ):
+                    # A full reference package may be built directly in the
+                    # organization's controlled resource root. It is verified
+                    # in place; copying only its FASTA would separate its FAI,
+                    # dictionary, or GZI sidecars from the package manifest.
+                    roots.append(
+                        (Path(settings.resource_cache_root).expanduser().resolve() / str(resource.organization_id))
+                    )
                 if not roots or not any(resolved_source == root or root in resolved_source.parents for root in roots):
                     raise ResourceStagingError("Local staging source is outside RESOURCE_STAGING_LOCAL_SOURCE_ROOTS.", code="LOCAL_SOURCE_POLICY_REJECTED", outcome="RESOURCE_REJECTED")
             allowed_hosts = {

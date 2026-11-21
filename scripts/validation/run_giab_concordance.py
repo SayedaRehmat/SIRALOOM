@@ -16,9 +16,9 @@ import math
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
-import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TextIO
@@ -38,6 +38,45 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def resolve_hap_py_version(executable: Path, version_text: str, returncode: int) -> tuple[str, dict[str, Any]]:
+    """Resolve hap.py version from its CLI, or its exact Conda package record.
+
+    The Bioconda 0.3.15 build currently exits successfully for ``--version``
+    but prints only ``Hap.py ``. In that case the adjacent conda-meta record
+    is usable provenance only when it explicitly owns this executable path.
+    """
+    version_match = VERSION_RE.search(version_text)
+    if returncode == 0 and version_match:
+        return version_match.group(0), {"source": "runtime_version_command"}
+
+    prefix = executable.parent.parent
+    metadata_dir = prefix / "conda-meta"
+    if metadata_dir.is_dir():
+        relative_executable = executable.relative_to(prefix).as_posix()
+        matches: list[tuple[str, dict[str, Any], Path]] = []
+        for metadata_path in metadata_dir.glob("hap.py-*.json"):
+            try:
+                record = json.loads(metadata_path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                continue
+            files = record.get("files") or []
+            if (record.get("name") == "hap.py" and relative_executable in files
+                    and isinstance(record.get("version"), str)):
+                matches.append((record["version"], record, metadata_path))
+        if len(matches) == 1:
+            version, record, metadata_path = matches[0]
+            return version, {
+                "source": "conda_package_record",
+                "package": "hap.py",
+                "build": record.get("build"),
+                "channel": record.get("channel"),
+                "package_url": record.get("url"),
+                "package_sha256": record.get("sha256"),
+                "metadata_sha256": sha256_file(metadata_path),
+            }
+    raise ConcordanceError("hap.py runtime version could not be verified from its command or owning package metadata.")
 
 
 def _regular_file(value: str | Path, label: str) -> Path:
@@ -426,10 +465,9 @@ def run_concordance(
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise ConcordanceError("hap.py executable/version probe failed.") from exc
     version_text = (version_result.stdout + "\n" + version_result.stderr).strip()
-    version_match = VERSION_RE.search(version_text)
-    if version_result.returncode != 0 or not version_match:
-        raise ConcordanceError("hap.py did not return a parseable runtime version.")
-    hap_version = version_match.group(0)
+    hap_version, hap_version_provenance = resolve_hap_py_version(
+        executable_path, version_text, version_result.returncode
+    )
 
     prefix = output_dir / "comparison"
     # hap.py documents -f for confident regions and -T for dense assay targets.
@@ -491,6 +529,7 @@ def run_concordance(
             "platform": platform.platform(),
             "python_version": platform.python_version(),
             "hap_py_version": hap_version,
+            "hap_py_version_provenance": hap_version_provenance,
             "hap_py_executable_sha256": executable_sha256_before,
             "repository_commit": os.environ.get("GITHUB_SHA"),
             "comparison_engine": engine,

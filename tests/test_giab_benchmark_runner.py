@@ -195,6 +195,27 @@ def test_tool_version_pin_requires_version_command_output_match():
         module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 2, "output": "Hap.py v0.3.15"})
 
 
+def test_hap_py_pin_can_be_verified_from_owning_conda_record(tmp_path):
+    module = _load_runner()
+    prefix = tmp_path / "env"
+    executable = prefix / "bin" / "hap.py"
+    executable.parent.mkdir(parents=True)
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    metadata = prefix / "conda-meta"
+    metadata.mkdir()
+    (metadata / "hap.py-0.3.15-build.json").write_text(json.dumps({
+        "name": "hap.py", "version": "0.3.15", "build": "py27_0",
+        "channel": "bioconda", "url": "https://example.invalid/hap.py",
+        "sha256": "b" * 64, "files": ["bin/hap.py"],
+    }), encoding="utf-8")
+    result = {"exit_code": 0, "output": "Hap.py "}
+
+    module.verify_version_pin("hap.py", "0.3.15", result, executable=str(executable))
+
+    assert result["verified_package_record"]["version"] == "0.3.15"
+    assert result["verified_package_record"]["package_sha256"] == "b" * 64
+
+
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [

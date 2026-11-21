@@ -53,11 +53,12 @@ def test_duplicate_criterion_rejected():
         ACMGEngine().classify([P("PM2", "MODERATE"), P("PM2", "SUPPORTING")])
 
 
-def test_provider_or_automatic_annotation_is_not_implicitly_promoted():
-    e = ACMGEngine()
-    result = e.classify([])
-    assert result.classification == "VUS"
-    assert result.state == "PROPOSED"
+def test_empty_evidence_set_cannot_produce_a_proposed_vus():
+    with pytest.raises(
+        ValueError,
+        match="no classification can be produced from an empty evidence set",
+    ):
+        ACMGEngine().classify([])
 
 
 def test_conflicting_pathogenic_and_benign_requires_review():

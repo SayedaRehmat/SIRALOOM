@@ -12,13 +12,14 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
 import urllib.request
-from urllib.parse import quote
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
@@ -32,7 +33,12 @@ ZENODO_API = "https://zenodo.org/api/records"
 DRAGEN_RECORD = "8350256"
 CALLSET_RECORD = "10428664"
 DRAGEN_KEY = "HG002_35x.hard-filtered.vcf.gz"
-REFERENCE_URL = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/chr20.fa.gz"
+REFERENCE_ACCESSION = "NC_000020.11"
+REFERENCE_LENGTH = 64_444_167
+REFERENCE_URL = (
+    "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+    f"?db=nuccore&id={REFERENCE_ACCESSION}&rettype=fasta&retmode=text"
+)
 EXPECTED_PROFILES = {
     "GATK_HAPLOTYPECALLER": "gatk_haplotypecaller",
     "DEEPVARIANT": "deepvariant_germline",
@@ -52,7 +58,7 @@ def record_files(record_id: str) -> list[dict[str, Any]]:
     if isinstance(files, dict):
         files = files.get("entries", [])
     if not isinstance(files, list):
-        raise RuntimeError(f"Unexpected Zenodo file listing for record {record_id}")
+        raise TypeError(f"Unexpected Zenodo file listing for record {record_id}")
     return files
 
 
@@ -65,11 +71,9 @@ def select_callset(files: list[dict[str, Any]], caller: str) -> dict[str, Any]:
             continue
         if any(token in upper for token in ("GVCF", "SV.", ".SV", "CNV", "REPEAT", "STR")):
             continue
-        if caller == "GATK" and "GATK" in upper:
-            candidates.append(item)
-        elif caller == "DEEPVARIANT" and (
+        if (caller == "GATK" and "GATK" in upper) or (caller == "DEEPVARIANT" and (
             "DEEPVARIANT" in upper or re.search(r"(?:^|[_.-])DV(?:[_.-]|$)", upper)
-        ) and "GIRAFFE" not in upper:
+        ) and "GIRAFFE" not in upper):
             candidates.append(item)
 
     if caller == "DEEPVARIANT" and len(candidates) > 1:
@@ -100,17 +104,39 @@ def file_url(item: dict[str, Any], record_id: str) -> str:
 
 def download(url: str, destination: Path) -> None:
     if destination.exists() and destination.stat().st_size:
-        return
+        if destination.suffix != ".gz":
+            return
+        try:
+            with gzip.open(destination, "rb") as compressed:
+                while compressed.read(1024 * 1024):
+                    pass
+        except (OSError, EOFError):
+            destination.unlink(missing_ok=True)
+        else:
+            return
     destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(destination.name + ".part")
     request = urllib.request.Request(url, headers={"User-Agent": "SIRALOOM-real-vcf-validation/1.0"})
-    with urllib.request.urlopen(request, timeout=120) as response, destination.open("wb") as output:
-        while True:
-            chunk = response.read(1024 * 1024)
-            if not chunk:
-                break
-            output.write(chunk)
-    if destination.stat().st_size == 0:
-        raise RuntimeError(f"Downloaded empty file: {destination}")
+    try:
+        with urllib.request.urlopen(request, timeout=120) as response, temporary.open("wb") as output:
+            while True:
+                chunk = response.read(1024 * 1024)
+                if not chunk:
+                    break
+                output.write(chunk)
+            output.flush()
+            os.fsync(output.fileno())
+        if temporary.stat().st_size == 0:
+            raise RuntimeError(f"Downloaded empty file: {destination}")
+        if destination.suffix == ".gz":
+            with gzip.open(temporary, "rb") as compressed:
+                while compressed.read(1024 * 1024):
+                    pass
+        temporary.replace(destination)
+    except (OSError, EOFError, RuntimeError) as exc:
+        temporary.unlink(missing_ok=True)
+        destination.unlink(missing_ok=True)
+        raise RuntimeError(f"Download failed integrity checks for {url}: {exc}") from exc
 
 
 def digest(path: Path, algorithm: str = "sha256") -> str:
@@ -119,6 +145,34 @@ def digest(path: Path, algorithm: str = "sha256") -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             hasher.update(chunk)
     return hasher.hexdigest()
+
+
+def reusable_caller_result(
+    previous: dict[str, Any],
+    callset: dict[str, Any],
+    reference_sha256: str,
+    bcftools_version: list[str],
+) -> bool:
+    """Reuse completed caller output only when every immutable input still matches."""
+    if previous.get("caller") != callset.get("caller"):
+        return False
+    if previous.get("source_sha256") != callset.get("sha256"):
+        return False
+    if previous.get("whole_file_strict_validation", {}).get("status") != "PASS":
+        return False
+    if previous.get("reference_validation", {}).get("result") != "PASS":
+        return False
+    normalization = previous.get("normalization", {})
+    if normalization.get("status") != "PASS" or normalization.get("index_exists") is not True:
+        return False
+    if previous.get("reference_sha256") != reference_sha256:
+        return False
+    if previous.get("bcftools") != bcftools_version:
+        return False
+    normalized = Path(str(normalization.get("output", "")))
+    if not normalized.is_file() or not Path(str(normalized) + ".csi").is_file():
+        return False
+    return digest(normalized) == normalization.get("output_sha256")
 
 
 def dragen_gp_attestation(callset: dict[str, Any], artifact: Path) -> dict[str, Any] | None:
@@ -177,15 +231,29 @@ def download_callsets(root: Path) -> list[dict[str, Any]]:
 
 
 def build_chr20_reference(root: Path) -> tuple[Path, int]:
-    compressed = root / "chr20.fa.gz"
-    download(REFERENCE_URL, compressed)
-    with gzip.open(compressed, "rt", encoding="ascii") as source:
-        first = source.readline().strip()
-        if not first.startswith(">"):
-            raise RuntimeError("UCSC chr20 FASTA has no FASTA header")
-        sequence = "".join(line.strip() for line in source if line.strip()).upper()
-    if not sequence or set(sequence) - set("ACGTN"):
-        raise RuntimeError("UCSC chr20 reference sequence is empty or contains unexpected symbols")
+    source_fasta = root / f"{REFERENCE_ACCESSION}.fa"
+    sequence = ""
+    for attempt in range(2):
+        download(REFERENCE_URL, source_fasta)
+        try:
+            with source_fasta.open("rt", encoding="ascii") as source:
+                first = source.readline().strip()
+                if not first.startswith(f">{REFERENCE_ACCESSION} "):
+                    raise RuntimeError(
+                        f"NCBI FASTA did not identify expected RefSeq accession {REFERENCE_ACCESSION}: {first}"
+                    )
+                sequence = "".join(line.strip() for line in source if line.strip()).upper()
+            if len(sequence) != REFERENCE_LENGTH:
+                raise RuntimeError(
+                    f"RefSeq {REFERENCE_ACCESSION} length mismatch: expected {REFERENCE_LENGTH}, observed {len(sequence)}"
+                )
+            if set(sequence) - set("ACGTN"):
+                raise RuntimeError("NCBI chr20 reference contains unexpected sequence symbols")
+            break
+        except (OSError, UnicodeError, RuntimeError):
+            source_fasta.unlink(missing_ok=True)
+            if attempt:
+                raise
     fasta = root / "chr20.reference.fa"
     header = ">chr20\n"
     with fasta.open("w", encoding="ascii", newline="\n") as output:
@@ -375,6 +443,9 @@ def main() -> int:
         "scope": "real sample-level germline SNV/indel caller VCF intake, validation, routing, GRCh38 chr20 REF validation, and reference-aware normalization",
         "reference": {
             "source": REFERENCE_URL,
+            "accession": REFERENCE_ACCESSION,
+            "source_fasta": str(args.work_dir / f"{REFERENCE_ACCESSION}.fa"),
+            "source_fasta_sha256": digest(args.work_dir / f"{REFERENCE_ACCESSION}.fa"),
             "contig": "chr20",
             "length": reference_length,
             "fasta_sha256": digest(reference),
@@ -390,17 +461,59 @@ def main() -> int:
     }
 
     failures = []
-    for callset in callsets:
+    report["overall"] = "RUNNING"
+    prior_report: dict[str, Any] = {}
+    if args.report.is_file():
         try:
-            result = exercise_one(callset, reference, reference_length, args.work_dir)
-        except Exception as error:
-            result = {
-                "caller": callset["caller"],
-                "source_file": callset["filename"],
-                "status": "ERROR",
-                "error_type": type(error).__name__,
-                "error": str(error),
+            candidate = json.loads(args.report.read_text(encoding="utf-8"))
+            if (
+                candidate.get("schema_version") == report["schema_version"]
+                and candidate.get("scope") == report["scope"]
+                and candidate.get("reference", {}).get("fasta_sha256") == report["reference"]["fasta_sha256"]
+                and candidate.get("bcftools") == report["bcftools"]
+            ):
+                prior_report = candidate
+        except (OSError, json.JSONDecodeError):
+            prior_report = {}
+    prior_results = {
+        result.get("caller"): result
+        for result in prior_report.get("results", [])
+        if isinstance(result, dict)
+    }
+    args.report.parent.mkdir(parents=True, exist_ok=True)
+    temporary_report = args.report.with_name(args.report.name + ".part")
+    temporary_report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary_report.replace(args.report)
+
+    for callset in callsets:
+        cached = prior_results.get(callset["caller"])
+        if cached:
+            cached = {
+                **cached,
+                "reference_sha256": prior_report["reference"]["fasta_sha256"],
+                "bcftools": prior_report["bcftools"],
             }
+        if cached and reusable_caller_result(
+            cached,
+            callset,
+            report["reference"]["fasta_sha256"],
+            report["bcftools"],
+        ):
+            result = cached
+            print(f"Reusing verified completed result for {callset['caller']}", flush=True)
+        else:
+            try:
+                result = exercise_one(callset, reference, reference_length, args.work_dir)
+                result["reference_sha256"] = report["reference"]["fasta_sha256"]
+                result["bcftools"] = report["bcftools"]
+            except Exception as error:  # noqa: BLE001 - preserve caller-specific failure in the report
+                result = {
+                    "caller": callset["caller"],
+                    "source_file": callset["filename"],
+                    "status": "ERROR",
+                    "error_type": type(error).__name__,
+                    "error": str(error),
+                }
         report["results"].append(result)
         if not result.get("caller_profile_match"):
             failures.append(f"{callset['caller']}: caller profile identity did not match")
@@ -412,6 +525,11 @@ def main() -> int:
             failures.append(f"{callset['caller']}: selected-reference validation did not pass")
         if (result.get("normalization") or {}).get("status") != "PASS":
             failures.append(f"{callset['caller']}: reference-aware normalization did not pass")
+        report["failures"] = list(failures)
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        temporary_report = args.report.with_name(args.report.name + ".part")
+        temporary_report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        temporary_report.replace(args.report)
 
     report["overall"] = "PASS" if not failures else "FAIL"
     report["failures"] = failures

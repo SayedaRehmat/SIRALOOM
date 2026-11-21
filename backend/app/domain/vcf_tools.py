@@ -705,7 +705,7 @@ def inspect_vcf_compression(path: str | Path) -> dict:
 
 
 def bcftools_available(executable: str = "bcftools") -> bool:
-    return shutil.which(executable) is not None
+    return Path(executable).is_file() or shutil.which(executable) is not None
 
 
 def has_multiallelic_records(path: str | Path) -> bool:
@@ -839,7 +839,10 @@ def _validate_vcf_index_record_counts(
                     raise VCFToolError("Sequential VCF scan found a record with an empty contig.")
                 state = sequential.setdefault(contig, {"count": 0, "digest": hashlib.sha256()})
                 state["count"] = int(state["count"]) + 1
-                state["digest"].update(line.encode("utf-8"))
+                # Compare record content, not container-specific newline style.
+                # Valid VCF streams may use CRLF while indexed BCFtools output
+                # is emitted with LF; canonicalize line endings on both paths.
+                state["digest"].update(line.rstrip("\r\n").encode("utf-8") + b"\n")
     except (OSError, EOFError, UnicodeDecodeError) as exc:
         raise VCFToolError(f"Cannot read staged BGZF VCF for index concordance: {exc}") from exc
 
@@ -897,7 +900,7 @@ def _validate_vcf_index_record_counts(
                     raise VCFToolError(
                         f"index-backed query for contig {contig!r} returned a record from another contig."
                     )
-                digest.update(raw_line)
+                digest.update(raw_line.rstrip(b"\r\n") + b"\n")
                 count += 1
             if count != sequential_counts[contig]:
                 raise VCFToolError(
@@ -1491,8 +1494,7 @@ def normalize_vcf_with_bcftools(
     bcftools_executable = bcftools_executable or settings.bcftools_executable
     expected_bcftools_version = expected_bcftools_version or settings.bcftools_version
     expected_htslib_version = settings.htslib_version
-    executable_available = Path(bcftools_executable).is_file() or shutil.which(bcftools_executable) is not None
-    if not executable_available:
+    if not bcftools_available(bcftools_executable):
         raise VCFToolError("bcftools is required for SIRALOOM reference-aware VCF normalization.")
     input_path = Path(input_path)
     output_path = Path(output_path)

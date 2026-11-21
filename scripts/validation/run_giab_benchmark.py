@@ -37,13 +37,38 @@ class BenchmarkConfigurationError(ValueError):
     pass
 
 
-def verify_version_pin(tool: str, expected: str, version_result: dict[str, Any]) -> None:
+def verify_version_pin(
+    tool: str, expected: str, version_result: dict[str, Any], *, executable: str | None = None
+) -> None:
     output = str(version_result.get("output") or "")
     version_pattern = r"^bcftools\s+(\S+)" if tool == "bcftools" else r"^Hap\.py\s+v?(\S+)"
     observed = next(
         (match.group(1) for line in output.splitlines() if (match := re.match(version_pattern, line.strip(), re.IGNORECASE))),
         None,
     )
+    if tool == "hap.py" and observed is None and executable:
+        executable_path = Path(executable).resolve(strict=True)
+        prefix = executable_path.parent.parent
+        relative_executable = executable_path.relative_to(prefix).as_posix()
+        records = []
+        for metadata_path in (prefix / "conda-meta").glob("hap.py-*.json"):
+            try:
+                record = json.loads(metadata_path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                continue
+            if record.get("name") == "hap.py" and relative_executable in (record.get("files") or []):
+                records.append((record, metadata_path))
+        if len(records) == 1:
+            record, metadata_path = records[0]
+            observed = str(record.get("version") or "") or None
+            version_result["verified_package_record"] = {
+                "version": observed,
+                "build": record.get("build"),
+                "channel": record.get("channel"),
+                "package_url": record.get("url"),
+                "package_sha256": record.get("sha256"),
+                "metadata_sha256": hashlib.sha256(metadata_path.read_bytes()).hexdigest(),
+            }
     if version_result.get("exit_code") != 0 or observed != expected:
         raise BenchmarkConfigurationError(
             f"{tool} version could not be confirmed against manifest pin {expected!r}; "
@@ -344,7 +369,7 @@ def main() -> int:
         expected_bcftools = (manifest.get("toolchain") or {}).get("bcftools_version")
         verify_version_pin("bcftools", expected_bcftools, bcftools_version)
         expected_hap_py = (manifest.get("toolchain") or {}).get("hap_py_version")
-        verify_version_pin("hap.py", expected_hap_py, hap_py_version)
+        verify_version_pin("hap.py", expected_hap_py, hap_py_version, executable=hap_py)
 
         normalization_lineage = verify_normalization_derivation(
             input_vcf=assets["input_vcf"],

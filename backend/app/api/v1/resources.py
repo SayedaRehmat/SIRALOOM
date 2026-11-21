@@ -289,6 +289,40 @@ def register_resource(
         execution["access_method"] = access_method
         execution["location"] = location
         metadata_json["execution"] = execution
+    resource_type = str(payload.get("resource_type") or "").strip().upper()
+    if resource_type == "REFERENCE_PACKAGE":
+        if requested_status != "CANDIDATE":
+            raise HTTPException(status_code=403, detail="Reference packages must enter the registry as CANDIDATE")
+        if access_method not in {"LOCAL", "FILE", "LOCAL_ONLY"}:
+            raise HTTPException(status_code=422, detail="Reference packages must be acquired and qualified from an explicit local package")
+        if organization_id is None:
+            raise HTTPException(status_code=422, detail="Reference packages registered through the laboratory API must be organization-bound")
+        try:
+            from backend.app.domain.reference_registry import register_reference_package
+
+            manifest = metadata_json
+            package_fasta = _validate_org_destination(
+                str(manifest.get("fasta_path") or ""),
+                organization_id,
+            )
+            if location and _validate_org_destination(location, organization_id) != package_fasta:
+                raise HTTPException(status_code=400, detail="Resource location must match the reference package FASTA path")
+            # Every package sidecar must remain in this organization's controlled
+            # resource root so later validation never consumes a path outside it.
+            for field in ("fai_path", "dictionary_path", "gzi_path"):
+                sidecar = manifest.get(field)
+                if sidecar:
+                    manifest[field] = str(_validate_org_destination(str(sidecar), organization_id))
+            manifest["fasta_path"] = str(package_fasta)
+            execution = dict(manifest.get("execution") or {})
+            execution["location"] = str(package_fasta)
+            manifest["execution"] = execution
+            location = str(package_fasta)
+            resource_metadata = manifest
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    else:
+        resource_metadata = metadata_json
     resource_identity = {
         "organization_id": organization_id,
         "name": str(payload.get("name") or "").strip(),
@@ -311,23 +345,41 @@ def register_resource(
         for item in superseded_before
     ]
     try:
-        resource, created = register_resource_version(
-            db,
-            name=str(payload.get("name") or ""),
-            provider=provider,
-            resource_type=str(payload.get("resource_type") or ""),
-            version=version,
-            genome_build=str(payload["genome_build"]) if payload.get("genome_build") else None,
-            access_method=access_method,
-            license_text=payload.get("license_text"),
-            checksum=payload.get("checksum"),
-            location=location,
-            population_definition=payload.get("population_definition"),
-            metadata_json=metadata_json,
-            organization_id=organization_id,
-            initial_status=requested_status,
-        )
+        if resource_type == "REFERENCE_PACKAGE":
+            from backend.app.domain.reference_registry import register_reference_package
+
+            resource, created = register_reference_package(
+                db,
+                name=str(payload.get("name") or ""),
+                provider=provider,
+                version=version,
+                genome_build=str(payload["genome_build"]) if payload.get("genome_build") else "",
+                manifest=resource_metadata,
+                package_checksum=str(payload.get("checksum") or ""),
+                source_contract=dict(resource_metadata.get("source_contract") or {}),
+                execution_contract=dict(resource_metadata.get("execution") or {}),
+                organization_id=organization_id,
+            )
+        else:
+            resource, created = register_resource_version(
+                db,
+                name=str(payload.get("name") or ""),
+                provider=provider,
+                resource_type=str(payload.get("resource_type") or ""),
+                version=version,
+                genome_build=str(payload["genome_build"]) if payload.get("genome_build") else None,
+                access_method=access_method,
+                license_text=payload.get("license_text"),
+                checksum=payload.get("checksum"),
+                location=location,
+                population_definition=payload.get("population_definition"),
+                metadata_json=resource_metadata,
+                organization_id=organization_id,
+                initial_status=requested_status,
+            )
     except ResourceRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     if created:
@@ -538,16 +590,30 @@ def create_resource_staging(
         raise HTTPException(status_code=409, detail="Another registered resource already uses this destination path")
     source_contract = dict((resource.metadata_json or {}).get("source_contract") or {})
     access_method = str(resource.access_method or "").strip().upper()
+    reference_package = resource.resource_type == "REFERENCE_PACKAGE"
+    reference_manifest = dict(resource.metadata_json or {}) if reference_package else {}
     source_uri = str(payload.source_uri or "").strip()
     if not source_uri and access_method == "HTTPS":
         source_uri = str(source_contract.get("artifact_url") or "").strip()
     if not source_uri:
         raise HTTPException(status_code=400, detail="source_uri is required for local resources")
 
-    expected_sha256 = str(payload.expected_sha256 or resource.checksum or "").strip() or None
-    if resource.checksum and expected_sha256 and expected_sha256.lower() != resource.checksum.lower():
-        raise HTTPException(status_code=409, detail="Staging SHA-256 must match the checksum registered on this immutable resource version")
-    expected_size_bytes = payload.expected_size_bytes
+    artifact_checksum = str(
+        reference_manifest.get("fasta_sha256") if reference_package else resource.checksum or ""
+    ).strip() or None
+    expected_sha256 = str(payload.expected_sha256 or artifact_checksum or "").strip() or None
+    if artifact_checksum and expected_sha256 and expected_sha256.lower() != artifact_checksum.lower():
+        raise HTTPException(status_code=409, detail="Staging SHA-256 must match the registered artifact checksum for this immutable resource version")
+    artifact_size = reference_manifest.get("fasta_size_bytes") if reference_package else None
+    if reference_package and (
+        not isinstance(artifact_size, int)
+        or artifact_size <= 0
+        or (payload.expected_size_bytes is not None and payload.expected_size_bytes != artifact_size)
+    ):
+        raise HTTPException(status_code=409, detail="Staging byte size must match the reference package manifest")
+    expected_size_bytes = payload.expected_size_bytes if payload.expected_size_bytes is not None else artifact_size
+    if reference_package and (not expected_sha256 or not expected_size_bytes):
+        raise HTTPException(status_code=400, detail="Reference package manifest must declare the FASTA SHA-256 and byte size")
     if access_method == "HTTPS":
         parsed = urlparse(source_uri)
         if parsed.scheme != "https" or not parsed.hostname:
@@ -575,7 +641,18 @@ def create_resource_staging(
         source_path = _local_source_path(source_uri)
         if source_path is None:
             raise HTTPException(status_code=400, detail="Local staging source must be a filesystem path or file:// URI")
+        is_preacquired_reference = (
+            reference_package
+            and source_path.expanduser().resolve(strict=False) == destination
+        )
+        if reference_package and not is_preacquired_reference:
+            raise HTTPException(
+                status_code=400,
+                detail="Reference package assets must be built at the registered organization destination so FASTA indexes and dictionary remain colocated",
+            )
         allowed_roots = _allowed_local_source_roots()
+        if is_preacquired_reference:
+            allowed_roots = [*allowed_roots, _organization_resource_root(principal.organization_id)]
         if not allowed_roots or not any(source_path == root or root in source_path.parents for root in allowed_roots):
             raise HTTPException(status_code=403, detail="Local source is outside RESOURCE_STAGING_LOCAL_SOURCE_ROOTS")
         if not source_path.is_file():
@@ -601,6 +678,7 @@ def create_resource_staging(
                 **payload.metadata,
                 "source_contract_release": source_contract.get("release_identity"),
                 "created_by": str(principal.user_id),
+                **({"staging_mode": "VERIFY_EXISTING_REFERENCE_PACKAGE"} if reference_package else {}),
             },
         )
         if row.status in {"DISCOVERED", "PREFLIGHT_FAILED"} or (

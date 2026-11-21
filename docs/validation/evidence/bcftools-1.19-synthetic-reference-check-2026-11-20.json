@@ -1,0 +1,132 @@
+{
+  "environment": "WSL Linux",
+  "executed_tool_profile": "bcftools-1.19-htslib-1.19",
+  "fai_path": "work/real-reference-check-bcftools-1.19/reference.fa.fai",
+  "fasta_path": "work/real-reference-check-bcftools-1.19/reference.fa",
+  "fasta_sha256": "7f5f8c9f603061bc785149f924a115c12847107b5028c732377878dd2f96ad96",
+  "is_product_profile_qualified": false,
+  "product_pinned_profile": "bcftools-1.25-htslib-1.25-linux-64",
+  "qualification": {
+    "bcftools_executable": "/home/usama/.local/share/siraloom-tools/bcftools-1.19/usr/bin/bcftools",
+    "bcftools_version": "bcftools 1.19",
+    "bcftools_version_match": true,
+    "expected_reference_fasta_sha256": "7f5f8c9f603061bc785149f924a115c12847107b5028c732377878dd2f96ad96",
+    "fixture": {
+      "contig": "chr1",
+      "contig_length": 9,
+      "sequence_window_length": 9,
+      "sequence_window_start": 1,
+      "small_insertion": {
+        "alt": "AA",
+        "homopolymer_base": "A",
+        "homopolymer_end_1based": 7,
+        "homopolymer_start_1based": 3,
+        "input_position": 4,
+        "ref": "A"
+      },
+      "snv": {
+        "alt": "A",
+        "position": 1,
+        "ref": "G"
+      }
+    },
+    "reference_fasta": "/mnt/c/Users/usama/Documents/Codex/2026-10-14/re/work/SIRALOOM/work/real-reference-check-bcftools-1.19/reference.fa",
+    "reference_fasta_sha256": "7f5f8c9f603061bc785149f924a115c12847107b5028c732377878dd2f96ad96",
+    "reference_sequence_queries": [
+      {
+        "contig": "chr1",
+        "region": "chr1:1-9",
+        "sequence_length": 9,
+        "status": "READ"
+      }
+    ],
+    "reference_sequence_reader": "siraloom-fasta-index-reader-v1",
+    "status": "VERIFIED",
+    "tests": {
+      "incorrect_ref_rejected": {
+        "command": [
+          "/home/usama/.local/share/siraloom-tools/bcftools-1.19/usr/bin/bcftools",
+          "norm",
+          "-f",
+          "work/real-reference-check-bcftools-1.19/reference.fa",
+          "-c",
+          "e",
+          "-Ov",
+          "-o",
+          "/tmp/siraloom-bcftools-reference-check-u7gv97z4/incorrect-ref-normalized.vcf",
+          "/tmp/siraloom-bcftools-reference-check-u7gv97z4/incorrect-ref.vcf"
+        ],
+        "reference_mismatch_reported": true,
+        "rejected": true,
+        "returncode": 255,
+        "status": "PASS",
+        "stderr": "Reference allele mismatch at chr1:1 .. REF_SEQ:'G' vs VCF:'A'\n"
+      },
+      "valid_small_indel": {
+        "command": [
+          "/home/usama/.local/share/siraloom-tools/bcftools-1.19/usr/bin/bcftools",
+          "norm",
+          "-f",
+          "work/real-reference-check-bcftools-1.19/reference.fa",
+          "-c",
+          "e",
+          "-m",
+          "-any",
+          "-Ov",
+          "-o",
+          "/tmp/siraloom-bcftools-reference-check-u7gv97z4/normalized.vcf",
+          "/tmp/siraloom-bcftools-reference-check-u7gv97z4/valid-snvs-indels.vcf"
+        ],
+        "input_position": 4,
+        "left_aligned": true,
+        "normalized_position": 2,
+        "output_record_count": 2,
+        "record": [
+          "chr1",
+          "2",
+          ".",
+          "C",
+          "CA",
+          ".",
+          "PASS",
+          "."
+        ],
+        "returncode": 0,
+        "status": "PASS",
+        "stderr": "Lines   total/split/joined/realigned/skipped:\t2/0/0/1/0\n"
+      },
+      "valid_snv": {
+        "command": [
+          "/home/usama/.local/share/siraloom-tools/bcftools-1.19/usr/bin/bcftools",
+          "norm",
+          "-f",
+          "work/real-reference-check-bcftools-1.19/reference.fa",
+          "-c",
+          "e",
+          "-m",
+          "-any",
+          "-Ov",
+          "-o",
+          "/tmp/siraloom-bcftools-reference-check-u7gv97z4/normalized.vcf",
+          "/tmp/siraloom-bcftools-reference-check-u7gv97z4/valid-snvs-indels.vcf"
+        ],
+        "output_record_count": 2,
+        "record": [
+          "chr1",
+          "1",
+          ".",
+          "G",
+          "A",
+          ".",
+          "PASS",
+          "."
+        ],
+        "returncode": 0,
+        "status": "PASS",
+        "stderr": "Lines   total/split/joined/realigned/skipped:\t2/0/0/1/0\n"
+      }
+    },
+    "tool": "bcftools norm"
+  },
+  "reference_scope": "synthetic nine-base fixture; not an assembly package"
+}

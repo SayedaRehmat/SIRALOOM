@@ -90,7 +90,14 @@ class GnomADGraphQLProvider:
         return provider
 
     def query_variant(self, variant: CanonicalVariant) -> list[PopulationObservationData]:
-        variant_id = f"{variant.chromosome.removeprefix('chr')}:{variant.position}:{variant.reference}:{variant.alternate}"
+        # gnomAD's GraphQL `variantId` uses its canonical hyphen-delimited
+        # allele identifier (for example `1-11796321-G-A`). A colon-delimited
+        # genomic coordinate is accepted by neither this field nor its
+        # not-found semantics, and would otherwise persist a false NO_MATCH.
+        variant_id = (
+            f"{variant.chromosome.removeprefix('chr')}-{variant.position}-"
+            f"{variant.reference}-{variant.alternate}"
+        )
         query = """
         query Variant($variantId: String!, $dataset: DatasetId!) {
           variant(variantId: $variantId, dataset: $dataset) {
@@ -210,7 +217,7 @@ class GnomADGraphQLProvider:
             ]
 
         observations: list[PopulationObservationData] = []
-        source_record_id = variant_id.replace(":", "-")
+        source_record_id = variant_id
         joint_details = details.get("joint")
         if joint_details is None:
             joint_details = {"ac": None, "an": None, "homozygote_count": None}
@@ -383,11 +390,15 @@ def _graphql_populations(
                 f"gnoMAD GraphQL {context}.populations must contain objects"
             )
         population_id = population.get("id")
+        # SIRALOOM currently consumes the aggregate Middle Eastern cohort only.
+        # gnomAD's live API also returns unlabeled aggregate and sex-stratified
+        # rows (including empty IDs and repeated XX/XY IDs); those rows are not
+        # ancestry evidence and must not invalidate the usable `mid` record.
         if not isinstance(population_id, str) or not population_id.strip():
-            raise GnomADProviderError(
-                f"gnoMAD GraphQL {context} population is missing a valid id"
-            )
+            continue
         key = population_id.casefold()
+        if key != "mid":
+            continue
         if key in result:
             raise GnomADProviderError(
                 f"gnoMAD GraphQL {context} contains duplicate population id {population_id!r}"

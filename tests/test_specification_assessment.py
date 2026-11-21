@@ -269,6 +269,119 @@ def test_review_required_criterion_blocks_combination_and_persists_no_classifica
         assert persisted == {"PM2": "PROPOSED", "PP3": "REQUIRES_REVIEW"}
 
 
+def test_unimplemented_configured_criterion_is_persisted_for_review():
+    engine = _db()
+    with Session(engine) as db:
+        analysis = _analysis(uuid4())
+        variant = _variant()
+        db.add_all([analysis, variant, ClinGenSpecification(
+            id=uuid4(), specification_id="SPEC-UNSUPPORTED", version="1.0",
+            provider="ClinGen", framework="ACMG/AMP", gene_scope=["GENE1"],
+            disease_scope=["Disease X"],
+            criteria={"PS2": {"strength": "STRONG"}}, raw_payload={},
+            retrieved_at=datetime.now(UTC), validated_for_automation=True,
+            validation_status="APPROVED_FOR_AUTOMATION",
+        )])
+        db.flush()
+        annotation = Annotation(
+            id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+            provider_name="fixture", provider_version="1", resource_name="fixture",
+            resource_version="1", payload={"normalized": {"gene": {"symbol": "GENE1"}}},
+        )
+        db.add(annotation)
+        db.flush()
+        service = ACMGSpecificationAssessmentService()
+        result = service.assess_variant(
+            db, analysis=analysis, variant=variant, annotation=annotation,
+            population_rows=[], resource_rows={}, gene="GENE1", disease="Disease X",
+        )
+        assert result.status == "REQUIRES_REVIEW"
+        assert result.combination_metadata["unresolved_criteria"] == ["PS2"]
+
+        service.persist(db, analysis=analysis, variant=variant, result=result)
+        db.commit()
+        from backend.app.review.service import get_review_bundle
+        bundle = get_review_bundle(db, analysis_id=analysis.id, variant_id=variant.id)
+        assessment = next(item for item in bundle["criteria"] if item["criterion"] == "PS2")
+        assert assessment["state"] == "REQUIRES_REVIEW"
+        assert assessment["automated_assessment"]["metadata"]["assessment_origin"] == (
+            "UNRESOLVED_SPECIFICATION_COVERAGE"
+        )
+
+
+def test_unresolved_reassessment_invalidates_prior_human_decision():
+    engine = _db()
+    with Session(engine) as db:
+        analysis = _analysis(uuid4())
+        variant = _variant()
+        prior = ACMGAssessment(
+            id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+            framework_name="ACMG/AMP", framework_version="2015",
+            specification_provider="ClinGen", specification_id="OLD-SPEC",
+            specification_version="1", criterion="PS2", state="ACCEPTED",
+            review_version=3, reviewed_assessment={"decision": "ACCEPT", "reviewer": "old"},
+            final_assessment={"decision": "ACCEPT", "strength": "STRONG"},
+            automated_assessment={"status": "PROPOSED"},
+        )
+        db.add_all([analysis, variant, prior, ClinGenSpecification(
+            id=uuid4(), specification_id="NEW-SPEC", version="2", provider="ClinGen",
+            framework="ACMG/AMP", gene_scope=["GENE1"], disease_scope=["Disease X"],
+            criteria={"PS2": {"strength": "STRONG"}}, raw_payload={},
+            retrieved_at=datetime.now(UTC), validated_for_automation=True,
+            validation_status="APPROVED_FOR_AUTOMATION",
+        )])
+        db.flush()
+        annotation = Annotation(
+            id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+            provider_name="fixture", provider_version="1", resource_name="fixture",
+            resource_version="1", payload={"normalized": {"gene": {"symbol": "GENE1"}}},
+        )
+        db.add(annotation)
+        service = ACMGSpecificationAssessmentService()
+        result = service.assess_variant(
+            db, analysis=analysis, variant=variant, annotation=annotation,
+            population_rows=[], resource_rows={}, gene="GENE1", disease="Disease X",
+        )
+        service.persist(db, analysis=analysis, variant=variant, result=result)
+        db.flush()
+        refreshed = db.get(ACMGAssessment, prior.id)
+        assert refreshed.state == "REQUIRES_REVIEW"
+        assert refreshed.specification_id == "NEW-SPEC"
+        assert refreshed.review_version == 4
+        assert refreshed.reviewed_assessment is None
+        assert refreshed.final_assessment is None
+
+
+def test_standalone_ba1_cannot_bypass_unresolved_specification_criterion():
+    engine = _db()
+    with Session(engine) as db:
+        analysis = _analysis(uuid4())
+        variant = _variant()
+        db.add_all([analysis, variant, ClinGenSpecification(
+            id=uuid4(), specification_id="SPEC-BA1-UNRESOLVED", version="1.0",
+            provider="ClinGen", framework="ACMG/AMP", gene_scope=["GENE1"],
+            disease_scope=["Disease X"], criteria={
+                "BA1": {"minimum_allele_frequency": 0.05, "minimum_allele_number": 1000},
+                "PS2": {"strength": "STRONG"},
+            }, raw_payload={}, retrieved_at=datetime.now(UTC),
+            validated_for_automation=True, validation_status="APPROVED_FOR_AUTOMATION",
+        )])
+        db.flush()
+        annotation = Annotation(
+            id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+            provider_name="fixture", provider_version="1", resource_name="fixture",
+            resource_version="1", payload={"normalized": {"gene": {"symbol": "GENE1"}}},
+        )
+        db.add(annotation)
+        result = ACMGSpecificationAssessmentService().assess_variant(
+            db, analysis=analysis, variant=variant, annotation=annotation,
+            population_rows=[], resource_rows={}, gene="GENE1", disease="Disease X",
+        )
+        assert result.status == "REQUIRES_REVIEW"
+        assert result.classification is None
+        assert result.combination_metadata["unresolved_criteria"] == ["PS2"]
+
+
 def test_pvs1_candidate_requires_review_and_never_enters_automated_classification():
     engine = _db()
     with Session(engine) as db:

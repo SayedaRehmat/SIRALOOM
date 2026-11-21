@@ -242,7 +242,7 @@ def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_o
     )
     output_vcf.write_bytes(b"previous-valid-vcf")
     index_path.write_bytes(b"previous-valid-index")
-    monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
+    monkeypatch.setattr(vcf_tools, "bcftools_available", lambda executable="bcftools": True)
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
@@ -357,7 +357,7 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
     input_vcf.write_text("dummy input\n", encoding="utf-8")
     output_vcf.write_bytes(b"previous-valid-vcf")
     index_path.write_bytes(b"previous-valid-index")
-    monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
+    monkeypatch.setattr(vcf_tools, "bcftools_available", lambda executable="bcftools": True)
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
@@ -762,13 +762,13 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
     import backend.app.domain.vcf_tools as vcf_tools
 
     staged_vcf = tmp_path / "staged.vcf.gz"
-    with gzip.open(staged_vcf, "wt", encoding="utf-8") as handle:
+    with gzip.open(staged_vcf, "wt", encoding="utf-8", newline="") as handle:
         handle.write(
-            "##fileformat=VCFv4.3\n"
-            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-            "1\t1\t.\tA\tG\t.\tPASS\t.\n"
-            "1\t2\t.\tC\tT\t.\tPASS\t.\n"
-            "2\t4\t.\tG\tA\t.\tPASS\t.\n"
+            "##fileformat=VCFv4.3\r\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\r\n"
+            "1\t1\t.\tA\tG\t.\tPASS\t.\r\n"
+            "1\t2\t.\tC\tT\t.\tPASS\t.\r\n"
+            "2\t4\t.\tG\tA\t.\tPASS\t.\r\n"
         )
 
     records = [

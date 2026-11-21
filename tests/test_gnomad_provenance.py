@@ -63,6 +63,8 @@ def test_gnomad_graphql_observation_has_stable_provenance(monkeypatch):
     assert len(observations) == 6
     mid = next(x for x in observations if x.population_code == "MID")
     assert mid.source_record_id == "1-555-T-C"
+    assert posted["variables"]["variantId"] == "1-555-T-C"
+    assert mid.request_metadata["variant_id"] == "1-555-T-C"
     assert len(mid.request_fingerprint) == 64
     assert len(mid.response_sha256) == 64
     assert mid.request_metadata["dataset_selector"] == "gnomad_r4"
@@ -360,6 +362,23 @@ def test_gnomad_rejects_duplicate_population_ids_case_insensitively():
         _graphql_populations(
             [population, {**population, "id": "MID"}], context="joint"
         )
+
+
+def test_gnomad_mid_lookup_ignores_unlabeled_and_non_mid_summary_rows():
+    from backend.app.adapters.population.gnomad import _graphql_populations
+
+    result = _graphql_populations(
+        [
+            {"id": "", "ac": 100, "an": 1000, "homozygote_count": 5},
+            {"id": "XX", "ac": 40, "an": 500, "homozygote_count": 2},
+            {"id": "XY", "ac": 60, "an": 500, "homozygote_count": 3},
+            {"id": "XX", "ac": 40, "an": 500, "homozygote_count": 2},
+            {"id": "mid", "ac": 7, "an": 200, "homozygote_count": 0},
+        ],
+        context="joint",
+    )
+
+    assert result == {"mid": (7, 200, 0)}
 
 
 def test_gnomad_rejects_missing_count_field_in_nonnull_dataset_section():

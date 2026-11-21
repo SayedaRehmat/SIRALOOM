@@ -11,6 +11,7 @@ from backend.app.api.v1 import (
 from backend.app.api.v1.phenotypes import router as phenotypes_router
 from backend.app.api.v1.clinical_intake import router as clinical_intake_router
 from backend.app.api.v1.evidence_context import router as evidence_context_router
+from backend.app.api.v1.literature import router as literature_router
 from backend.app.api.v1.clingen import router as clingen_router
 from backend.app.api.v1.variant_reports import router as variant_reports_router
 from backend.app.api.v1.pedigree import router as pedigree_router
@@ -66,6 +67,7 @@ app.include_router(variant_reports_router, prefix="/api/v1", dependencies=secure
 app.include_router(phenotypes_router, prefix="/api/v1", dependencies=secured)
 app.include_router(clinical_intake_router, prefix="/api/v1", dependencies=secured)
 app.include_router(evidence_context_router, prefix="/api/v1", dependencies=secured)
+app.include_router(literature_router, prefix="/api/v1", dependencies=secured)
 
 app.include_router(pedigree_router, prefix="/api/v1", dependencies=secured)
 

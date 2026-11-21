@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -147,6 +148,8 @@ def test_default_runtime_dockerfile_pins_all_inputs_and_fails_closed_outside_amd
 
 
 def test_pinned_snapshot_retry_loop_retries_transient_apt_failures():
+    if os.name == "nt":
+        pytest.skip("the pinned APT retry loop requires a POSIX /bin/sh")
     dockerfile = (ROOT / "docker/backend-bcftools-source.Dockerfile").read_text(encoding="utf-8")
     loop = dockerfile.split("    && apt_update_succeeded=0 \\\n", 1)[1].split(
         "    && apt-get install", 1

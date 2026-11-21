@@ -55,6 +55,7 @@ The application does not infer a toolchain from whichever `bcftools` appears fir
 - `BCFTOOLS_LOCK_FILE`: the profile's platform-specific explicit Conda lock.
 - `BCFTOOLS_VERSION` and `HTSLIB_VERSION`: exact runtime attestations.
 - `BCFTOOLS_EXECUTABLE`: executable path selected by deployment configuration (defaults to `bcftools`).
+- Reference-package qualification reads its short fixture sequence with the versioned SIRALOOM indexed-FASTA reader, so the application image does not require a separate `samtools` runtime dependency. The reference-package build procedure still records the `samtools` version used to create FAI/GZI indexes and sequence dictionaries.
 
 A profile-specific worker deployment must use the same profile as the upload-validation/API process that accepts the case. A future queue-routing stage will persist a profile ID with each analysis and dispatch to a matching worker pool; this PR establishes explicit process-level selection and provenance, not yet per-analysis scheduling across heterogeneous workers.
 

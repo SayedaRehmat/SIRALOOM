@@ -11,6 +11,7 @@ from scripts.validation.run_giab_concordance import (
     ConcordanceError,
     load_sample_mapping,
     parse_happy_summary,
+    resolve_hap_py_version,
     run_concordance,
     validate_bed_file,
     validate_single_sample_vcf,
@@ -23,6 +24,42 @@ SUMMARY_HEADER = [
     "QUERY.TOTAL", "QUERY.TP", "QUERY.FP", "QUERY.UNK", "FP.gt", "FP.al",
     "METRIC.Recall", "METRIC.Precision", "METRIC.Frac_NA",
 ]
+
+
+def test_hap_py_conda_package_metadata_fallback_is_bound_to_executable(tmp_path):
+    prefix = tmp_path / "env"
+    executable = prefix / "bin" / "hap.py"
+    executable.parent.mkdir(parents=True)
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    metadata = prefix / "conda-meta"
+    metadata.mkdir()
+    (metadata / "hap.py-0.3.15-build.json").write_text(json.dumps({
+        "name": "hap.py", "version": "0.3.15", "build": "py27_0",
+        "channel": "bioconda", "url": "https://example.invalid/hap.py",
+        "sha256": "a" * 64, "files": ["bin/hap.py"],
+    }), encoding="utf-8")
+
+    version, provenance = resolve_hap_py_version(executable, "Hap.py ", 0)
+
+    assert version == "0.3.15"
+    assert provenance["source"] == "conda_package_record"
+    assert provenance["package_sha256"] == "a" * 64
+    assert provenance["metadata_sha256"]
+
+
+def test_hap_py_package_record_must_own_the_executable(tmp_path):
+    prefix = tmp_path / "env"
+    executable = prefix / "bin" / "hap.py"
+    executable.parent.mkdir(parents=True)
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    metadata = prefix / "conda-meta"
+    metadata.mkdir()
+    (metadata / "hap.py-0.3.15-build.json").write_text(json.dumps({
+        "name": "hap.py", "version": "0.3.15", "files": ["bin/other.py"],
+    }), encoding="utf-8")
+
+    with pytest.raises(ConcordanceError, match="could not be verified"):
+        resolve_hap_py_version(executable, "Hap.py ", 0)
 
 
 def _summary(path: Path) -> None:
@@ -54,7 +91,9 @@ def _inputs(tmp_path: Path) -> dict[str, Path]:
     )
     truth.write_text(vcf_header.replace("SAMPLE_PRIVATE_ID", "HG002"), encoding="utf-8")
     query.write_text(vcf_header.replace("SAMPLE_PRIVATE_ID", "CASE_SAMPLE_001"), encoding="utf-8")
-    reference.write_text(">chr1\n" + "A" * 1000 + "\n", encoding="utf-8")
+    # FAI byte geometry is defined for LF bytes; Path.write_text uses the
+    # platform newline on Windows, which would make this fixture's index false.
+    reference.write_bytes((">chr1\n" + "A" * 1000 + "\n").encode("ascii"))
     fai.write_text("chr1\t1000\t6\t1000\t1001\n", encoding="utf-8")
     confident.write_text("chr1\t0\t1000\n", encoding="utf-8")
     targets.write_text("chr1\t0\t1000\n", encoding="utf-8")

@@ -7,6 +7,7 @@ import { useLanguage } from "../../../../lib/i18n";
 import { isWorkspaceCaseReady } from "../../../../lib/workspace-context.mjs";
 import { validatedArtifactId } from "../../../../lib/validated-upload.mjs";
 import { clearUploadIdempotencyAttempt, getOrCreateUploadIdempotencyAttempt } from "../../../../lib/upload-idempotency.mjs";
+import { clearLiteratureSearchAttempt, getOrCreateLiteratureSearchAttempt } from "../../../../lib/literature-search-idempotency.mjs";
 import { canFinalizeClinicalReports, canSubmitReportSignout } from "../../../../lib/report-permissions.mjs";
 import PhenotypeIntake from "../../../../components/PhenotypeIntake";
 import ClinicalContextIntake from "../../../../components/ClinicalContextIntake";
@@ -108,6 +109,24 @@ type VariantDetail = {
   classifications: Array<Record<string, unknown>>;
 };
 
+type LiteratureCandidate = {
+  evidence_id: string;
+  pmid: string;
+  title: string;
+  citation?: string | null;
+  publication_year?: number | null;
+  doi?: string | null;
+  source_url: string;
+  curation_status: string;
+};
+
+type LiteratureSearchResult = {
+  status: "SUCCESS" | "SUCCESS_NO_MATCH";
+  gene_symbol: string;
+  candidates: LiteratureCandidate[];
+  interpretation: string;
+};
+
 const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 
 const steps = [
@@ -195,6 +214,26 @@ function formatDate(value?: string | null) {
   return new Date(value).toLocaleString();
 }
 
+function collectAnnotatedGeneSymbols(value: unknown): string[] {
+  const symbols = new Set<string>();
+  const visit = (item: unknown) => {
+    if (Array.isArray(item)) {
+      item.forEach(visit);
+      return;
+    }
+    if (!item || typeof item !== "object") return;
+    for (const [key, nested] of Object.entries(item)) {
+      if (["gene_symbol", "gene_name", "symbol"].includes(key.toLowerCase()) && typeof nested === "string") {
+        const symbol = nested.trim();
+        if (/^[A-Za-z0-9][A-Za-z0-9_.-]{0,30}$/.test(symbol)) symbols.add(symbol.toUpperCase());
+      }
+      if (nested && typeof nested === "object") visit(nested);
+    }
+  };
+  visit(value);
+  return Array.from(symbols).sort();
+}
+
 function nextActionHref(nextStep?: string | null) {
   if (nextStep === "review" || nextStep === "HUMAN_REVIEW_REQUIRED") return "/app/review";
   if (nextStep === "reportability" || nextStep === "report_finalization" || nextStep === "REPORTABILITY_REQUIRED") return "/app/reports";
@@ -241,6 +280,10 @@ export default function Home() {
   const [completeVariantColumns, setCompleteVariantColumns] = useState<string[]>([]);
   const [selectedVariantId, setSelectedVariantId] = useState("");
   const [variantDetail, setVariantDetail] = useState<VariantDetail | null>(null);
+  const [literatureGene, setLiteratureGene] = useState("");
+  const [literatureResult, setLiteratureResult] = useState<LiteratureSearchResult | null>(null);
+  const [literatureBusy, setLiteratureBusy] = useState(false);
+  const literatureSearchKeyRef = useRef<{ key: string; storageKey: string; fingerprint: string } | null>(null);
   const [review, setReview] = useState<ReviewBundle | null>(null);
   const [reportId, setReportId] = useState("");
   const [report, setReport] = useState<any>(null);
@@ -326,6 +369,24 @@ export default function Home() {
     const completed = values.filter((value) => value.status === "SUCCEEDED").length;
     return { completed, total: values.length };
   }, [analysis]);
+
+  const annotatedGeneSymbols = useMemo(
+    () => collectAnnotatedGeneSymbols(variantDetail?.annotations ?? []),
+    [variantDetail],
+  );
+
+  useEffect(() => {
+    if (!annotatedGeneSymbols.length) {
+      setLiteratureGene("");
+      return;
+    }
+    setLiteratureGene((current) => annotatedGeneSymbols.includes(current) ? current : annotatedGeneSymbols[0]);
+  }, [selectedVariantId, annotatedGeneSymbols]);
+
+  useEffect(() => {
+    setLiteratureResult(null);
+    literatureSearchKeyRef.current = null;
+  }, [selectedVariantId]);
 
   useEffect(() => {
     const queryCase = new URLSearchParams(window.location.search).get("case") ?? "";
@@ -834,6 +895,38 @@ export default function Home() {
     }
   };
 
+  const searchLiterature = async () => {
+    if (!analysisId || !selectedVariantId || !annotatedGeneSymbols.includes(literatureGene)) return;
+    setLiteratureBusy(true);
+    setLiteratureResult(null);
+    setMessage("");
+    try {
+      literatureSearchKeyRef.current ??= await getOrCreateLiteratureSearchAttempt(
+        window.sessionStorage,
+        { analysisId, variantId: selectedVariantId, geneSymbol: literatureGene },
+        () => `pubmed-${crypto.randomUUID()}`,
+      );
+      const result = await apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/literature-search`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": literatureSearchKeyRef.current.key,
+        },
+        body: JSON.stringify({ gene_symbol: literatureGene }),
+      }) as LiteratureSearchResult;
+      setLiteratureResult(result);
+      const detail = await apiFetch(`/variants/${selectedVariantId}?analysis_id=${analysisId}`);
+      setVariantDetail(detail);
+      setMessage(result.status === "SUCCESS_NO_MATCH" ? "PubMed search completed with no matches." : "PubMed citation candidates retrieved for human curation.");
+      clearLiteratureSearchAttempt(window.sessionStorage, literatureSearchKeyRef.current);
+      literatureSearchKeyRef.current = null;
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "PubMed search failed. Check the approved resource configuration and retry.");
+    } finally {
+      setLiteratureBusy(false);
+    }
+  };
+
   const proposeManualClassification = async () => {
     if (!analysisId || !selectedVariantId || !manualClassificationReason.trim() || !manualClassificationEvidenceId) {
       setMessage(t("workspace.manualClassificationEvidenceRequired"));
@@ -1308,6 +1401,31 @@ export default function Home() {
       <section className="detail-grid">
         <section id="evidence" className="panel evidence-panel">
           <div className="panel-head"><div><div className="section-kicker">{t("workspace.evidenceSection")}</div><h3>{t("workspace.variantEvidence")}</h3></div></div>
+          {variantDetail && <div className="literature-search">
+            <div>
+              <strong>Literature discovery</strong>
+              <p>Search PubMed for an annotated gene. Matches are citation candidates and require human curation.</p>
+            </div>
+            {annotatedGeneSymbols.length ? <div className="actions-row">
+              <label htmlFor="literature-gene">Annotated gene</label>
+              <select id="literature-gene" value={literatureGene} onChange={(event) => { literatureSearchKeyRef.current = null; setLiteratureGene(event.target.value); }} disabled={literatureBusy}>
+                {annotatedGeneSymbols.map((symbol) => <option key={symbol} value={symbol}>{symbol}</option>)}
+              </select>
+              <button className="secondary" type="button" onClick={searchLiterature} disabled={literatureBusy || !analysisId || !selectedVariantId}>
+                {literatureBusy ? "Searching PubMed…" : "Search PubMed"}
+              </button>
+            </div> : <p className="table-note">No gene symbol is available in this variant’s persisted annotation.</p>}
+            {literatureResult && <div role="status" aria-live="polite">
+              {literatureResult.status === "SUCCESS_NO_MATCH"
+                ? <p>Search completed for {literatureResult.gene_symbol}; no citation candidates were returned.</p>
+                : <div><p>{literatureResult.candidates.length} citation candidate(s) found for {literatureResult.gene_symbol}. These do not establish variant significance.</p>
+                  {literatureResult.candidates.map((candidate) => <article className="evidence-item" key={candidate.evidence_id}>
+                    <div><strong>{candidate.title}</strong><span>{candidate.citation ?? `PMID ${candidate.pmid}`}</span></div>
+                    <a href={candidate.source_url} target="_blank" rel="noreferrer">Open PubMed record</a>
+                  </article>)}
+                </div>}
+            </div>}
+          </div>}
           {!variantDetail ? <div className="empty"><strong>{t("workspace.noVariantSelected")}</strong><p>{t("workspace.selectVariantAfterAnalysis")}</p></div> : <div className="evidence-stack">
             <div className="identity-card"><div><span>{t("workspace.canonical")}</span><strong>{String(variantDetail.variant.canonical_key ?? "—")}</strong></div><div><span>{t("workspace.normalization")}</span><strong>{String(variantDetail.variant.normalization_status ?? "—")}</strong></div></div>
             <div className="evidence-list">
