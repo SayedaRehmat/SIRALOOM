@@ -1,10 +1,10 @@
 # SIRALOOM Variant — Phase 1 Acceptance Matrix
 
-> Earlier evidence snapshots below are historical. The latest working-tree evidence is recorded in the 2026-11-21 snapshot here; it does not change the `main` release gate until merged and re-run there.
+> Earlier release-gate snapshots below are historical checkpoints. The latest evidence and current `main` state are recorded in the 2026-11-21 snapshot.
 
 ## Latest working-tree verification — 2026-11-21
 
-Checkout branch: `codex/grch38-reference-qualification`; local `HEAD` and `origin/main` are `d935fd069058fb8818fdea160419525a4f2d70ac`. The runner optimization and completed caller-smoke evidence below are included in `d935fd069058fb8818fdea160419525a4f2d70ac`, now published on `origin/main`. Latest SIRALOOM CI run `44894576486` passed backend, PostgreSQL integration, and frontend jobs; its optional real-caller job was skipped because the smoke evidence is generated locally.
+Checkout branch: `codex/grch38-reference-qualification`; local `HEAD` and `origin/main` are `d935fd069058fb8818fdea160419525a4f2d70ac`. The runner optimization and completed caller-smoke evidence below are included in `d935fd069058fb8818fdea160419525a4f2d70ac`, now published on `origin/main`. Latest SIRALOOM CI run `44895105465` for this documentation sync passed backend, PostgreSQL integration, and frontend jobs; its optional real-caller job was skipped because the smoke evidence is generated locally. Prior exact-code CI `44894576486` passed the same jobs.
 
 | Capability | Status | Evidence and limitation |
 |---|---|---|
@@ -20,11 +20,11 @@ Checkout branch: `codex/grch38-reference-qualification`; local `HEAD` and `origi
 | Laboratory deployment, cross-tenant production exercise, and backup/restore | **NOT RUN** | No laboratory-controlled deployment, credentials, or restore target were available. |
 | Clinical validation, clinical utility, accreditation, or regulatory authorization | **NOT ESTABLISHED** | Software checks do not establish these claims; laboratory-specific validation and authorization remain required. |
 
-**Current readiness decision: NOT READY for clinical use or laboratory deployment.** The initial implementation is on remote `main`; follow-up smoke-runner/evidence changes are verified locally and will be pushed in the next commit. Independent GIAB concordance, production deployment, restore, and clinical validation evidence are absent.
+**Current readiness decision: NOT READY for clinical use or laboratory deployment.** The workflow changes and smoke-runner evidence are on remote `main` at `7436bb46c008fc3a21f3b14eead5407295c6dfaf`. Independent GIAB concordance, production deployment, restore, and clinical validation evidence are absent.
 
-## Current release-gate snapshot — 2026-11-17
+## Historical release-gate checkpoint — 2026-11-17
 
-This snapshot supersedes earlier evidence snapshots for the current `main` checkpoint. It records software verification separately from scientific qualification and laboratory deployment.
+This section records the `main` state as observed on 2026-11-17. It is retained as historical evidence and is superseded by the 2026-11-21 snapshot above.
 
 | Gate | Status | Evidence and limitation |
 |---|---|---|
