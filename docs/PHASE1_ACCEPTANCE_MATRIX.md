@@ -4,7 +4,7 @@
 
 ## Latest working-tree verification — 2026-11-21
 
-Checkout branch: `codex/grch38-reference-qualification`; local `HEAD` and `origin/main` are `d935fd069058fb8818fdea160419525a4f2d70ac`. The runner optimization and completed caller-smoke evidence below are included in `d935fd069058fb8818fdea160419525a4f2d70ac`, now published on `origin/main`. Latest SIRALOOM CI run `44895105465` for this documentation sync passed backend, PostgreSQL integration, and frontend jobs; its optional real-caller job was skipped because the smoke evidence is generated locally. Prior exact-code CI `44894576486` passed the same jobs.
+Checkout branch: `codex/grch38-reference-qualification`; local `HEAD` and `origin/main` are `ba634d48b89ab9a035a5aa87d7ebd3cfcbbdcaef`. Germline workflow code and caller-smoke evidence are on `origin/main`. Exact-SHA CI run `44895482671` for this checkout passed backend, PostgreSQL integration, and frontend jobs; its optional real-caller job was skipped because the smoke evidence is generated locally.
 
 | Capability | Status | Evidence and limitation |
 |---|---|---|
@@ -20,7 +20,7 @@ Checkout branch: `codex/grch38-reference-qualification`; local `HEAD` and `origi
 | Laboratory deployment, cross-tenant production exercise, and backup/restore | **NOT RUN** | No laboratory-controlled deployment, credentials, or restore target were available. |
 | Clinical validation, clinical utility, accreditation, or regulatory authorization | **NOT ESTABLISHED** | Software checks do not establish these claims; laboratory-specific validation and authorization remain required. |
 
-**Current readiness decision: NOT READY for clinical use or laboratory deployment.** The workflow changes and smoke-runner evidence are on remote `main` at `7436bb46c008fc3a21f3b14eead5407295c6dfaf`. Independent GIAB concordance, production deployment, restore, and clinical validation evidence are absent.
+**Current readiness decision: NOT READY for clinical use or laboratory deployment.** The workflow changes and smoke-runner evidence are on remote `main` at `ba634d48b89ab9a035a5aa87d7ebd3cfcbbdcaef`. Independent GIAB concordance, production deployment, restore, and clinical validation evidence are absent.
 
 ## Historical release-gate checkpoint — 2026-11-17
 
