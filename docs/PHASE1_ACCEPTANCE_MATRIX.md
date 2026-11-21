@@ -4,7 +4,7 @@
 
 ## Latest working-tree verification — 2026-11-21
 
-Checkout branch: `codex/grch38-reference-qualification`; the published baseline is `49bd63f85168d2c5738ae504a2daf1e82bb31a1f` on both local `HEAD` and `origin/main`. The runner optimization and completed caller-smoke evidence below are follow-up working-tree changes and will be published separately.
+Checkout branch: `codex/grch38-reference-qualification`; local `HEAD` and `origin/main` are `d935fd069058fb8818fdea160419525a4f2d70ac`. The runner optimization and completed caller-smoke evidence below are included in `d935fd069058fb8818fdea160419525a4f2d70ac`, now published on `origin/main`. Latest SIRALOOM CI run `44894576486` passed backend, PostgreSQL integration, and frontend jobs; its optional real-caller job was skipped because the smoke evidence is generated locally.
 
 | Capability | Status | Evidence and limitation |
 |---|---|---|
