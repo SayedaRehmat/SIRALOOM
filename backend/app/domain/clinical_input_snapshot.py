@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from copy import deepcopy
 import json
 from typing import Any
 from uuid import UUID
@@ -16,13 +17,14 @@ from backend.app.infrastructure.db.models import (
     ClinicalIntakeRevision,
     Artifact,
     PhenotypeObservation,
+    PhenotypeObservationAmendment,
     PedigreeMember,
     PedigreeRelationship,
     Specimen,
     WorkflowStep,
 )
 
-SNAPSHOT_SCHEMA_VERSION = 2
+SNAPSHOT_SCHEMA_VERSION = 3
 
 
 def _canonical_json(value: Any) -> str:
@@ -49,6 +51,13 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
         )
         .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
     ).all()
+    amendments = db.scalars(
+        select(PhenotypeObservationAmendment).where(
+            PhenotypeObservationAmendment.observation_id.in_([row.id for row in rows])
+        )
+    ).all() if rows else []
+    amendment_by_observation = {item.observation_id: item for item in amendments}
+    phenotype_by_id = {row.id: row for row in rows}
     context = case.clinical_context if isinstance(case.clinical_context, dict) else {}
     gene_disease_evidence = context.get("gene_disease_evidence") or []
     literature_evidence = context.get("literature_evidence") or []
@@ -199,7 +208,22 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
         },
         "phenotype_observations": [
             {
+                "phenotype_id": str(row.id),
+                "case_id": str(row.case_id),
+                "analysis_id": str(row.analysis_id) if row.analysis_id else None,
                 "scope": "CASE" if row.analysis_id is None else "ANALYSIS",
+                "record_lifecycle_status": amendment_by_observation[row.id].amendment_type if row.id in amendment_by_observation else "ACTIVE",
+                "amendment_id": str(amendment_by_observation[row.id].id) if row.id in amendment_by_observation else None,
+                "amendment_reason": amendment_by_observation[row.id].reason if row.id in amendment_by_observation else None,
+                "replacement_observation_id": str(amendment_by_observation[row.id].replacement_observation_id) if row.id in amendment_by_observation and amendment_by_observation[row.id].replacement_observation_id else None,
+                "replacement_observation_fingerprint": (
+                    phenotype_by_id[amendment_by_observation[row.id].replacement_observation_id].record_fingerprint
+                    if row.id in amendment_by_observation
+                    and amendment_by_observation[row.id].replacement_observation_id in phenotype_by_id
+                    else None
+                ),
+                "amendment_recorded_by": str(amendment_by_observation[row.id].recorded_by) if row.id in amendment_by_observation else None,
+                "amendment_recorded_at": amendment_by_observation[row.id].recorded_at.isoformat() if row.id in amendment_by_observation else None,
                 "hpo_id": row.hpo_id,
                 "canonical_hpo_id": row.canonical_hpo_id,
                 "subject_member_id": str(row.subject_member_id) if row.subject_member_id else None,
@@ -222,7 +246,7 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
 
 
 def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
-    if not isinstance(value, dict) or value.get("schema_version") not in {1, SNAPSHOT_SCHEMA_VERSION}:
+    if not isinstance(value, dict) or value.get("schema_version") not in {1, 2, SNAPSHOT_SCHEMA_VERSION}:
         raise ValueError("Persisted clinical input snapshot has an unsupported schema")
     if not isinstance(value.get("phenotype_observations"), list):
         raise ValueError("Persisted clinical input snapshot has invalid phenotype observations")
@@ -266,6 +290,12 @@ def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
             or (row.get("clinical_attributes") is not None and not isinstance(row.get("clinical_attributes"), dict))
             or (row.get("ontology_resolution") is not None and not isinstance(row.get("ontology_resolution"), dict))
             or (row.get("subject_member_id") is not None and not isinstance(row.get("subject_member_id"), str))
+            or row.get("record_lifecycle_status", "ACTIVE") not in {"ACTIVE", "SUPERSEDED", "RETRACTED"}
+            or (
+                row.get("record_lifecycle_status") == "SUPERSEDED"
+                and (not row.get("replacement_observation_id") or not row.get("replacement_observation_fingerprint"))
+            )
+            or (row.get("record_lifecycle_status") == "RETRACTED" and not row.get("amendment_reason"))
         ):
             raise ValueError("Persisted clinical input snapshot contains an invalid phenotype row")
     return value
@@ -286,8 +316,8 @@ def patient_phenotype_observations(value: dict[str, Any]) -> list[dict[str, Any]
     }
     return [
         row for row in validated["phenotype_observations"]
-        if row.get("subject_member_id") is None
-        or str(row.get("subject_member_id")) in proband_ids
+        if row.get("record_lifecycle_status", "ACTIVE") == "ACTIVE"
+        and (row.get("subject_member_id") is None or str(row.get("subject_member_id")) in proband_ids)
     ]
 
 
@@ -302,14 +332,85 @@ def family_phenotype_observations(value: dict[str, Any]) -> list[dict[str, Any]]
     }
     return [
         row for row in validated["phenotype_observations"]
-        if row.get("subject_member_id") is not None
+        if row.get("record_lifecycle_status", "ACTIVE") == "ACTIVE"
+        and row.get("subject_member_id") is not None
         and str(row.get("subject_member_id")) not in proband_ids
     ]
 
 
+def _semantic_snapshot_for_digest(value: dict[str, Any]) -> dict[str, Any]:
+    """Remove database-generated identifiers while retaining clinical meaning and lifecycle state."""
+    semantic = deepcopy(value)
+
+    clinical_context = semantic.get("clinical_context")
+    if isinstance(clinical_context, dict):
+        pointer = clinical_context.get("clinical_intake_revision")
+        if isinstance(pointer, dict):
+            pointer.pop("revision_id", None)
+        intake = clinical_context.get("clinical_intake")
+        if isinstance(intake, dict):
+            for test in intake.get("prior_testing", []) if isinstance(intake.get("prior_testing"), list) else []:
+                if isinstance(test, dict):
+                    test.pop("artifact_id", None)
+
+    revision = semantic.get("clinical_context_revision")
+    if isinstance(revision, dict):
+        for key in ("revision_id", "revision_fingerprint", "recorded_by", "recorded_at"):
+            revision.pop(key, None)
+        intake = revision.get("context")
+        if isinstance(intake, dict):
+            for test in intake.get("prior_testing", []) if isinstance(intake.get("prior_testing"), list) else []:
+                if isinstance(test, dict):
+                    test.pop("artifact_id", None)
+
+    pedigree = semantic.get("pedigree_context")
+    member_identifiers: dict[str, str] = {}
+    if isinstance(pedigree, dict):
+        for member in pedigree.get("members", []):
+            if not isinstance(member, dict):
+                continue
+            member_id = member.pop("member_id", None)
+            if member_id is not None and member.get("member_identifier"):
+                member_identifiers[str(member_id)] = str(member["member_identifier"])
+            member.pop("specimen_id", None)
+        pedigree["members"] = sorted(
+            pedigree.get("members", []), key=_canonical_json
+        )
+        for relationship in pedigree.get("relationships", []):
+            if not isinstance(relationship, dict):
+                continue
+            for key in ("parent_member_id", "child_member_id"):
+                member_id = relationship.pop(key, None)
+                if member_id is not None:
+                    relationship[key.replace("_id", "_identifier")] = member_identifiers.get(
+                        str(member_id), str(member_id)
+                    )
+        pedigree["relationships"] = sorted(
+            pedigree.get("relationships", []), key=_canonical_json
+        )
+
+    phenotype_rows = semantic.get("phenotype_observations", [])
+    for row in phenotype_rows:
+        if not isinstance(row, dict):
+            continue
+        subject_id = row.pop("subject_member_id", None)
+        if subject_id is not None:
+            row["subject_member_identifier"] = member_identifiers.get(
+                str(subject_id), str(subject_id)
+            )
+        for key in (
+            "phenotype_id", "case_id", "analysis_id", "amendment_id",
+            "replacement_observation_id", "amendment_recorded_by", "amendment_recorded_at",
+        ):
+            row.pop(key, None)
+    semantic["phenotype_observations"] = sorted(phenotype_rows, key=_canonical_json)
+    return semantic
+
+
 def clinical_input_snapshot_digest(value: dict[str, Any]) -> str:
     validated = validate_case_clinical_input_snapshot(value)
-    return hashlib.sha256(_canonical_json(validated).encode("utf-8")).hexdigest()
+    semantic = _semantic_snapshot_for_digest(validated)
+    return hashlib.sha256(_canonical_json(semantic).encode("utf-8")).hexdigest()
 
 
 def capture_or_reuse_case_clinical_input_snapshot(

@@ -6,6 +6,7 @@ type ApiFetch = (path: string, init?: RequestInit) => Promise<any>;
 type Props = { caseId: string; apiFetch: ApiFetch };
 type PhenotypeRow = {
   phenotype_id: string;
+  analysis_id?: string | null;
   hpo_id: string;
   canonical_hpo_id?: string | null;
   label?: string | null;
@@ -18,6 +19,12 @@ type PhenotypeRow = {
   ontology_resolution?: Record<string, any>;
   source?: string;
   evidence?: Record<string, any>;
+  record_lifecycle_status?: "ACTIVE" | "SUPERSEDED" | "RETRACTED";
+  amendment_id?: string | null;
+  amendment_reason?: string | null;
+  replacement_observation_id?: string | null;
+  amendment_recorded_by?: string | null;
+  amendment_recorded_at?: string | null;
 };
 type Term = { hpo_id: string; label: string };
 type Member = {
@@ -32,6 +39,14 @@ const STATUSES = ["PRESENT", "ABSENT", "EXCLUDED", "UNKNOWN", "NOT_ASSESSED"];
 const AGE_UNITS = ["YEARS", "MONTHS", "WEEKS", "DAYS"];
 const LATERALITY = ["UNKNOWN", "LEFT", "RIGHT", "BILATERAL", "UNILATERAL", "MIDLINE", "NOT_APPLICABLE"];
 const TEMPORAL = ["UNKNOWN", "CONTINUOUS", "EPISODIC", "RECURRENT", "PROGRESSIVE", "REGRESSIVE", "STATIC"];
+
+function parseIso8601Duration(value?: string | null): { value: string; unit: string } | null {
+  if (!value) return null;
+  const match = /^P(\d+(?:\.\d+)?)([YMWD])$/.exec(value);
+  if (!match) return null;
+  const unit: Record<string, string> = { Y: "YEARS", M: "MONTHS", W: "WEEKS", D: "DAYS" };
+  return { value: match[1], unit: unit[match[2]] };
+}
 
 function toIso8601Duration(value: string, unit: string): string {
   const numeric = value.trim();
@@ -76,6 +91,11 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
   const [source, setSource] = useState("CLINICAL_INPUT");
   const [evidenceReference, setEvidenceReference] = useState("");
   const [clinicalNote, setClinicalNote] = useState("");
+  const [baseClinicalAttributes, setBaseClinicalAttributes] = useState<Record<string, any>>({});
+  const [supersedingPhenotypeId, setSupersedingPhenotypeId] = useState("");
+  const [amendmentReason, setAmendmentReason] = useState("");
+  const [retractingPhenotypeId, setRetractingPhenotypeId] = useState("");
+  const [retractionReason, setRetractionReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -162,6 +182,94 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     setEpisodePeriod("");
     setEvidenceReference("");
     setClinicalNote("");
+    setBaseClinicalAttributes({});
+    setSupersedingPhenotypeId("");
+    setAmendmentReason("");
+  };
+
+  const startCorrection = (row: PhenotypeRow) => {
+    const attributes = { ...(row.clinical_attributes ?? {}) };
+    setSupersedingPhenotypeId(row.phenotype_id);
+    setAmendmentReason("");
+    setHpoId(row.hpo_id);
+    setLabel(row.label ?? "");
+    setTermQuery(`${row.hpo_id} · ${row.label ?? "existing phenotype"}`);
+    setTerms([]);
+    setStatus(row.phenotype_status);
+    setSubjectMemberId(row.subject_member_id ?? "");
+    if (row.observed_at) {
+      const date = new Date(row.observed_at);
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      setObservedAt(local);
+    } else {
+      setObservedAt("");
+    }
+    setOnset(row.onset ?? "");
+    setSeverity(row.severity ?? "");
+    setAgeValue("");
+    setAgeUnit("YEARS");
+    setResolutionAgeValue("");
+    setResolutionAgeUnit("YEARS");
+    const onsetAge = parseIso8601Duration(attributes.onset_age_iso8601);
+    if (onsetAge) {
+      setAgeValue(onsetAge.value);
+      setAgeUnit(onsetAge.unit);
+      delete attributes.onset_age_iso8601;
+    }
+    const resolutionAge = parseIso8601Duration(attributes.resolution_age_iso8601);
+    if (resolutionAge) {
+      setResolutionAgeValue(resolutionAge.value);
+      setResolutionAgeUnit(resolutionAge.unit);
+      delete attributes.resolution_age_iso8601;
+    }
+    setSeverityHpoId(attributes.severity_hpo_id ?? "");
+    delete attributes.severity_hpo_id;
+    setLaterality(attributes.laterality ?? "UNKNOWN");
+    delete attributes.laterality;
+    setTemporalPattern(attributes.temporal_pattern ?? "UNKNOWN");
+    delete attributes.temporal_pattern;
+    setCourseHpoId(attributes.clinical_course_hpo_id ?? "");
+    delete attributes.clinical_course_hpo_id;
+    setModifierIds((attributes.modifier_hpo_ids ?? []).join(", "));
+    delete attributes.modifier_hpo_ids;
+    setSiteSystem(attributes.anatomical_site?.system ?? "");
+    setSiteCode(attributes.anatomical_site?.code ?? "");
+    setSiteDisplay(attributes.anatomical_site?.display ?? "");
+    delete attributes.anatomical_site;
+    setEpisodeCount(attributes.episode_frequency?.count?.toString() ?? "");
+    setEpisodePeriod(attributes.episode_frequency?.period_value?.toString() ?? "");
+    setEpisodeUnit(attributes.episode_frequency?.period_unit ?? "WEEKS");
+    delete attributes.episode_frequency;
+    setBaseClinicalAttributes(attributes);
+    setSource(row.source ?? "CLINICAL_INPUT");
+    setEvidenceReference(row.evidence?.source_reference ?? "");
+    setClinicalNote(row.evidence?.clinical_note ?? "");
+    setNotice(`Correcting observation ${row.phenotype_id}. Enter the clinical reason and save a replacement; the original record will remain preserved.`);
+  };
+
+  const retract = async () => {
+    if (!retractingPhenotypeId || !retractionReason.trim()) return;
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const result = await apiFetch(
+        `/cases/${caseId}/phenotypes/${retractingPhenotypeId}/retractions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: retractionReason.trim() }),
+        },
+      );
+      await refresh();
+      setRetractingPhenotypeId("");
+      setRetractionReason("");
+      setNotice(`Observation retracted. Original record retained; amendment ${result.amendment_id} recorded.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to retract phenotype observation");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const save = async () => {
@@ -170,6 +278,7 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     setNotice("");
     try {
       const clinicalAttributes: Record<string, any> = {
+        ...baseClinicalAttributes,
         laterality,
         temporal_pattern: temporalPattern,
       };
@@ -211,14 +320,18 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
           clinical_attributes: clinicalAttributes,
           source,
           evidence,
+          supersedes_observation_id: supersedingPhenotypeId || undefined,
+          amendment_reason: amendmentReason.trim() || undefined,
         }),
       });
       await refresh();
       const resolution = saved?.ontology_resolution?.primary_term?.status ?? "UNKNOWN";
       setNotice(
-        resolution === "CURRENT" || resolution === "ALTERNATE_ID"
-          ? `Observation saved; HPO term resolution: ${resolution}.`
-          : `Observation saved, but HPO term resolution is ${resolution}. It remains visible for review and is not silently treated as a validated term.`,
+        supersedingPhenotypeId
+          ? `Observation corrected; the original record remains in history as SUPERSEDED. HPO resolution: ${resolution}.`
+          : resolution === "CURRENT" || resolution === "ALTERNATE_ID"
+            ? `Observation saved; HPO term resolution: ${resolution}.`
+            : `Observation saved, but HPO term resolution is ${resolution}. It remains visible for review and is not silently treated as a validated term.`,
       );
       resetForm();
     } catch (err) {
@@ -359,8 +472,17 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
         <label>Clinical note / evidence context
           <textarea value={clinicalNote} onChange={event => setClinicalNote(event.target.value)} rows={3} maxLength={5000} placeholder="Record the source and context; avoid unsupported interpretation." />
         </label>
+        {supersedingPhenotypeId && (
+          <div className="clinical-card">
+            <strong>Correction of observation {supersedingPhenotypeId}</strong>
+            <label>Reason for correction (required)
+              <textarea rows={2} maxLength={2000} value={amendmentReason} onChange={event => setAmendmentReason(event.target.value)} placeholder="Explain the source of the error and why this replacement is correct." />
+            </label>
+            <button type="button" className="secondary" onClick={resetForm} disabled={saving}>Cancel correction</button>
+          </div>
+        )}
         <div className="actions-row">
-          <button type="button" className="primary" onClick={save} disabled={saving || !hpoId.trim()}>{saving ? "Saving…" : "Save phenotype observation"}</button>
+          <button type="button" className="primary" onClick={save} disabled={saving || !hpoId.trim() || (Boolean(supersedingPhenotypeId) && !amendmentReason.trim())}>{saving ? "Saving…" : "Save phenotype observation"}</button>
           <button type="button" className="secondary" onClick={resetForm} disabled={saving}>Clear form</button>
           <button type="button" className="secondary" onClick={() => void refresh()} disabled={loading}>{loading ? "Refreshing…" : "Refresh observations"}</button>
         </div>
@@ -377,11 +499,32 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
                 <article className="keyline" key={row.phenotype_id}>
                   <div>
                     <strong>{row.canonical_hpo_id || row.hpo_id} · {row.label || row.ontology_resolution?.primary_term?.label || "Unresolved term"}</strong>
+                    <span className={`badge ${(row.record_lifecycle_status ?? "ACTIVE") === "ACTIVE" ? "success" : "neutral"}`}>{row.record_lifecycle_status ?? "ACTIVE"}</span>
                     <div>{row.phenotype_status.replaceAll("_", " ")} · {member ? member.member_identifier : "Proband / primary patient"} · HPO {resolution}</div>
                     <small>{row.observed_at ? new Date(row.observed_at).toLocaleString() : "Observation time not supplied"}{row.onset ? ` · Onset: ${row.onset}` : ""}{row.severity ? ` · Severity: ${row.severity}` : ""}{row.clinical_attributes?.severity_hpo_id ? ` · Severity term: ${row.clinical_attributes.severity_hpo_id}` : ""}</small>
                     {resolution !== "CURRENT" && resolution !== "ALTERNATE_ID" && <small className="danger-text">Requires terminology review; not treated as a validated HPO term.</small>}
                     {row.clinical_attributes && Object.keys(row.clinical_attributes).length > 0 && <details><summary>Clinical attributes</summary><pre>{JSON.stringify(row.clinical_attributes, null, 2)}</pre></details>}
                     {row.evidence && Object.keys(row.evidence).length > 0 && <details><summary>Source evidence</summary><pre>{JSON.stringify(row.evidence, null, 2)}</pre></details>}
+                    {(row.record_lifecycle_status ?? "ACTIVE") === "SUPERSEDED" && <small>Superseded by {row.replacement_observation_id} · {row.amendment_reason}</small>}
+                    {(row.record_lifecycle_status ?? "ACTIVE") === "RETRACTED" && <small>Retracted · {row.amendment_reason}</small>}
+                    {row.analysis_id && <small>Analysis-scoped observation · immutable within its historical analysis record.</small>}
+                    {(row.record_lifecycle_status ?? "ACTIVE") === "ACTIVE" && !row.analysis_id && (
+                      <div className="actions-row">
+                        <button type="button" className="secondary" onClick={() => startCorrection(row)} disabled={saving}>Correct / supersede</button>
+                        <button type="button" className="secondary" onClick={() => { setRetractingPhenotypeId(row.phenotype_id); setRetractionReason(""); }} disabled={saving}>Retract</button>
+                      </div>
+                    )}
+                    {retractingPhenotypeId === row.phenotype_id && (
+                      <div className="clinical-card">
+                        <label>Retraction reason (required)
+                          <textarea rows={2} maxLength={2000} value={retractionReason} onChange={event => setRetractionReason(event.target.value)} />
+                        </label>
+                        <div className="actions-row">
+                          <button type="button" className="primary" onClick={() => void retract()} disabled={saving || !retractionReason.trim()}>Confirm retraction</button>
+                          <button type="button" className="secondary" onClick={() => { setRetractingPhenotypeId(""); setRetractionReason(""); }} disabled={saving}>Cancel</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </article>
               );

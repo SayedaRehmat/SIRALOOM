@@ -638,6 +638,30 @@ wheels = [
 ]
 
 [[package]]
+name = "fhir-core"
+version = "1.1.12"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f7/1b/0072a6ec7716df558bbcc134611df02d8ba22e286cbf64070fe6190f9d75/fhir_core-1.1.12.tar.gz", hash = "sha256:8f1674104ff575ff00dd2b4ff7ed6caf043d6d5a306990536e1b6ee2ccd06732", size = 40415, upload-time = "2026-10-18T20:20:47.011Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/67/22/4a118da089892195692b5e3519992708dc67fb84d49fddee5d9a1f3f43b4/fhir_core-1.1.12-py2.py3-none-any.whl", hash = "sha256:2ae218ed43b32705ce1c37150253942bd88350248a77f66e8ca2b6c3ed8263b2", size = 34264, upload-time = "2026-10-18T20:20:45.735Z" },
+]
+
+[[package]]
+name = "fhir-resources"
+version = "8.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fhir-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/98/06/331d78ad6db6903be6b912701c44b32af295279907b3a2e6ad6c2e2f97b1/fhir_resources-8.3.0.tar.gz", hash = "sha256:bdfd1c7bd1b89bfa269c1f435727771f6c632cd857e2848221713b3f8b9f46e8", size = 1617996, upload-time = "2026-07-03T15:23:54.01Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/86/32914542064b8aee77ac48142f8a1955df78da4eb905dd41697d26941d21/fhir_resources-8.3.0-py2.py3-none-any.whl", hash = "sha256:151e6c9b4336e36383cc2aaf2067a6f112a420fce1c7bd289182e55dd950871b", size = 2288069, upload-time = "2026-07-03T15:23:51.97Z" },
+]
+
+[[package]]
 name = "firebase-admin"
 version = "6.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1698,6 +1722,18 @@ wheels = [
 ]
 
 [[package]]
+name = "phenopackets"
+version = "2.0.2.post5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e6/1b/007d837da26e5c97973b062fdef7dce204efc6cb3f14e8b49e5d0c38d066/phenopackets-2.0.2.post5.tar.gz", hash = "sha256:f82c8662ddb379fb820c2bb2b67844802ba04fd86d4935c4a6651d72f1094ebd", size = 38703, upload-time = "2025-09-09T16:53:49.068Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/10/b07c3652945d5d3dd1852ddece0ada69efa234a06664f2141d8903199816/phenopackets-2.0.2.post5-py3-none-any.whl", hash = "sha256:34c9076729026dc087512fa6652bd7b693492a52d2f7150755deae4d58d5d6ab", size = 53035, upload-time = "2025-09-09T16:53:47.701Z" },
+]
+
+[[package]]
 name = "pillow"
 version = "13.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1822,17 +1858,17 @@ wheels = [
 
 [[package]]
 name = "protobuf"
-version = "7.36.2"
+version = "6.33.6"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d9/89/5b8517baa72f84a67b8a307ba953c91057af618bf40bf676f3c03551f8f0/protobuf-7.36.2.tar.gz", hash = "sha256:497d0463ff3316681da6c0b9e8d06cb465d61abce00b613ab42226175644d1bb", size = 512737, upload-time = "2026-09-17T20:07:59.326Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/66/70/e908e9c5e52ef7c3a6c7902c9dfbb34c7e29c25d2f81ade3856445fd5c94/protobuf-6.33.6.tar.gz", hash = "sha256:a6768d25248312c297558af96a9f9c929e8c4cee0659cb07e780731095f38135", size = 444531, upload-time = "2026-03-18T19:05:00.988Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/72/98342feb672507c8f3a69e34b4fa8961f608edba5c1a48a6f47156d92cb5/protobuf-7.36.2-cp310-abi3-macosx_10_9_universal2.whl", hash = "sha256:cbc70b17ee27e28894c7fee8bb04be1abead49e936bc70eb60052531eee2079e", size = 456039, upload-time = "2026-09-17T20:07:51.542Z" },
-    { url = "https://files.pythonhosted.org/packages/b6/ea/91fdf7c2b8bbd49cde056f00a9df6773532987e1c00fe2830b895af95c7e/protobuf-7.36.2-cp310-abi3-manylinux2014_aarch64.whl", hash = "sha256:e11e1f0180583a2af89db6a2ecd9e8dc40aa6d2988ca175bfd0e6d12ea72d74e", size = 344219, upload-time = "2026-09-17T20:07:52.914Z" },
-    { url = "https://files.pythonhosted.org/packages/17/ab/5fd5f8ece73fad885c5a09aa849b32d70472f954ba3a92d3bb5974ea953b/protobuf-7.36.2-cp310-abi3-manylinux2014_s390x.whl", hash = "sha256:f4fee11ec330d238b34a05c9b675f693c20415d1c5bd7d5320cc2f8a798eb9cf", size = 357223, upload-time = "2026-09-17T20:07:53.985Z" },
-    { url = "https://files.pythonhosted.org/packages/db/f3/3996583dd2906297a637af12114deddf7658af6e683fedb83be061983fb5/protobuf-7.36.2-cp310-abi3-manylinux2014_x86_64.whl", hash = "sha256:89f23aa53c24553a2416fd4fd1ec06f74fa42b14b546d8883128813f775bbfd2", size = 343223, upload-time = "2026-09-17T20:07:54.931Z" },
-    { url = "https://files.pythonhosted.org/packages/fc/1b/dcc64f358fcb51811b58ae40b3d28f820725f116d86487cc20bd4b130701/protobuf-7.36.2-cp310-abi3-win32.whl", hash = "sha256:912c1221170e16c08d1f086762f563dd61ff83c18b5fa6652952dfaded66f728", size = 442998, upload-time = "2026-09-17T20:07:55.826Z" },
-    { url = "https://files.pythonhosted.org/packages/8a/55/b77bda4e5e5f5971fb51b07663694690e9afdb9402136c16a522bd621cad/protobuf-7.36.2-cp310-abi3-win_amd64.whl", hash = "sha256:a300819d441e078a5608c0d3c709796bb548136058fda017ae51d425b44fd353", size = 456514, upload-time = "2026-09-17T20:07:57.188Z" },
-    { url = "https://files.pythonhosted.org/packages/e4/04/d52c7016b04b6c5108f26691f9d33ec82a9b65d041f1a9c771137693d618/protobuf-7.36.2-py3-none-any.whl", hash = "sha256:bdb3a345d48db958e6ce1f18e508beb0cc981d64f24088427549c866cd039f1e", size = 179806, upload-time = "2026-09-17T20:07:58.211Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/9f/2f509339e89cfa6f6a4c4ff50438db9ca488dec341f7e454adad60150b00/protobuf-6.33.6-cp310-abi3-win32.whl", hash = "sha256:7d29d9b65f8afef196f8334e80d6bc1d5d4adedb449971fefd3723824e6e77d3", size = 425739, upload-time = "2026-03-18T19:04:48.373Z" },
+    { url = "https://files.pythonhosted.org/packages/76/5d/683efcd4798e0030c1bab27374fd13a89f7c2515fb1f3123efdfaa5eab57/protobuf-6.33.6-cp310-abi3-win_amd64.whl", hash = "sha256:0cd27b587afca21b7cfa59a74dcbd48a50f0a6400cfb59391340ad729d91d326", size = 437089, upload-time = "2026-03-18T19:04:50.381Z" },
+    { url = "https://files.pythonhosted.org/packages/5c/01/a3c3ed5cd186f39e7880f8303cc51385a198a81469d53d0fdecf1f64d929/protobuf-6.33.6-cp39-abi3-macosx_10_9_universal2.whl", hash = "sha256:9720e6961b251bde64edfdab7d500725a2af5280f3f4c87e57c0208376aa8c3a", size = 427737, upload-time = "2026-03-18T19:04:51.866Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/90/b3c01fdec7d2f627b3a6884243ba328c1217ed2d978def5c12dc50d328a3/protobuf-6.33.6-cp39-abi3-manylinux2014_aarch64.whl", hash = "sha256:e2afbae9b8e1825e3529f88d514754e094278bb95eadc0e199751cdd9a2e82a2", size = 324610, upload-time = "2026-03-18T19:04:53.096Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/ca/25afc144934014700c52e05103c2421997482d561f3101ff352e1292fb81/protobuf-6.33.6-cp39-abi3-manylinux2014_s390x.whl", hash = "sha256:c96c37eec15086b79762ed265d59ab204dabc53056e3443e702d2681f4b39ce3", size = 339381, upload-time = "2026-03-18T19:04:54.616Z" },
+    { url = "https://files.pythonhosted.org/packages/16/92/d1e32e3e0d894fe00b15ce28ad4944ab692713f2e7f0a99787405e43533a/protobuf-6.33.6-cp39-abi3-manylinux2014_x86_64.whl", hash = "sha256:e9db7e292e0ab79dd108d7f1a94fe31601ce1ee3f7b79e0692043423020b0593", size = 323436, upload-time = "2026-03-18T19:04:55.768Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/72/02445137af02769918a93807b2b7890047c32bfb9f90371cbc12688819eb/protobuf-6.33.6-py3-none-any.whl", hash = "sha256:77179e006c476e69bf8e8ce866640091ec42e1beb80b213c3900006ecfba6901", size = 170656, upload-time = "2026-03-18T19:04:59.826Z" },
 ]
 
 [[package]]
@@ -2348,11 +2384,13 @@ dependencies = [
     { name = "alembic" },
     { name = "celery" },
     { name = "fastapi" },
+    { name = "fhir-resources" },
     { name = "firebase-admin" },
     { name = "httpx" },
     { name = "jinja2" },
     { name = "orjson" },
     { name = "packaging" },
+    { name = "phenopackets" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -2379,6 +2417,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.13,<2" },
     { name = "celery", specifier = ">=5.4,<6" },
     { name = "fastapi", specifier = ">=0.115,<1" },
+    { name = "fhir-resources", specifier = "==8.3.0" },
     { name = "firebase-admin", specifier = ">=6.6,<7" },
     { name = "httpx", specifier = ">=0.27,<1" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27,<1" },
@@ -2386,6 +2425,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11,<2" },
     { name = "orjson", specifier = ">=3.10,<4" },
     { name = "packaging", specifier = ">=24,<27" },
+    { name = "phenopackets", specifier = "==2.0.2.post5" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },
     { name = "pydantic", specifier = ">=2.8,<3" },
     { name = "pydantic-settings", specifier = ">=2.4,<3" },
