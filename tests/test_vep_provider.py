@@ -207,6 +207,86 @@ def test_vep_rejects_duplicate_requested_alleles():
         )
 
 
+def test_vep_joins_left_anchored_indel_by_submitted_record_identity():
+    """Ensembl release 116 trims the shared VCF anchor in consequence coordinates.
+
+    The independently specified ClinVar allele is BRCA1 NM_007294.4:c.68_69del,
+    GRCh38 NC_000017.11:g.43124028_43124029delCT, represented in VCF as
+    17:43124027 ACT>A. VEP reports the event as 17:43124028 CT/-.
+    """
+    provider = VEPProvider.from_execution_contract(_portable_contract())
+    variant = CanonicalVariant(
+        genome_build="GRCh38",
+        chromosome="17",
+        position=43124027,
+        reference="ACT",
+        alternate="A",
+    )
+    response = ProviderRawResult(
+        "annotate",
+        [{
+            "id": "SIRALOOM_0",
+            "input": "17 43124027 SIRALOOM_0 ACT A . PASS .",
+            "start": 43124028,
+            "end": 43124029,
+            "seq_region_name": "17",
+            "allele_string": "CT/-",
+            "transcript_consequences": [{
+                "transcript_id": "ENST00000357654",
+                "gene_symbol": "BRCA1",
+                "gene_id": "ENSG00000012048",
+                "mane_select": "NM_007294.4",
+                "canonical": 1,
+                "consequence_terms": ["frameshift_variant"],
+                "hgvsc": "ENST00000357654.9:c.68_69del",
+                "hgvsp": "ENSP00000350283.3:p.Glu23ValfsTer17",
+            }],
+        }],
+        "release-116-known-answer",
+        {},
+    )
+
+    result = provider.normalize_result(
+        response,
+        inputs={"variants": [variant], "genome_build": "GRCh38"},
+    ).observations[0]
+
+    assert (result["chr"], result["pos"], result["ref"], result["alt"]) == (
+        "17", 43124027, "ACT", "A"
+    )
+    assert result["gene_symbol"] == "BRCA1"
+    assert result["transcript"] == "ENST00000357654"
+    assert result["effect"] == "frameshift_variant"
+    assert result["hgvsc"] == "ENST00000357654.9:c.68_69del"
+    assert result["hgvsp"] == "ENSP00000350283.3:p.Glu23ValfsTer17"
+
+
+def test_vep_rejects_input_identity_whose_alleles_do_not_match_request():
+    provider = VEPProvider.from_execution_contract(_portable_contract())
+    variant = CanonicalVariant(
+        genome_build="GRCh38", chromosome="17", position=43124027,
+        reference="ACT", alternate="A",
+    )
+
+    with pytest.raises(VEPProviderError, match="do not match"):
+        provider.normalize_result(
+            ProviderRawResult(
+                "annotate",
+                [{
+                    "id": "SIRALOOM_0",
+                    "input": "17 43124027 SIRALOOM_0 ACT G . PASS .",
+                    "start": 43124028,
+                    "seq_region_name": "17",
+                    "allele_string": "CT/-",
+                    "transcript_consequences": [],
+                }],
+                "fixture",
+                {},
+            ),
+            inputs={"variants": [variant], "genome_build": "GRCh38"},
+        )
+
+
 def _manifested_toolchain(tmp_path, binary, *, vep_version=None):
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir(exist_ok=True)

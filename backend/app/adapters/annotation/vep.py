@@ -395,22 +395,57 @@ class VEPProvider(ScientificResourceProvider):
         if len(set(variant_keys)) != len(variant_keys):
             raise VEPProviderError("VEP request contains duplicate normalized alleles.")
         by_key = dict(zip(variant_keys, variants, strict=True))
-        observed_keys: set[str] = set()
+        index_by_key = {key: index for index, key in enumerate(variant_keys)}
+        by_input_index: dict[int, CanonicalVariant] = dict(enumerate(variants))
+        observed_indices: set[int] = set()
         for record in result.payload:
-            start = record.get("start")
-            seq_region = record.get("seq_region_name")
-            allele_string = str(record.get("allele_string") or "")
-            ref = allele_string.split("/", 1)[0] if "/" in allele_string else None
-            alt = allele_string.split("/", 1)[1] if "/" in allele_string else None
-            key = f"{seq_region}:{start}:{ref}:{alt}" if ref and alt else None
-            if key is None or key not in by_key:
-                raise VEPProviderError(
-                    "VEP returned a record that does not match a requested normalized allele."
-                )
-            if key in observed_keys:
-                raise VEPProviderError("VEP returned duplicate records for a requested normalized allele.")
-            observed_keys.add(key)
-            original = by_key[key]
+            input_text = record.get("input")
+            input_fields = str(input_text).split() if isinstance(input_text, str) else []
+            if input_fields:
+                # VEP trims shared VCF anchor bases in its consequence coordinates
+                # (for example, VCF ACT>A is reported at CT/- one base later).
+                # Join on the submitted record identity, then verify its original
+                # allele fields against the request before accepting the result.
+                if len(input_fields) < 5:
+                    raise VEPProviderError("VEP input identity is malformed or incomplete.")
+                input_chrom, input_pos, input_id, input_ref, input_alt = input_fields[:5]
+                match = re.fullmatch(r"SIRALOOM_(\d+)", input_id)
+                record_id = record.get("id")
+                if record_id not in (None, "", input_id):
+                    raise VEPProviderError("VEP result ID conflicts with its submitted input identity.")
+                if not match:
+                    raise VEPProviderError("VEP result does not retain its SIRALOOM input record identity.")
+                input_index = int(match.group(1))
+                original = by_input_index.get(input_index)
+                if original is None or input_index in observed_indices:
+                    raise VEPProviderError("VEP returned an unknown or duplicate submitted input identity.")
+                if (
+                    _canonical_contig(input_chrom) != _canonical_contig(original.chromosome)
+                    or input_pos != str(original.position)
+                    or input_ref.upper() != original.reference.upper()
+                    or input_alt.upper() != original.alternate.upper()
+                ):
+                    raise VEPProviderError("VEP submitted input alleles do not match the requested normalized allele.")
+            else:
+                # Retain compatibility with exact-allele provider fixtures and
+                # older VEP JSON, but do not guess through indel representation
+                # shifts: only a complete exact output allele can use this path.
+                start = record.get("start")
+                seq_region = record.get("seq_region_name")
+                allele_string = str(record.get("allele_string") or "")
+                ref = allele_string.split("/", 1)[0] if "/" in allele_string else None
+                alt = allele_string.split("/", 1)[1] if "/" in allele_string else None
+                key = f"{seq_region}:{start}:{ref}:{alt}" if ref and alt else None
+                if key is None or key not in by_key:
+                    raise VEPProviderError(
+                        "VEP returned a record that does not match a requested normalized allele."
+                    )
+                original = by_key[key]
+                input_index = index_by_key[key]
+                if input_index in observed_indices:
+                    raise VEPProviderError("VEP returned duplicate records for a requested normalized allele.")
+
+            observed_indices.add(input_index)
 
             transcripts = record.get("transcript_consequences") or []
             selected, selection_status = self._select_display_transcript(transcripts)
@@ -447,11 +482,11 @@ class VEPProvider(ScientificResourceProvider):
                 },
             })
 
-        expected = set(variant_keys)
-        if observed_keys != expected:
+        expected = set(by_input_index)
+        if observed_indices != expected:
             raise VEPProviderError(
                 f"VEP result set does not match the requested batch; "
-                f"missing={len(expected - observed_keys)}, extra={len(observed_keys - expected)}"
+                f"missing={len(expected - observed_indices)}, extra={len(observed_indices - expected)}"
             )
         return ProviderNormalizedResult("annotate", tuple(normalized), result.metadata)
 
@@ -515,6 +550,7 @@ class VEPProvider(ScientificResourceProvider):
             )
 
         from uuid import uuid4
+
         from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
 
         toolchain = self.contract.toolchain or {}
@@ -828,6 +864,13 @@ def _canonical_assembly(value: str | None) -> str | None:
     if normalized in {"grch38", "hg38"}:
         return "GRCh38"
     return None
+
+
+def _canonical_contig(value: str) -> str:
+    normalized = value.strip()
+    if normalized.casefold().startswith("chr"):
+        normalized = normalized[3:]
+    return normalized.casefold()
 
 
 def _extract_vep_version(value: str) -> str | None:
