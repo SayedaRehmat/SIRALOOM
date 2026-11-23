@@ -164,12 +164,16 @@ class Case(Base):
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"))
     case_identifier: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
+    accession_reconciliation_status: Mapped[str] = mapped_column(Text, nullable=False, default="NEW_WORKFLOW", server_default="NEW_WORKFLOW")
     clinical_context: Mapped[dict] = mapped_column(JSON, default=dict)
     language: Mapped[str] = mapped_column(Text, default="en")
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
-    __table_args__ = (UniqueConstraint("organization_id", "case_identifier"),)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "case_identifier"),
+        CheckConstraint("accession_reconciliation_status IN ('LEGACY_UNRECONCILED','NEW_WORKFLOW','RECONCILED')", name="ck_case_accession_reconciliation_status"),
+    )
 
 
 class ClinicalIntakeRevision(Base):
