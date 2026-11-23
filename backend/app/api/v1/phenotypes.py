@@ -2,11 +2,12 @@ import hashlib
 import json
 import math
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -25,9 +26,17 @@ from backend.app.domain.resource_capabilities import CapabilityRequirement, Reso
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution
 from backend.app.domain.resource_execution_plan import build_resource_execution_plan
 from backend.app.adapters.phenotype.hpo_obo import HPOOntologyError
+from backend.app.adapters.phenotype.phenopackets_v2 import (
+    PhenopacketExportError,
+    build_phenopackets_v2,
+)
+from backend.app.adapters.phenotype.fhir_r5 import (
+    FHIRExportError,
+    build_fhir_r5_bundle,
+)
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
-    Analysis, Case, PedigreeMember, PhenotypeObservation, WorkflowStep,
+    Analysis, Case, ClinicalIntakeRevision, PedigreeMember, PedigreeRelationship, PhenotypeObservation, WorkflowStep,
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.phenotype import normalize_hpo_id
@@ -495,3 +504,326 @@ def list_analysis_phenotypes(
         "count": len(rows),
         "phenotypes": [_payload(r) for r in rows],
     }
+
+
+
+
+_INTERNAL_EXPORT_KEYS = {
+    "case_id", "analysis_id", "member_id", "parent_member_id", "child_member_id",
+    "specimen_id", "artifact_id", "user_id", "recorded_by", "created_by",
+    "revision_id", "resource_id", "qualification_id", "execution_id", "provider_id",
+}
+
+
+def _sanitize_export_sidecar(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_export_sidecar(item)
+            for key, item in value.items()
+            if key not in _INTERNAL_EXPORT_KEYS
+        }
+    if isinstance(value, list):
+        return [_sanitize_export_sidecar(item) for item in value]
+    return value
+
+
+def _server_utc_iso(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    if value.tzinfo is None or value.utcoffset() is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    context = dict(row.context or {})
+    prior_testing = []
+    for item in context.get("prior_testing", []) or []:
+        if not isinstance(item, dict):
+            continue
+        exported = _sanitize_export_sidecar(item)
+        if item.get("artifact_id"):
+            exported["artifact_reference_present"] = True
+        prior_testing.append(exported)
+    if "prior_testing" in context:
+        context["prior_testing"] = prior_testing
+    return {
+        "version": row.version,
+        "schema_version": row.schema_version,
+        "revision_fingerprint": row.revision_fingerprint,
+        "intake_status": row.intake_status,
+        "phenotype_review_status": row.phenotype_review_status,
+        "family_history_review_status": row.family_history_review_status,
+        "context": context,
+        "phenotype_review_note": row.phenotype_review_note,
+        "family_history_review_note": row.family_history_review_note,
+        "completion_note": row.completion_note,
+        "recorded_at": _server_utc_iso(row.recorded_at),
+    }
+
+
+
+
+
+def _phenotype_export_sidecar(
+    observations: list[PhenotypeObservation],
+    members: list[PedigreeMember],
+) -> list[dict[str, Any]]:
+    member_identifiers = {str(member.id): member.member_identifier for member in members}
+    exported = []
+    for row in observations:
+        subject_member_id = (
+            member_identifiers.get(str(row.subject_member_id))
+            if row.subject_member_id is not None else None
+        )
+        if row.subject_member_id is not None and subject_member_id is None:
+            raise HTTPException(409, "Phenotype observation references a family member outside this case")
+        exported.append({
+            "record_fingerprint": row.record_fingerprint,
+            "subject_member_identifier": subject_member_id,
+            "hpo_id": row.hpo_id,
+            "canonical_hpo_id": row.canonical_hpo_id,
+            "label": row.label,
+            "phenotype_status": row.phenotype_status,
+            "present": row.present,
+            "onset": row.onset,
+            "severity": row.severity,
+            "observed_at": row.observed_at.isoformat() if row.observed_at else None,
+            "created_at": _server_utc_iso(row.created_at),
+            "clinical_attributes": _sanitize_export_sidecar(row.clinical_attributes or {}),
+            "ontology_resolution": _sanitize_export_sidecar(row.ontology_resolution or {}),
+            "source": row.source,
+            "evidence": _sanitize_export_sidecar(row.evidence or {}),
+        })
+    return exported
+
+def _pedigree_export_sidecar(
+    case: Case,
+    members: list[PedigreeMember],
+    relationships: list[PedigreeRelationship],
+    clinical_intake_revision: ClinicalIntakeRevision | None,
+) -> dict[str, Any]:
+    identifiers = {str(member.id): member.member_identifier for member in members}
+    consanguinity_values = []
+    sources = [getattr(case, "clinical_context", None) or {}]
+    sources.extend(member.metadata_json or {} for member in members)
+    sources.extend(relationship.metadata_json or {} for relationship in relationships)
+    if clinical_intake_revision is not None:
+        sources.append(clinical_intake_revision.context or {})
+    for source in sources:
+        if isinstance(source, dict) and "consanguinous_parents" in source:
+            consanguinity_values.append(source["consanguinous_parents"])
+    consanguinous_parents = consanguinity_values[0] if consanguinity_values else None
+    return {
+        "consanguinous_parents": (
+            consanguinous_parents if consanguinous_parents is not None else "NOT_RECORDED"
+        ),
+        "members": [
+            {
+                "member_identifier": member.member_identifier,
+                "phenopacket_subject_id": (
+                    f"SIRALOOM:{uuid5(NAMESPACE_URL, f'siraloom:pedigree-member:{member.id}')}"
+                ),
+                "relationship_to_proband": member.relationship_to_proband,
+                "sex": member.sex,
+                "affected_status": member.affected_status,
+                "is_proband": member.is_proband,
+                "sampled": member.sampled,
+                "specimen_reference_present": member.specimen_id is not None,
+                "metadata": _sanitize_export_sidecar(member.metadata_json or {}),
+            }
+            for member in members
+        ],
+        "relationships": [
+            {
+                "parent_member_identifier": identifiers.get(str(row.parent_member_id)),
+                "child_member_identifier": identifiers.get(str(row.child_member_id)),
+                "relationship_type": row.relationship_type,
+                "metadata": _sanitize_export_sidecar(row.metadata_json or {}),
+            }
+            for row in relationships
+        ],
+    } if members else {"members": [], "relationships": []}
+
+@router.get("/cases/{case_id}/phenopackets-v2")
+def export_case_phenopackets_v2(
+    case_id: UUID,
+    allow_lossy: bool = Query(default=False),
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Export the case as a GA4GH Phenopacket v2 or Family document.
+
+    The response envelope carries the schema-validated GA4GH document and
+    explicit loss warnings. Strict export is the default.
+    """
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    require_case_permission(case, principal, db, "read")
+
+    observations = list(db.scalars(
+        select(PhenotypeObservation)
+        .where(
+            PhenotypeObservation.case_id == case_id,
+            PhenotypeObservation.analysis_id.is_(None),
+        )
+        .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
+    ))
+    members = list(db.scalars(
+        select(PedigreeMember)
+        .where(PedigreeMember.case_id == case_id)
+        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
+    ))
+    relationships = list(db.scalars(
+        select(PedigreeRelationship)
+        .where(PedigreeRelationship.case_id == case_id)
+        .order_by(PedigreeRelationship.created_at, PedigreeRelationship.id)
+    ))
+    clinical_intake_revision = db.scalar(
+        select(ClinicalIntakeRevision)
+        .where(ClinicalIntakeRevision.case_id == case_id)
+        .order_by(ClinicalIntakeRevision.version.desc())
+        .limit(1)
+    )
+
+    try:
+        document, warnings = build_phenopackets_v2(
+            case=case,
+            phenotype_observations=observations,
+            pedigree_members=members,
+            pedigree_relationships=relationships,
+            clinical_intake_revision=clinical_intake_revision,
+            allow_lossy=allow_lossy,
+        )
+    except PhenopacketExportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    AuditService(db).record(
+        event_type="CLINICAL_INTEROPERABILITY_EXPORT",
+        case_id=case_id,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="CASE",
+        subject_id=str(case_id),
+        operation="EXPORT",
+        after_state={
+            "format": "GA4GH_PHENOPACKETS",
+            "schema_version": "2.0",
+            "lossy": bool(warnings),
+            "warning_count": len(warnings),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+            "clinical_intake_revision_version": (
+                clinical_intake_revision.version if clinical_intake_revision is not None else None
+            ),
+        },
+        payload={
+            "allow_lossy": allow_lossy,
+            "warning_fields": sorted({item["field"] for item in warnings}),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+        },
+    )
+    db.commit()
+    return {
+        "format": "GA4GH_PHENOPACKETS",
+        "schema_version": "2.0",
+        "lossy": bool(warnings),
+        "warnings": warnings,
+        "clinical_intake_revision": _clinical_intake_export_payload(clinical_intake_revision),
+        "phenotype_observation_sidecar": _phenotype_export_sidecar(observations, members),
+        "pedigree_sidecar": _pedigree_export_sidecar(
+            case, members, relationships, clinical_intake_revision
+        ),
+        "document": document,
+    }
+
+
+@router.get("/cases/{case_id}/fhir-r5/phenotypes")
+def export_case_phenotypes_fhir_r5(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Export phenotype and family context as a validated HL7 FHIR R5 Bundle."""
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    require_case_permission(case, principal, db, "read")
+
+    observations = list(db.scalars(
+        select(PhenotypeObservation)
+        .where(
+            PhenotypeObservation.case_id == case_id,
+            PhenotypeObservation.analysis_id.is_(None),
+        )
+        .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
+    ))
+    members = list(db.scalars(
+        select(PedigreeMember)
+        .where(PedigreeMember.case_id == case_id)
+        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
+    ))
+    relationships = list(db.scalars(
+        select(PedigreeRelationship)
+        .where(PedigreeRelationship.case_id == case_id)
+        .order_by(PedigreeRelationship.created_at, PedigreeRelationship.id)
+    ))
+    clinical_intake_revision = db.scalar(
+        select(ClinicalIntakeRevision)
+        .where(ClinicalIntakeRevision.case_id == case_id)
+        .order_by(ClinicalIntakeRevision.version.desc())
+        .limit(1)
+    )
+
+    try:
+        bundle = build_fhir_r5_bundle(
+            case=case,
+            phenotype_observations=observations,
+            pedigree_members=members,
+            pedigree_relationships=relationships,
+            clinical_intake_revision=clinical_intake_revision,
+        )
+    except FHIRExportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    AuditService(db).record(
+        event_type="CLINICAL_INTEROPERABILITY_EXPORT",
+        case_id=case_id,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="CASE",
+        subject_id=str(case_id),
+        operation="EXPORT",
+        after_state={
+            "format": "HL7_FHIR_R5",
+            "fhir_version": "5.0.0",
+            "resource_count": len(bundle.get("entry", [])),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+            "clinical_intake_revision_version": (
+                clinical_intake_revision.version if clinical_intake_revision is not None else None
+            ),
+        },
+        payload={
+            "format": "HL7_FHIR_R5",
+            "resource_count": len(bundle.get("entry", [])),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+        },
+    )
+    db.commit()
+    return JSONResponse(content=bundle, media_type="application/fhir+json")
