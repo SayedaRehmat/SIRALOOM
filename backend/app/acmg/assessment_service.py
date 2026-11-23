@@ -796,6 +796,20 @@ class ACMGSpecificationAssessmentService:
                         result=classification.classification,
                         criterion_ids=criterion_ids,
                         state=classification.state,
+                        metadata_json={
+                            "combination_method": result.combination_method,
+                            "combination_metadata": result.combination_metadata or {},
+                            "classification_rationale": list(classification.rationale),
+                            "criterion_snapshot": [
+                                {
+                                    "criterion": item.criterion,
+                                    "strength": item.strength,
+                                    "direction": item.direction,
+                                    "evidence_ids": list(item.evidence_ids),
+                                }
+                                for item in classification.criteria
+                            ],
+                        },
                         review_status="PENDING",
                         version=next_version,
                         supersedes_classification_id=latest.id if latest else None,

@@ -9,6 +9,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.acmg.rules import validate_strength
+from backend.app.acmg.combination_method import STANDARD_ACMG
+from backend.app.acmg.engine import ACMGEngine, CriterionAssessment
 from backend.app.adapters.annotation.genebe_normalizer import gene_be_display_payload
 from backend.app.auth.authorization import get_analysis_variant, require_analysis_artifact
 from backend.app.domain.annotation_provenance import annotation_provenance_snapshot
@@ -622,8 +624,132 @@ def review_criterion(
         reason=mutation.reason.strip(),
         payload={"review_sequence": action.sequence_number},
     )
+    _refresh_classification_after_criterion_review(
+        db, analysis=analysis, variant_id=variant_id, reviewer=reviewer,
+        assessment_rows=list(db.scalars(
+            select(ACMGAssessment).where(
+                ACMGAssessment.analysis_id == analysis_id,
+                ACMGAssessment.variant_id == variant_id,
+            ).order_by(ACMGAssessment.criterion)
+        )),
+    )
     db.flush()
     return assessment
+
+
+def _refresh_classification_after_criterion_review(
+    db: Session, *, analysis: Analysis, variant_id: UUID, reviewer: User,
+    assessment_rows: list[ACMGAssessment],
+) -> None:
+    """Recombine reviewed criteria for the supported baseline method.
+
+    A reviewer changing an individual criterion must not be able to approve an
+    aggregate computed from the old criterion values. For unsupported
+    combination methods we fail closed and require the separate governed
+    classification decision path.
+    """
+    current = db.scalar(
+        select(Classification).where(
+            Classification.analysis_id == analysis.id,
+            Classification.variant_id == variant_id,
+        ).order_by(Classification.version.desc()).with_for_update()
+    )
+    if current is None or current.review_status != ReviewStatus.IN_REVIEW:
+        return
+
+    snapshot = list((current.metadata_json or {}).get("criterion_snapshot") or [])
+    if not snapshot:
+        current.metadata_json = {
+            **(current.metadata_json or {}),
+            "criterion_review_requires_reassessment": True,
+            "criterion_review_reassessment_reason": "The source classification has no persisted criterion combination snapshot.",
+        }
+        return
+
+    method = (current.metadata_json or {}).get("combination_method")
+    if method != STANDARD_ACMG:
+        current.metadata_json = {
+            **(current.metadata_json or {}),
+            "criterion_review_requires_reassessment": True,
+            "criterion_review_reassessment_reason": "The classification method has no registered reviewed-criterion recombination engine.",
+        }
+        return
+
+    by_criterion = {row.criterion: row for row in assessment_rows}
+    combined: list[CriterionAssessment] = []
+    for item in snapshot:
+        row = by_criterion.get(str(item.get("criterion")))
+        if row is None:
+            current.metadata_json = {
+                **(current.metadata_json or {}),
+                "criterion_review_requires_reassessment": True,
+                "criterion_review_reassessment_reason": "A classification criterion record is missing.",
+            }
+            return
+        if row.state == "REJECTED":
+            continue
+        final = row.final_assessment if row.state in {"ACCEPTED", "MODIFIED"} else None
+        source = final or row.automated_assessment or {}
+        strength = source.get("strength") or item.get("strength")
+        direction = source.get("direction") or item.get("direction")
+        if not strength or not direction:
+            current.metadata_json = {
+                **(current.metadata_json or {}),
+                "criterion_review_requires_reassessment": True,
+                "criterion_review_reassessment_reason": f"Reviewed criterion {row.criterion} lacks a supported strength or direction.",
+            }
+            return
+        evidence_ids = source.get("evidence_ids") or item.get("evidence_ids") or []
+        combined.append(CriterionAssessment(
+            criterion=row.criterion, strength=strength, direction=direction,
+            status="PROPOSED", evidence_ids=tuple(str(value) for value in evidence_ids),
+            reason=(source.get("reason") or "Reviewer accepted the persisted criterion evidence."),
+            metadata={"review_state": row.state, "review_version": row.review_version},
+        ))
+
+    try:
+        result = ACMGEngine().classify(combined)
+    except ValueError as exc:
+        current.metadata_json = {
+            **(current.metadata_json or {}),
+            "criterion_review_requires_reassessment": True,
+            "criterion_review_reassessment_reason": str(exc),
+        }
+        return
+
+    new = Classification(
+        id=uuid4(), variant_id=variant_id, analysis_id=analysis.id,
+        framework_name=current.framework_name, framework_version=current.framework_version,
+        specification_provider=current.specification_provider,
+        specification_id=current.specification_id,
+        specification_version=current.specification_version,
+        result=result.classification,
+        criterion_ids=[str(by_criterion[item.criterion].id) for item in result.criteria],
+        metadata_json={
+            **(current.metadata_json or {}),
+            "combination_method": STANDARD_ACMG,
+            "classification_rationale": list(result.rationale),
+            "criterion_snapshot": [
+                {"criterion": item.criterion, "strength": item.strength,
+                 "direction": item.direction, "evidence_ids": list(item.evidence_ids)}
+                for item in result.criteria
+            ],
+            "reviewed_criterion_recombination": True,
+            "recombined_by": str(reviewer.id),
+            "recombination_source_classification_id": str(current.id),
+        },
+        state=result.state, review_status=ReviewStatus.NOT_STARTED,
+        version=current.version + 1, supersedes_classification_id=current.id,
+    )
+    db.add(new)
+    AuditService(db).record(
+        event_type="CLASSIFICATION_RECOMPUTED_AFTER_CRITERION_REVIEW",
+        case_id=analysis.case_id, analysis_id=analysis.id, actor_type="HUMAN",
+        actor_id=str(reviewer.id), subject_type="CLASSIFICATION", subject_id=str(new.id),
+        operation="RECOMPUTE", before_state=_classification_dict(current),
+        after_state=_classification_dict(new),
+        reason="A criterion review decision changed the aggregate classification proposal.",
+    )
 
 
 def approve_classification(
@@ -660,6 +786,13 @@ def approve_classification(
         return current
     if current.review_status != ReviewStatus.IN_REVIEW:
         raise ReviewError("Classification must be in active review before approval")
+    if str(current.state).upper() == "REQUIRES_REVIEW":
+        raise ReviewError("A classification requiring scientific reassessment cannot be approved")
+    if (current.metadata_json or {}).get("criterion_review_requires_reassessment"):
+        raise ReviewError(
+            "A criterion decision changed or invalidated the classification evidence. "
+            "Reassessment or a new documented manual classification is required before approval."
+        )
     if current.review_version != expected_version:
         raise ReviewConflictError(
             f"Classification review version conflict: expected {expected_version}, current {current.review_version}"
