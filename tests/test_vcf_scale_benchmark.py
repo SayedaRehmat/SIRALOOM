@@ -28,6 +28,63 @@ def _inputs(tmp_path: Path) -> tuple[Path, Path]:
     return vcf, reference
 
 
+def test_deployment_resource_snapshot_captures_cgroup_v2_and_output_filesystem(tmp_path):
+    module = _load_runner()
+    cgroup = tmp_path / "cgroup"
+    cgroup.mkdir()
+    (cgroup / "memory.current").write_text("1048576\n", encoding="ascii")
+    (cgroup / "memory.peak").write_text("2097152\n", encoding="ascii")
+    (cgroup / "memory.max").write_text("4194304\n", encoding="ascii")
+    output = tmp_path / "evidence"
+    output.mkdir(mode=0o700)
+
+    snapshot = module.deployment_resource_snapshot(output, cgroup_root=cgroup)
+
+    assert snapshot["container_memory"] == {
+        "cgroup_version": 2,
+        "current_bytes": 1048576,
+        "peak_bytes": 2097152,
+        "limit_bytes": 4194304,
+        "measurement_scope": "cgroup workload/container; not process-attributed",
+    }
+    filesystem = snapshot["output_filesystem"]
+    assert filesystem["total_bytes"] > 0
+    assert filesystem["free_bytes"] > 0
+    assert filesystem["used_bytes"] >= 0
+    assert filesystem["device_id"] == output.stat().st_dev
+    assert filesystem["output_directory_mode"] == "0o700"
+
+
+def test_deployment_resource_snapshot_supports_cgroup_v1_and_unavailable_metrics(tmp_path):
+    module = _load_runner()
+    cgroup = tmp_path / "cgroup"
+    memory = cgroup / "memory"
+    memory.mkdir(parents=True)
+    (memory / "memory.usage_in_bytes").write_text("512\n", encoding="ascii")
+    (memory / "memory.max_usage_in_bytes").write_text("1024\n", encoding="ascii")
+    (memory / "memory.limit_in_bytes").write_text(str((1 << 63) - 4096) + "\n", encoding="ascii")
+    output = tmp_path / "evidence"
+    output.mkdir()
+
+    snapshot = module.deployment_resource_snapshot(output, cgroup_root=cgroup)
+
+    assert snapshot["container_memory"]["cgroup_version"] == 1
+    assert snapshot["container_memory"]["current_bytes"] == 512
+    assert snapshot["container_memory"]["peak_bytes"] == 1024
+    assert snapshot["container_memory"]["limit_bytes"] is None
+
+    (memory / "memory.limit_in_bytes").write_text("max\\n", encoding="ascii")
+    unlimited_text = module.deployment_resource_snapshot(output, cgroup_root=cgroup)
+    assert unlimited_text["container_memory"]["limit_bytes"] is None
+
+    empty_cgroup = tmp_path / "no-cgroup"
+    empty_cgroup.mkdir()
+    unavailable = module.deployment_resource_snapshot(output, cgroup_root=empty_cgroup)
+    assert unavailable["container_memory"]["cgroup_version"] is None
+    assert unavailable["container_memory"]["current_bytes"] is None
+    assert unavailable["container_memory"]["peak_bytes"] is None
+
+
 def test_prepare_output_dir_preserves_existing_evidence(tmp_path):
     module = _load_runner()
     output = tmp_path / "existing"
