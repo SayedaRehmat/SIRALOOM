@@ -78,6 +78,7 @@ type CaseWorkspace = {
 
 type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };
 type CaseArtifact = { artifact_id: string; filename: string; artifact_type: string; size_bytes: number; sha256: string; genome_build?: string | null; validation_status?: string | null; validation_dispatch_status?: string | null; validation_dispatch_error?: string | null; metadata?: Record<string, unknown>; created_at?: string; specimen_id?: string | null; paired_artifact_id?: string | null; };
+type ToolchainProfile = { id: string; bcftools_version: string; htslib_version: string; platform: string; is_default: boolean };
 
 type AuditEvent = {
   event_id: string;
@@ -268,6 +269,9 @@ export default function Home() {
   const [selectedSpecimenId, setSelectedSpecimenId] = useState("");
   const [genomeBuild, setGenomeBuild] = useState("GRCh38");
   const [resourceProfileId, setResourceProfileId] = useState("WES_GRCh38_STANDARD");
+  const [toolchainProfileId, setToolchainProfileId] = useState("");
+  const [toolchainProfiles, setToolchainProfiles] = useState<ToolchainProfile[]>([]);
+  const [toolchainProfilesUnavailable, setToolchainProfilesUnavailable] = useState(false);
   const [assayId, setAssayId] = useState("");
   const [preflightResult, setPreflightResult] = useState<any>(null);
   const [indication, setIndication] = useState("");
@@ -422,6 +426,25 @@ export default function Home() {
       });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!sessionRoleResolved || !sessionRole) return;
+    let active = true;
+    apiFetch("/toolchain-profiles")
+      .then((profiles) => {
+        if (!active) return;
+        const available = Array.isArray(profiles) ? profiles as ToolchainProfile[] : [];
+        setToolchainProfiles(available);
+        setToolchainProfileId((current) => (
+          available.some((profile) => profile.id === current)
+            ? current
+            : available.find((profile) => profile.is_default)?.id ?? ""
+        ));
+        setToolchainProfilesUnavailable(available.length === 0);
+      })
+      .catch(() => { if (active) setToolchainProfilesUnavailable(true); });
+    return () => { active = false; };
+  }, [sessionRole, sessionRoleResolved]);
 
   const refreshCaseArtifacts = useCallback(async () => {
     if (!caseId) return;
@@ -862,6 +885,7 @@ export default function Home() {
           workflow_version: "2.1",
           reference_build: genomeBuild,
           resource_profile_id: resourceProfileId,
+          ...(toolchainProfileId ? { toolchain_profile_id: toolchainProfileId } : {}),
         }),
       });
       setAnalysisId(created.analysis_id);
@@ -1293,6 +1317,17 @@ export default function Home() {
               <option value="WGS_GRCh38_STANDARD">{t("workspace.profileWgs38")}</option>
               <option value="WES_GRCh37_STANDARD">{t("workspace.profileWes37")}</option>
             </select>
+          </label>
+          <label>{t("workspace.toolchainProfile")}
+            <select value={toolchainProfileId} disabled={!toolchainProfiles.length} onChange={(event) => setToolchainProfileId(event.target.value)}>
+              {!toolchainProfiles.length && <option value="">{t("workspace.toolchainDefault")}</option>}
+              {toolchainProfiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.id} · BCFtools {profile.bcftools_version} / HTSlib {profile.htslib_version}{profile.is_default ? ` · ${t("workspace.toolchainDefault")}` : ""}
+                </option>
+              ))}
+            </select>
+            {toolchainProfilesUnavailable && <small>{t("workspace.toolchainUnavailable")}</small>}
           </label>
           <label>Reference genome
             <select value={genomeBuild} onChange={(e) => { const build = e.target.value; setGenomeBuild(build); setResourceProfileId(build === "GRCh37" ? "WES_GRCh37_STANDARD" : resourceProfileId === "WGS_GRCh38_STANDARD" ? "WGS_GRCh38_STANDARD" : "WES_GRCh38_STANDARD"); }}>

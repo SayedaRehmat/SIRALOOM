@@ -13,12 +13,12 @@ from sqlalchemy.orm import Session
 from backend.app.domain.enums import AnalysisStatus, ArtifactType
 from backend.app.domain.ingestion import normalize_build
 from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
-from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile
 from backend.app.domain.resource_profile_resolver import (
     AnalysisResourcePlan,
     build_workflow_stage_resource_plan,
     resolve_analysis_resource_profile,
 )
+from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile
 from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisDispatch,
@@ -147,6 +147,14 @@ def create_analysis(
         or configured_toolchain_id
         or settings.bcftools_profile_id
     )
+    from backend.app.domain.toolchain_profiles import enabled_toolchain_profile_ids
+    if selected_toolchain_id not in enabled_toolchain_profile_ids(
+        settings.bcftools_profile_id,
+        settings.bcftools_enabled_profile_ids,
+    ):
+        raise ValueError(
+            "The requested scientific toolchain profile is not enabled in this laboratory deployment."
+        )
     toolchain_profile = resolve_registered_toolchain_profile(selected_toolchain_id)
     toolchain_snapshot = {
         "profile_id": selected_toolchain_id,

@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     # One immutable scientific execution profile per process/container. Different
     # profiles run in separate worker images; never rely on PATH selecting a random tool.
     bcftools_profile_id: str = "bcftools-1.25-htslib-1.25-linux-64"
+    # Additional immutable scientific worker profiles enabled by the operator.
+    bcftools_enabled_profile_ids: str = ""
     bcftools_executable: str = "bcftools"
     bcftools_version: str = "1.25"
     htslib_version: str = "1.25"
@@ -129,6 +131,14 @@ class Settings(BaseSettings):
             )
         except ToolchainProfileError as exc:
             raise ValueError(f"Invalid configured BCFtools/HTSlib profile: {exc}") from exc
+        from backend.app.domain.toolchain_profiles import enabled_toolchain_profile_ids
+        try:
+            enabled_toolchain_profile_ids(
+                self.bcftools_profile_id,
+                self.bcftools_enabled_profile_ids,
+            )
+        except ToolchainProfileError as exc:
+            raise ValueError(f"Invalid enabled BCFtools/HTSlib profiles: {exc}") from exc
         return self
 
 

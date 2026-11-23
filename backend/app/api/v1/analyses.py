@@ -25,6 +25,7 @@ from backend.app.auth.principal import (
     Principal,
     get_current_principal,
 )
+from backend.app.config import settings
 from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.domain.schemas import AnalysisCreate
 from backend.app.domain.storage_capacity import (
@@ -34,6 +35,10 @@ from backend.app.domain.storage_capacity import (
 from backend.app.domain.storage_profiles import (
     StorageProfileError,
     artifact_storage_target_for_organization,
+)
+from backend.app.domain.toolchain_profiles import (
+    enabled_toolchain_profile_ids,
+    resolve_registered_toolchain_profile,
 )
 from backend.app.infrastructure.db.models import (
     Annotation,
@@ -48,6 +53,26 @@ from backend.app.infrastructure.db.session import get_db
 from backend.app.quality import normalize_rules
 
 router = APIRouter(tags=["analyses"])
+
+
+@router.get("/toolchain-profiles")
+def list_toolchain_profiles(principal: Principal = Depends(get_current_principal)):
+    """List pinned worker profiles explicitly enabled by this deployment."""
+    del principal  # Authenticated access; profile availability is deployment-scoped.
+    identifiers = enabled_toolchain_profile_ids(
+        settings.bcftools_profile_id,
+        settings.bcftools_enabled_profile_ids,
+    )
+    return [
+        {
+            "id": profile["id"],
+            "bcftools_version": profile["bcftools_version"],
+            "htslib_version": profile["htslib_version"],
+            "platform": profile["platform"],
+            "is_default": profile["id"] == settings.bcftools_profile_id,
+        }
+        for profile in (resolve_registered_toolchain_profile(identifier) for identifier in identifiers)
+    ]
 
 TERMINAL_ANALYSIS_STATUSES = {
     "SUCCEEDED",

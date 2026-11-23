@@ -168,6 +168,9 @@ export type TranslationKey =
   | "workspace.gateResolved"
   | "workspace.gateRetryNeedsChange"
   | "workspace.analysisProfile"
+  | "workspace.toolchainProfile"
+  | "workspace.toolchainUnavailable"
+  | "workspace.toolchainDefault"
   | "workspace.assayProfile"
   | "workspace.noClinicalAssay"
   | "workspace.assayQcGateNotice"
@@ -1859,6 +1862,9 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.gateResolved": "Gate decision recorded. Workflow state refreshed.",
     "workspace.gateRetryNeedsChange": "Before retrying, document a real input, clinical-context, or resource change.",
     "workspace.analysisProfile": "Analysis profile",
+    "workspace.toolchainProfile": "Scientific execution profile",
+    "workspace.toolchainUnavailable": "Unable to load deployment profiles · the configured default will be used",
+    "workspace.toolchainDefault": "Deployment default",
     "workspace.assayProfile": "Laboratory assay QC profile",
     "workspace.noClinicalAssay": "No assay selected · analytical evaluation only",
     "workspace.assayQcGateNotice": "Clinical report generation and sign-out require an active assay profile and a reviewed PASS QC assessment.",
@@ -2815,6 +2821,9 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.gateResolved": "تم تسجيل قرار البوابة وتحديث حالة سير العمل.",
     "workspace.gateRetryNeedsChange": "قبل إعادة المحاولة، وثّق تغييرًا فعليًا في الإدخال أو السياق السريري أو المورد.",
     "workspace.analysisProfile": "ملف التحليل",
+    "workspace.toolchainProfile": "ملف تنفيذ الأدوات العلمية",
+    "workspace.toolchainUnavailable": "تعذر تحميل ملفات النشر · سيتم استخدام الملف الافتراضي المهيأ",
+    "workspace.toolchainDefault": "الافتراضي للنشر",
     "workspace.assayProfile": "ملف ضبط جودة الفحص المخبري",
     "workspace.noClinicalAssay": "لم يتم اختيار فحص · للتقييم التحليلي فقط",
     "workspace.assayQcGateNotice": "يتطلب إنشاء التقرير السريري واعتماده ملف فحص نشطًا وتقييم ضبط جودة ناجحًا ومراجعًا.",

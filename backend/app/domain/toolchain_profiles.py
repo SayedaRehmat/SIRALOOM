@@ -105,6 +105,16 @@ def resolve_registered_toolchain_profile(profile_id: str) -> dict[str, Any]:
     return profile
 
 
+def enabled_toolchain_profile_ids(default_profile_id: str, configured_ids: str = "") -> tuple[str, ...]:
+    """Resolve the profiles an operator has made selectable in this deployment."""
+    identifiers = [default_profile_id]
+    identifiers.extend(item.strip() for item in configured_ids.split(",") if item.strip())
+    unique = tuple(dict.fromkeys(identifiers))
+    for profile_id in unique:
+        resolve_registered_toolchain_profile(profile_id)
+    return unique
+
+
 
 def assert_analysis_toolchain_matches_worker(
     analysis: Any,
