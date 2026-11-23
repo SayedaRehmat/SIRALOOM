@@ -266,9 +266,18 @@ class ACMGSpecificationAssessmentService:
                     result = evaluate_pvs1(variant_context, profile=profile)
                 else:  # pragma: no cover - guarded by registry
                     continue
-            except EvaluatorConfigurationError:
-                # A specification that declares a criterion without enough structured
-                # configuration cannot be safely automated.
+            except EvaluatorConfigurationError as exc:
+                # Missing scientific configuration is a reviewable criterion state,
+                # not an unsupported specification that may be silently omitted.
+                evaluator_results.append(EvaluatorResult(
+                    criterion=criterion,
+                    applicable=False,
+                    strength=None,
+                    direction="UNKNOWN",
+                    status="REQUIRES_REVIEW",
+                    reason=f"Required criterion configuration is unavailable: {exc}",
+                    metadata={"configuration_state": "REQUIRES_REVIEW"},
+                ))
                 continue
             evaluator_results.append(result)
 
