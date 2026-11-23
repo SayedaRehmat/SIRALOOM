@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -145,7 +146,7 @@ jobs:
         run: uv run --locked pytest -q tests/integration
 
   real-caller-vcf:
-    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'test/real-caller-vcf-')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && startsWith(github.head_ref, 'test/real-caller-vcf-'))
     runs-on: ubuntu-latest
     defaults:
       run:
