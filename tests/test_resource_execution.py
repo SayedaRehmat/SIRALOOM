@@ -151,6 +151,7 @@ def test_resolver_returns_exact_qualified_contract_and_stable_hash():
         assert resolved.contract.provider_version == "api-public-v1"
         assert len(resolved.contract_hash) == 64
         assert resolved.snapshot["resource_id"] == str(resource.id)
+        assert resolved.snapshot["resource_checksum"] == resource.checksum
     finally:
         db.close()
         engine.dispose()
@@ -276,6 +277,7 @@ def test_profile_bound_clingen_execution_record_persists_for_evidence_stage(
         qualification_version="qualification-v1",
         contract=contract,
         contract_hash="a" * 64,
+            resource_checksum="b" * 64,
     )
 
     try:
@@ -384,7 +386,10 @@ def test_profile_bound_clingen_execution_record_persists_for_evidence_stage(
             assert persisted.step_id == "build_evidence"
             assert persisted.provider_id == provider
             assert persisted.status == "STARTED"
-            assert persisted.metadata_json == {"execution_kind": capability}
+            assert persisted.metadata_json == {
+                "execution_kind": capability,
+                "resource_checksum": "b" * 64,
+            }
     finally:
         engine.dispose()
 

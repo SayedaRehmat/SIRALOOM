@@ -30,12 +30,14 @@ class ResolvedResourceExecution:
     qualification_version: str
     contract: ResourceExecutionContract
     contract_hash: str
+    resource_checksum: str | None = None
 
     @property
     def snapshot(self) -> dict[str, object]:
         return {
             "resource_id": str(self.resource_id),
             "resource_version": self.resource_version,
+            "resource_checksum": self.resource_checksum,
             "qualification_id": str(self.qualification_id),
             "qualification_version": self.qualification_version,
             "execution_contract": self.contract.as_dict(),
@@ -106,6 +108,7 @@ def resolve_resource_execution(
         qualification_version=qualification.qualification_version,
         contract=contract,
         contract_hash=contract_hash,
+        resource_checksum=resource.checksum,
     )
 
 
@@ -188,6 +191,7 @@ def _assert_profile_bound_resource_execution(
     expected = {
         "resource_id": str(expected_execution.get("resource_id")),
         "resource_version": expected_execution.get("resource_version"),
+        "resource_checksum": expected_execution.get("resource_checksum"),
         "qualification_id": str(expected_execution.get("qualification_id")),
         "qualification_version": expected_execution.get("qualification_version"),
         "contract_hash": expected_execution.get("contract_hash"),
@@ -195,6 +199,7 @@ def _assert_profile_bound_resource_execution(
     actual = {
         "resource_id": str(resolved.resource_id),
         "resource_version": resolved.resource_version,
+        "resource_checksum": getattr(resolved, "resource_checksum", None),
         "qualification_id": str(resolved.qualification_id),
         "qualification_version": resolved.qualification_version,
         "contract_hash": resolved.contract_hash,
@@ -251,7 +256,10 @@ def start_resource_execution(
         contract_hash=resolved.contract_hash,
         contract_json=contract.as_dict(),
         status="STARTED",
-        metadata_json=metadata or {},
+        metadata_json={
+            **(metadata or {}),
+            "resource_checksum": getattr(resolved, "resource_checksum", None),
+        },
         started_at=datetime.now(timezone.utc),
         created_at=datetime.now(timezone.utc),
     )

@@ -30,6 +30,7 @@ def _resolved(resource_id, *, version="1", qualification_id=None, qualification_
     return SimpleNamespace(
         resource_id=resource_id,
         resource_version=version,
+        resource_checksum="a" * 64,
         qualification_id=qualification_id or uuid4(),
         qualification_version=qualification_version,
         contract_hash=contract_hash,
@@ -63,6 +64,7 @@ def _selection(resource_id, capability, resolved):
         "execution": {
             "resource_id": str(resolved.resource_id),
             "resource_version": resolved.resource_version,
+            "resource_checksum": resolved.resource_checksum,
             "qualification_id": str(resolved.qualification_id),
             "qualification_version": resolved.qualification_version,
             "contract_hash": resolved.contract_hash,
@@ -142,7 +144,10 @@ def test_profile_bound_clingen_evidence_is_executable_in_build_evidence(capabili
     )
     assert execution.resource_id == resource_id
     assert execution.step_id == "build_evidence"
-    assert execution.metadata_json == {"execution_kind": capability}
+    assert execution.metadata_json == {
+        "execution_kind": capability,
+        "resource_checksum": resolved.resource_checksum,
+    }
     assert db.added == [execution]
 
 
@@ -172,6 +177,26 @@ def test_profile_bound_worker_rejects_qualification_drift():
         qualification_id=planned.qualification_id,
         contract_hash="different-contract",
     )
+    db = _DB(_analysis([_selection(resource_id, "REFERENCE_PACKAGE", planned)]))
+
+    with pytest.raises(ResourceExecutionError, match="differs from the immutable preflight plan"):
+        _assert_profile_bound_resource_execution(
+            db,
+            analysis_id=uuid4(),
+            step_id="normalize",
+            resolved=runtime,
+        )
+
+
+def test_profile_bound_worker_rejects_resource_checksum_drift():
+    resource_id = uuid4()
+    planned = _resolved(resource_id)
+    runtime = _resolved(
+        resource_id,
+        qualification_id=planned.qualification_id,
+        contract_hash=planned.contract_hash,
+    )
+    runtime = SimpleNamespace(**{**vars(runtime), "resource_checksum": "b" * 64})
     db = _DB(_analysis([_selection(resource_id, "REFERENCE_PACKAGE", planned)]))
 
     with pytest.raises(ResourceExecutionError, match="differs from the immutable preflight plan"):
