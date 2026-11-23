@@ -6,6 +6,9 @@ type ApiFetch = (path: string, init?: RequestInit) => Promise<any>;
 type Props = { caseId: string; apiFetch: ApiFetch };
 type PriorTest = {
   test_type: string;
+  test_type_system: string;
+  test_type_code: string;
+  test_type_display: string;
   performed_at: string;
   laboratory: string;
   accession_reference: string;
@@ -42,6 +45,9 @@ const CLINICAL_STATUS = ["ACTIVE", "RULED_OUT", "RESOLVED", "UNKNOWN"];
 
 const emptyPriorTest = (): PriorTest => ({
   test_type: "",
+  test_type_system: "",
+  test_type_code: "",
+  test_type_display: "",
   performed_at: "",
   laboratory: "",
   accession_reference: "",
@@ -63,6 +69,11 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
   const [history, setHistory] = useState<Revision[]>([]);
   const [referralIndication, setReferralIndication] = useState("");
   const [referralQuestion, setReferralQuestion] = useState("");
+  const [referralDate, setReferralDate] = useState("");
+  const [referringClinician, setReferringClinician] = useState("");
+  const [referringOrganization, setReferringOrganization] = useState("");
+  const [clinicalService, setClinicalService] = useState("");
+  const [clinicalEncounterDate, setClinicalEncounterDate] = useState("");
   const [clinicalSummary, setClinicalSummary] = useState("");
   const [ageValue, setAgeValue] = useState("");
   const [ageUnit, setAgeUnit] = useState("YEARS");
@@ -85,12 +96,20 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
     const context = revision?.context ?? {};
     setReferralIndication(context.referral_indication ?? legacy.indication ?? "");
     setReferralQuestion(context.referral_question ?? "");
+    setReferralDate(context.referral_date ?? "");
+    setReferringClinician(context.referring_clinician ?? "");
+    setReferringOrganization(context.referring_organization ?? "");
+    setClinicalService(context.clinical_service ?? "");
+    setClinicalEncounterDate(context.clinical_encounter_date ?? "");
     setClinicalSummary(context.clinical_summary ?? "");
     setAgeValue(context.age_at_assessment?.value?.toString() ?? "");
     setAgeUnit(context.age_at_assessment?.unit ?? "YEARS");
     setAgeAsOfDate(context.age_at_assessment?.as_of_date ?? "");
     setPriorTests((context.prior_testing ?? []).map((item: any) => ({
       test_type: item.test_type ?? "",
+      test_type_system: item.test_type_system ?? "",
+      test_type_code: item.test_type_code ?? "",
+      test_type_display: item.test_type_display ?? "",
       performed_at: item.performed_at ?? "",
       laboratory: item.laboratory ?? "",
       accession_reference: item.accession_reference ?? "",
@@ -146,6 +165,9 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
         .filter(item => item.test_type.trim())
         .map(item => ({
           test_type: item.test_type.trim(),
+          test_type_system: item.test_type_system.trim() || undefined,
+          test_type_code: item.test_type_code.trim() || undefined,
+          test_type_display: item.test_type_display.trim() || undefined,
           performed_at: item.performed_at || undefined,
           laboratory: item.laboratory.trim() || undefined,
           accession_reference: item.accession_reference.trim() || undefined,
@@ -167,6 +189,11 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
         intake_status: intakeStatus,
         referral_indication: referralIndication.trim() || undefined,
         referral_question: referralQuestion.trim() || undefined,
+        referral_date: referralDate || undefined,
+        referring_clinician: referringClinician.trim() || undefined,
+        referring_organization: referringOrganization.trim() || undefined,
+        clinical_service: clinicalService.trim() || undefined,
+        clinical_encounter_date: clinicalEncounterDate || undefined,
         clinical_summary: clinicalSummary.trim() || undefined,
         age_at_assessment: ageValue.trim() ? {
           value: Number(ageValue),
@@ -221,6 +248,21 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
           <label>Referral question
             <textarea rows={2} maxLength={5000} value={referralQuestion} onChange={event => setReferralQuestion(event.target.value)} placeholder="Specific diagnostic question the laboratory is being asked to address" />
           </label>
+          <label>Referral date
+            <input type="date" value={referralDate} onChange={event => setReferralDate(event.target.value)} />
+          </label>
+          <label>Referring clinician
+            <input maxLength={300} value={referringClinician} onChange={event => setReferringClinician(event.target.value)} placeholder="Name or professional identifier" />
+          </label>
+          <label>Referring organization
+            <input maxLength={300} value={referringOrganization} onChange={event => setReferringOrganization(event.target.value)} placeholder="Referring hospital, clinic or service" />
+          </label>
+          <label>Clinical service
+            <input maxLength={200} value={clinicalService} onChange={event => setClinicalService(event.target.value)} placeholder="e.g. clinical genetics, neurology, pediatrics" />
+          </label>
+          <label>Clinical encounter date
+            <input type="date" value={clinicalEncounterDate} onChange={event => setClinicalEncounterDate(event.target.value)} />
+          </label>
           <label>Clinical summary
             <textarea rows={4} maxLength={15000} value={clinicalSummary} onChange={event => setClinicalSummary(event.target.value)} placeholder="Clinician-authored history, course, relevant investigations and context" />
           </label>
@@ -247,8 +289,17 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
         {priorTests.map((item, index) => (
           <div className="clinical-card" key={index}>
             <div className="m10-form-grid">
-              <label>Test / assay
+              <label>Test / assay (human-readable)
                 <input value={item.test_type} onChange={event => updatePriorTest(index, "test_type", event.target.value)} placeholder="e.g. chromosomal microarray, exome sequencing" />
+              </label>
+              <label>Test terminology system URI
+                <input value={item.test_type_system} onChange={event => updatePriorTest(index, "test_type_system", event.target.value)} placeholder="http://loinc.org (or another explicit code system URI)" />
+              </label>
+              <label>Test code
+                <input value={item.test_type_code} onChange={event => updatePriorTest(index, "test_type_code", event.target.value)} placeholder="LOINC code when available" />
+              </label>
+              <label>Coded test display
+                <input value={item.test_type_display} onChange={event => updatePriorTest(index, "test_type_display", event.target.value)} placeholder="Official display for the selected code" />
               </label>
               <label>Performed on
                 <input type="date" value={item.performed_at} onChange={event => updatePriorTest(index, "performed_at", event.target.value)} />
@@ -275,6 +326,7 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
             <button type="button" className="secondary" onClick={() => setPriorTests(current => current.filter((_, i) => i !== index))}>Remove prior test entry</button>
           </div>
         ))}
+        <p className="quiet">Use a terminology code such as LOINC when a governed code is available. The system URI, code and display must be supplied together; free-text assay names remain available when no suitable code exists. Codes are stored as supplied and are not yet validated against a pinned terminology release.</p>
         {priorTests.length === 0 && <p className="quiet">No prior tests recorded. This is not interpreted as evidence that prior testing was not performed.</p>}
       </div>
 
@@ -295,10 +347,20 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
               <input value={item.display} onChange={event => updateDifferential(index, "display", event.target.value)} />
             </label>
             <label>Certainty
-              <select value={item.certainty} onChange={event => updateDifferential(index, "certainty", event.target.value)}>{CERTAINTY.map(value => <option key={value}>{value}</option>)}</select>
+              <select value={item.certainty} onChange={event => {
+                const value = event.target.value;
+                updateDifferential(index, "certainty", value);
+                if (value === "RULED_OUT") updateDifferential(index, "clinical_status", "RULED_OUT");
+                else if (item.clinical_status === "RULED_OUT") updateDifferential(index, "clinical_status", "ACTIVE");
+              }}>{CERTAINTY.map(value => <option key={value}>{value}</option>)}</select>
             </label>
             <label>Clinical status
-              <select value={item.clinical_status} onChange={event => updateDifferential(index, "clinical_status", event.target.value)}>{CLINICAL_STATUS.map(value => <option key={value}>{value}</option>)}</select>
+              <select value={item.clinical_status} onChange={event => {
+                const value = event.target.value;
+                updateDifferential(index, "clinical_status", value);
+                if (value === "RULED_OUT") updateDifferential(index, "certainty", "RULED_OUT");
+                else if (item.certainty === "RULED_OUT") updateDifferential(index, "certainty", "CONSIDERED");
+              }}>{CLINICAL_STATUS.map(value => <option key={value}>{value}</option>)}</select>
             </label>
             <button type="button" className="secondary" onClick={() => setDifferentials(current => current.filter((_, i) => i !== index))}>Remove differential</button>
           </div>

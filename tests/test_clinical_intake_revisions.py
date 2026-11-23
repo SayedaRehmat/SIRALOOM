@@ -156,3 +156,58 @@ def test_interpretable_prior_test_result_requires_traceable_result_content():
         source_reference="LAB-REPORT-2024-001",
     )
     assert result.source_reference == "LAB-REPORT-2024-001"
+
+
+
+def test_prior_testing_supports_explicit_loinc_coding_without_silent_system_defaults():
+    with pytest.raises(ValidationError):
+        PriorTestingInput(
+            test_type="Chromosomal microarray",
+            test_type_code="18725-2",
+        )
+    coded = PriorTestingInput(
+        test_type="Chromosomal microarray",
+        test_type_system="http://loinc.org",
+        test_type_code="18725-2",
+        test_type_display="Chromosome analysis",
+        result_status="NEGATIVE",
+        result_summary="No reportable copy-number finding.",
+    )
+    assert coded.test_type_system == "http://loinc.org"
+    assert coded.test_type_code == "18725-2"
+
+
+def test_clinical_intake_captures_referral_and_encounter_provenance():
+    body = ClinicalIntakeInput(
+        intake_status="DRAFT",
+        referral_indication="Unexplained developmental delay",
+        referral_question="Assess for a monogenic diagnosis",
+        referral_date="2026-10-30",
+        referring_clinician="Dr Example",
+        referring_organization="Regional Genetics Service",
+        clinical_service="Clinical Genetics",
+        clinical_encounter_date="2026-10-28",
+    )
+    context = body.model_dump(mode="json")
+    assert context["referral_date"] == "2026-10-30"
+    assert context["clinical_encounter_date"] == "2026-10-28"
+    assert context["referring_organization"] == "Regional Genetics Service"
+
+
+def test_differential_diagnosis_ruled_out_state_must_be_semantically_consistent():
+    with pytest.raises(ValidationError):
+        DifferentialDiagnosisInput(
+            system="http://snomed.info/sct",
+            code="123",
+            display="Example condition",
+            certainty="RULED_OUT",
+            clinical_status="ACTIVE",
+        )
+    valid = DifferentialDiagnosisInput(
+        system="http://snomed.info/sct",
+        code="123",
+        display="Example condition",
+        certainty="RULED_OUT",
+        clinical_status="RULED_OUT",
+    )
+    assert valid.clinical_status == "RULED_OUT"

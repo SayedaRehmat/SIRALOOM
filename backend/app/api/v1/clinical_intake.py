@@ -51,6 +51,9 @@ class PriorTestingInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     test_type: str = Field(min_length=1, max_length=200)
+    test_type_system: str | None = Field(default=None, max_length=500)
+    test_type_code: str | None = Field(default=None, max_length=200)
+    test_type_display: str | None = Field(default=None, max_length=500)
     performed_at: date | None = None
     laboratory: str | None = Field(default=None, max_length=300)
     accession_reference: str | None = Field(default=None, max_length=300)
@@ -64,10 +67,15 @@ class PriorTestingInput(BaseModel):
     @model_validator(mode="after")
     def normalize_prior_test(self):
         self.test_type = self.test_type.strip()
-        for name in ("laboratory", "accession_reference", "result_summary", "source_reference"):
+        for name in ("test_type_system", "test_type_code", "test_type_display", "laboratory", "accession_reference", "result_summary", "source_reference"):
             value = getattr(self, name)
             if isinstance(value, str):
                 setattr(self, name, value.strip() or None)
+        coded_values = (self.test_type_system, self.test_type_code, self.test_type_display)
+        if any(coded_values) and not all(coded_values):
+            raise ValueError("A coded prior test type requires system URI, code and display")
+        if self.test_type_system and not self.test_type_system.startswith(("http://", "https://", "urn:")):
+            raise ValueError("Prior-test coding system must be an absolute URI")
         if self.result_status in {"POSITIVE", "NEGATIVE", "INCONCLUSIVE"} and not (
             self.result_summary or self.source_reference or self.artifact_id
         ):
@@ -91,6 +99,10 @@ class DifferentialDiagnosisInput(BaseModel):
         self.display = self.display.strip()
         if not self.system.startswith(("http://", "https://", "urn:")):
             raise ValueError("Differential diagnosis coding system must be an absolute URI")
+        if self.certainty == "RULED_OUT" and self.clinical_status != "RULED_OUT":
+            raise ValueError("A RULED_OUT differential diagnosis must have clinical_status RULED_OUT")
+        if self.clinical_status == "RULED_OUT" and self.certainty != "RULED_OUT":
+            raise ValueError("A RULED_OUT clinical status must have certainty RULED_OUT")
         return self
 
 
@@ -100,6 +112,11 @@ class ClinicalIntakeInput(BaseModel):
     intake_status: Literal["DRAFT", "COMPLETE", "NOT_APPLICABLE"] = "DRAFT"
     referral_indication: str | None = Field(default=None, max_length=2000)
     referral_question: str | None = Field(default=None, max_length=5000)
+    referral_date: date | None = None
+    referring_clinician: str | None = Field(default=None, max_length=300)
+    referring_organization: str | None = Field(default=None, max_length=300)
+    clinical_service: str | None = Field(default=None, max_length=200)
+    clinical_encounter_date: date | None = None
     clinical_summary: str | None = Field(default=None, max_length=15000)
     age_at_assessment: AgeAtAssessmentInput | None = None
     prior_testing: list[PriorTestingInput] = Field(default_factory=list, max_length=100)
@@ -113,7 +130,8 @@ class ClinicalIntakeInput(BaseModel):
 
     @model_validator(mode="after")
     def validate_intake_attestation(self):
-        for field_name in ("referral_indication", "referral_question", "clinical_summary",
+        for field_name in ("referral_indication", "referral_question", "referring_clinician",
+                           "referring_organization", "clinical_service", "clinical_summary",
                            "phenotype_review_note", "family_history_review_note", "completion_note"):
             value = getattr(self, field_name)
             if isinstance(value, str):
