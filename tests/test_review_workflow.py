@@ -479,6 +479,50 @@ def test_criterion_review_without_recomputable_snapshot_blocks_approval():
             expected_version=classification.review_version, reason="Attempt stale approval.",
         )
 
+def test_stale_classification_can_be_superseded_by_audited_manual_reassessment():
+    db, reviewer, _, analysis, variant, _, classification = seed()
+    evidence = add_review_evidence(db, reviewer, analysis, variant)
+    classification.metadata_json = {
+        "criterion_review_requires_reassessment": True,
+        "criterion_review_reassessment_reason": "No qualified combination engine for this specification.",
+    }
+    db.add(Annotation(
+        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+        provider_name="VEP", provider_version="test-1", resource_name="VEP",
+        resource_version="test-1", request_fingerprint="a" * 64,
+        response_sha256="b" * 64, request_metadata={}, observed_at=datetime.now(timezone.utc),
+        retry_count=0, payload={},
+    ))
+    db.add(WorkflowStep(
+        id=uuid4(), analysis_id=analysis.id, step_id="acmg_assessment", step_order=6,
+        status="REQUIRES_REVIEW", attempt=1, error_code="CLASSIFICATION_COMBINATION_REQUIRES_REVIEW",
+        error_message="Unsupported combination method.", metadata_json={},
+    ))
+    db.commit()
+
+    proposal = propose_manual_classification(
+        db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer,
+        result="VUS", reason="Documented manual reassessment using linked evidence.",
+        evidence_ids=(evidence.id,),
+    )
+    db.commit()
+    assert proposal.version == classification.version + 1
+    assert proposal.supersedes_classification_id == classification.id
+    assert proposal.state == "PROPOSED"
+    assert proposal.metadata_json["decision_mode"] == "MANUAL"
+
+    from backend.app.review.service import start_review
+    active = start_review(db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer)
+    approved = approve_classification(
+        db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer,
+        expected_version=active.review_version, reason="Manual reassessment reviewed.",
+    )
+    db.commit()
+    assert approved.result == "VUS"
+    assert approved.review_status == ReviewStatus.APPROVED
+    assert approved.version == proposal.version + 1
+
+
 def test_approval_creates_new_immutable_classification_version():
     db, reviewer, _, analysis, variant, _, classification = seed()
     new = approve_classification(db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer, expected_version=0, reason="Evidence reviewed and approved")

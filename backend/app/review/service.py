@@ -363,12 +363,17 @@ def propose_manual_classification(
         raise ReviewError("Variant is not annotated in this analysis")
 
     existing = db.scalar(
-        select(Classification.id).where(
+        select(Classification).where(
             Classification.analysis_id == analysis_id,
             Classification.variant_id == variant_id,
-        ).limit(1)
+        ).order_by(Classification.version.desc()).with_for_update().limit(1)
     )
-    if existing is not None:
+    reassessing = bool(
+        existing
+        and (existing.metadata_json or {}).get("criterion_review_requires_reassessment")
+        and existing.review_status != ReviewStatus.APPROVED
+    )
+    if existing is not None and not reassessing:
         raise ReviewError("A classification already exists for this variant; use the existing review workflow")
 
     selected_evidence = list(db.scalars(
@@ -401,11 +406,14 @@ def propose_manual_classification(
             "proposed_by": str(reviewer.id),
             "proposed_at": now.isoformat(),
             "acmg_criteria_available": False,
+            "supersedes_classification_id": str(existing.id) if reassessing else None,
+            "reassessment_reason": (existing.metadata_json or {}).get("criterion_review_reassessment_reason") if reassessing else None,
         },
         state="PROPOSED",
         review_status=ReviewStatus.NOT_STARTED,
-        version=1,
+        version=(existing.version + 1) if reassessing else 1,
         review_version=0,
+        supersedes_classification_id=existing.id if reassessing else None,
     )
     db.add(classification)
     action = ReviewAction(
@@ -417,7 +425,7 @@ def propose_manual_classification(
         action_type="MANUAL_CLASSIFICATION_PROPOSED",
         sequence_number=_next_review_sequence(db, analysis_id, variant_id),
         reason=rationale,
-        before_state=None,
+        before_state=_classification_dict(existing) if reassessing else None,
         after_state=_classification_dict(classification),
         expected_version=0,
         resulting_version=0,
