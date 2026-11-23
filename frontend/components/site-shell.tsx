@@ -35,7 +35,7 @@ export function SiteShell({ children, showLanguageSwitcher = true }: { children:
           </div>
           <div className="footer-links">
             <div><strong>{bilingual("Product", "المنتج")}</strong><Link href="/services">{bilingual("SIRALOOM Variant", "SIRALOOM Variant")}</Link><Link href="/contact">{bilingual("Laboratory deployment", "نشر المختبر")}</Link></div>
-            <div><strong>{bilingual("Governance", "الحوكمة")}</strong><Link href="/privacy">{bilingual("Privacy", "الخصوصية")}</Link><Link href="/terms">{bilingual("Terms", "الشروط")}</Link></div>
+            <div><strong>{bilingual("Governance", "الحوكمة")}</strong><Link href="/privacy">{bilingual("Privacy", "الخصوصية")}</Link><Link href="/terms">{bilingual("Terms", "الشروط")}</Link><Link href="/refund-policy">{bilingual("Refund policy", "سياسة الاسترداد")}</Link></div>
           </div>
         </div>
         <div className="footer-bottom">

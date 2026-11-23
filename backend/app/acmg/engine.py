@@ -12,11 +12,8 @@ from typing import Any
 
 from .rules import (
     ACMG2015BaselineProfile,
-    BENIGN_CRITERIA,
     CriterionDirection,
-    PATHOGENIC_CRITERIA,
     RuleProfile,
-    STRENGTH_TO_POINTS,
     validate_direction,
     validate_strength,
 )
@@ -47,6 +44,11 @@ class ACMGEngine:
         self.profile = profile
 
     def validate_assessments(self, assessments: list[CriterionAssessment]) -> None:
+        if not assessments:
+            raise ValueError(
+                "At least one proposed ACMG criterion assessment is required; "
+                "no classification can be produced from an empty evidence set"
+            )
         seen: set[str] = set()
         for a in assessments:
             validate_strength(a.criterion, a.strength)

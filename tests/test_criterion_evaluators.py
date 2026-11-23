@@ -262,7 +262,13 @@ def test_pp3_uses_calibrated_interval():
     result = evaluate_pp3_bp4(
         {"REVEL": 0.91},
         criterion="PP3",
-        profile={"PP3": {"predictor": "REVEL", "minimum_score": 0.9, "strength": "SUPPORTING"}},
+        profile={"PP3": {
+            "predictor": "REVEL", "minimum_score": 0.9, "strength": "SUPPORTING",
+            "calibration": {
+                "calibration_id": "TEST-REVEL-1", "model_version": "fixture-1",
+                "validation_dataset": "synthetic-test-only", "calibration_reference": "test-fixture",
+            },
+        }},
     )
     assert result.applicable is True
     assert result.strength == "SUPPORTING"
@@ -289,6 +295,10 @@ def test_pp3_missing_or_invalid_predictor_score_requires_review(predictor_observ
             "predictor": "REVEL",
             "minimum_score": 0.9,
             "strength": "SUPPORTING",
+            "calibration": {
+                "calibration_id": "TEST-REVEL-1", "model_version": "fixture-1",
+                "validation_dataset": "synthetic-test-only", "calibration_reference": "test-fixture",
+            },
         }},
     )
 
@@ -305,6 +315,10 @@ def test_pp3_valid_score_outside_calibrated_interval_is_not_met():
             "predictor": "REVEL",
             "minimum_score": 0.9,
             "strength": "SUPPORTING",
+            "calibration": {
+                "calibration_id": "TEST-REVEL-1", "model_version": "fixture-1",
+                "validation_dataset": "synthetic-test-only", "calibration_reference": "test-fixture",
+            },
         }},
     )
 

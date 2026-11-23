@@ -124,6 +124,10 @@ tbody tr.selected { background: #eff8f5; }
 .identity-card strong { margin-top: 5px; font-size: 12px; overflow-wrap: anywhere; }
 .evidence-stack { display: grid; gap: 12px; }
 .evidence-list { display: grid; gap: 6px; }
+.literature-search { display: grid; gap: 10px; margin: 12px 0 16px; padding: 14px; border: 1px solid #e3e5ee; border-radius: 12px; background: #fafbfe; }
+.literature-search p { margin: 4px 0 0; color: #5d6578; font-size: 13px; line-height: 1.5; }
+.literature-search .actions-row { align-items: center; margin-top: 0; }
+.literature-search select { min-width: 140px; min-height: 38px; padding: 6px 10px; border: 1px solid #d4d8e4; border-radius: 8px; background: #fff; color: inherit; }
 .evidence-item { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
 .evidence-item div { min-width: 0; }
 .evidence-item strong, .evidence-item span { display: block; }

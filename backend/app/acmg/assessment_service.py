@@ -10,8 +10,8 @@ This module is deliberately conservative:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 from numbers import Real
 from typing import Any
 from uuid import UUID, uuid4
@@ -47,6 +47,7 @@ from backend.app.infrastructure.db.models import (
     Resource,
     Variant,
 )
+
 
 def _predictor_evidence_ids(
     db: Session,
@@ -265,9 +266,18 @@ class ACMGSpecificationAssessmentService:
                     result = evaluate_pvs1(variant_context, profile=profile)
                 else:  # pragma: no cover - guarded by registry
                     continue
-            except EvaluatorConfigurationError:
-                # A specification that declares a criterion without enough structured
-                # configuration cannot be safely automated.
+            except EvaluatorConfigurationError as exc:
+                # Missing scientific configuration is a reviewable criterion state,
+                # not an unsupported specification that may be silently omitted.
+                evaluator_results.append(EvaluatorResult(
+                    criterion=criterion,
+                    applicable=False,
+                    strength=None,
+                    direction="UNKNOWN",
+                    status="REQUIRES_REVIEW",
+                    reason=f"Required criterion configuration is unavailable: {exc}",
+                    metadata={"configuration_state": "REQUIRES_REVIEW"},
+                ))
                 continue
             evaluator_results.append(result)
 
@@ -594,6 +604,45 @@ class ACMGSpecificationAssessmentService:
             row.state = evaluated.status
             db.add(row)
 
+        # Persist configured criteria that have no executable evaluator or
+        # source assertion. The transient workflow result alone is not enough
+        # for the reviewer worklist to explain why classification was blocked.
+        unresolved = (result.combination_metadata or {}).get("unresolved_criteria") or []
+        from backend.app.acmg.rules import BENIGN_CRITERIA
+        for criterion in sorted({str(item).upper() for item in unresolved}):
+            existing = db.scalar(select(ACMGAssessment).where(
+                ACMGAssessment.variant_id == variant.id,
+                ACMGAssessment.analysis_id == analysis.id,
+                ACMGAssessment.criterion == criterion,
+            ))
+            row = existing or ACMGAssessment(
+                id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+                framework_name="ACMG/AMP", framework_version="2015",
+                specification_provider="ClinGen",
+                specification_id=result.binding.specification_id,
+                specification_version=result.binding.specification_version,
+                criterion=criterion, state="REQUIRES_REVIEW",
+            )
+            row.specification_provider = "ClinGen"
+            row.specification_id = result.binding.specification_id
+            row.specification_version = result.binding.specification_version
+            if row.reviewed_assessment is not None or row.final_assessment is not None:
+                # A human decision belongs to the prior automated specification
+                # context. Keep it in review history, but never expose it as the
+                # current decision after this criterion becomes unassessable.
+                row.reviewed_assessment = None
+                row.final_assessment = None
+                row.review_version += 1
+            row.state = "REQUIRES_REVIEW"
+            row.automated_assessment = {
+                "applicable": None, "strength": None,
+                "direction": "BENIGN" if criterion in BENIGN_CRITERIA else "PATHOGENIC",
+                "status": "REQUIRES_REVIEW", "evidence_ids": [],
+                "reason": "This configured specification criterion is not executable by the current SIRALOOM ruleset and has no source assessment.",
+                "metadata": {"assessment_origin": "UNRESOLVED_SPECIFICATION_COVERAGE"},
+            }
+            db.add(row)
+
         # Source assertions that cannot be proposed still need a durable,
         # criterion-level disposition. In particular, retired PP5/BP6 source
         # assertions must remain visible as REQUIRES_REVIEW rather than only
@@ -747,6 +796,20 @@ class ACMGSpecificationAssessmentService:
                         result=classification.classification,
                         criterion_ids=criterion_ids,
                         state=classification.state,
+                        metadata_json={
+                            "combination_method": result.combination_method,
+                            "combination_metadata": result.combination_metadata or {},
+                            "classification_rationale": list(classification.rationale),
+                            "criterion_snapshot": [
+                                {
+                                    "criterion": item.criterion,
+                                    "strength": item.strength,
+                                    "direction": item.direction,
+                                    "evidence_ids": list(item.evidence_ids),
+                                }
+                                for item in classification.criteria
+                            ],
+                        },
                         review_status="PENDING",
                         version=next_version,
                         supersedes_classification_id=latest.id if latest else None,

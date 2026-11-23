@@ -1,5 +1,7 @@
 import hashlib
 import json
+import os
+import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -12,37 +14,48 @@ from backend.app.domain.resource_source_contract import ResourceExecutionContrac
 from backend.app.domain.schemas import CanonicalVariant
 
 
+def _host_path(value):
+    if os.name == "nt" and isinstance(value, str) and value.startswith("/"):
+        return str(Path(tempfile.gettempdir()) / "siraloom-vep-fixtures" / value.lstrip("/"))
+    return value
+
+
 def _contract(*, access_method="LOCAL", toolchain=None, vep_binary="/opt/vep/vep"):
+    toolchain = toolchain if toolchain is not None else {
+        "vep_binary": vep_binary,
+        "cache_dir": "/resources/vep/115",
+        "cache_version": "115",
+        "assembly": "GRCh38",
+        "fasta": "/resources/GRCh38.fa",
+        "cache_manifest": "/resources/vep/115.manifest.json",
+        "cache_manifest_sha256": "a" * 64,
+        "cache_artifact_sha256": "b" * 64,
+        "vep_binary_sha256": "c" * 64,
+    }
+    toolchain = {
+        key: _host_path(value) if key in {"vep_binary", "cache_dir", "fasta", "cache_manifest"} else value
+        for key, value in toolchain.items()
+    }
     return ResourceExecutionContract(
         provider_id="VEP",
         provider_version="115",
         access_method=access_method,
         endpoint=None,
-        location="/resources/vep/115",
+        location=_host_path("/resources/vep/115"),
         dataset="vep-cache",
         execution_scope="ORGANIZATION_MANAGED",
-        toolchain=toolchain if toolchain is not None else {
-            "vep_binary": vep_binary,
-            "cache_dir": "/resources/vep/115",
-            "cache_version": "115",
-            "assembly": "GRCh38",
-            "fasta": "/resources/GRCh38.fa",
-            "cache_manifest": "/resources/vep/115.manifest.json",
-            "cache_manifest_sha256": "a" * 64,
-            "cache_artifact_sha256": "b" * 64,
-            "vep_binary_sha256": "c" * 64,
-        },
+        toolchain=toolchain,
     )
 
 
 def test_vep_provider_uses_only_the_governed_local_toolchain():
     provider = VEPProvider.from_execution_contract(_contract())
 
-    assert provider.binary == "/opt/vep/vep"
-    assert provider.cache_dir == "/resources/vep/115"
+    assert provider.binary == _host_path("/opt/vep/vep")
+    assert provider.cache_dir == _host_path("/resources/vep/115")
     assert provider.cache_version == "115"
     assert provider.assembly == "GRCh38"
-    assert provider.fasta == "/resources/GRCh38.fa"
+    assert provider.fasta == _host_path("/resources/GRCh38.fa")
     assert provider.contract.provider_version == "115"
 
 
@@ -127,6 +140,71 @@ def _normalize_consequences(transcripts):
         result,
         inputs={"variants": [variant], "genome_build": "GRCh38"},
     ).observations[0]
+
+
+def _vep_output_record(position=100, ref="A", alt="G"):
+    return {
+        "start": position,
+        "seq_region_name": "1",
+        "allele_string": f"{ref}/{alt}",
+        "transcript_consequences": [],
+    }
+
+
+def _portable_contract():
+    root = Path(tempfile.gettempdir()) / "siraloom-vep-test"
+    toolchain = {
+        "vep_binary": str(root / "vep"),
+        "cache_dir": str(root / "cache"),
+        "cache_version": "115",
+        "assembly": "GRCh38",
+        "cache_manifest": str(root / "cache-manifest.json"),
+        "cache_manifest_sha256": "a" * 64,
+        "cache_artifact_sha256": "b" * 64,
+        "vep_binary_sha256": "c" * 64,
+    }
+    return _contract(toolchain=toolchain, vep_binary=toolchain["vep_binary"])
+
+
+def test_vep_rejects_unrequested_output_alleles():
+    provider = VEPProvider.from_execution_contract(_portable_contract())
+    variant = CanonicalVariant(
+        genome_build="GRCh38", chromosome="1", position=100, reference="A", alternate="G"
+    )
+
+    with pytest.raises(VEPProviderError, match="does not match a requested normalized allele"):
+        provider.normalize_result(
+            ProviderRawResult("annotate", [_vep_output_record(101)], "digest", {}),
+            inputs={"variants": [variant], "genome_build": "GRCh38"},
+        )
+
+
+def test_vep_rejects_duplicate_output_for_a_requested_allele():
+    provider = VEPProvider.from_execution_contract(_portable_contract())
+    variant = CanonicalVariant(
+        genome_build="GRCh38", chromosome="1", position=100, reference="A", alternate="G"
+    )
+
+    with pytest.raises(VEPProviderError, match="duplicate records"):
+        provider.normalize_result(
+            ProviderRawResult(
+                "annotate", [_vep_output_record(), _vep_output_record()], "digest", {}
+            ),
+            inputs={"variants": [variant], "genome_build": "GRCh38"},
+        )
+
+
+def test_vep_rejects_duplicate_requested_alleles():
+    provider = VEPProvider.from_execution_contract(_portable_contract())
+    variant = CanonicalVariant(
+        genome_build="GRCh38", chromosome="1", position=100, reference="A", alternate="G"
+    )
+
+    with pytest.raises(VEPProviderError, match="request contains duplicate"):
+        provider.normalize_result(
+            ProviderRawResult("annotate", [_vep_output_record()], "digest", {}),
+            inputs={"variants": [variant, variant], "genome_build": "GRCh38"},
+        )
 
 
 def _manifested_toolchain(tmp_path, binary, *, vep_version=None):
@@ -462,7 +540,10 @@ def test_vep_rejects_symlinked_cache_root(monkeypatch, tmp_path):
     toolchain, cache_file = _manifested_toolchain(tmp_path, binary)
     actual_cache = cache_file.parent
     cache_link = tmp_path / "cache-link"
-    cache_link.symlink_to(actual_cache, target_is_directory=True)
+    try:
+        cache_link.symlink_to(actual_cache, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"symlink creation is unavailable in this test environment: {exc}")
     toolchain["cache_dir"] = str(cache_link)
     provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
     monkeypatch.setattr(

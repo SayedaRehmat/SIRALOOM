@@ -99,6 +99,7 @@ def register_builtin_providers() -> ProviderRegistry:
     from backend.app.adapters.clingen.variant_pathogenicity import (
         ClinGenVariantPathogenicityProvider,
     )
+    from backend.app.adapters.literature.pubmed import PubMedLiteratureProvider
     from backend.app.adapters.phenotype.hpo_obo import HPOOboProvider
     from backend.app.adapters.phenotype.hpoa import HPOAProvider
     from backend.app.adapters.population.gnomad import (
@@ -197,6 +198,15 @@ def register_builtin_providers() -> ProviderRegistry:
         descriptor=ProviderCapability(
             provider_id=HPOAProvider.provider_id,
             capabilities=frozenset({ResourceCapability.DISEASE_PHENOTYPE}),
+        ),
+    )
+    registry.register(
+        provider_id=PubMedLiteratureProvider.provider_id,
+        provider_version=PubMedLiteratureProvider.provider_version,
+        factory=PubMedLiteratureProvider.from_execution_contract,
+        descriptor=ProviderCapability(
+            provider_id=PubMedLiteratureProvider.provider_id,
+            capabilities=frozenset({ResourceCapability.LITERATURE}),
         ),
     )
     return registry

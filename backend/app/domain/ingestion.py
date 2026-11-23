@@ -9,6 +9,7 @@ from pathlib import Path
 
 from backend.app.config import settings
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
+from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
 PRIMARY_SUFFIXES = (".vcf", ".vcf.gz", ".vcf.bgz")
@@ -299,6 +300,15 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 "GVCF markers detected. GVCF reference blocks require a genotyping/joint-"
                 "genotyping workflow and are not treated as ordinary Phase 1 variant records."
             )
+        caller_provenance = strict_profile["caller_provenance"]
+        if caller_provenance.get("caller_semantic_compatibility_review_required"):
+            compatibility_status = caller_provenance.get(
+                "caller_semantic_compatibility_status", "REVIEW_REQUIRED"
+            )
+            warnings.append(
+                "Caller semantic compatibility requires review before genotype-based "
+                f"clinical analysis (status={compatibility_status})."
+            )
         unchecked_info_number_g = strict_profile["unchecked_info_number_g_fields"]
         if unchecked_info_number_g:
             warnings.append(
@@ -329,6 +339,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             "symbolic_source_record_count": strict_profile["symbolic_records"],
             "breakend_source_record_count": strict_profile["breakend_records"],
             "gvcf_marker_count": strict_profile["gvcf_markers"],
+            "caller_provenance": strict_profile["caller_provenance"],
             "vcf45_reference_span_records": strict_profile["vcf45_reference_span_records"],
             "vcf45_max_reference_end": strict_profile["vcf45_max_reference_end"],
             "vcf45_reference_block_sample_count": strict_profile["vcf45_reference_block_sample_count"],
@@ -356,16 +367,28 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             validation_metadata,
         )
     except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
-        failure_metadata = None
+        # Strict validation may reject a caller-semantic deviation before it
+        # returns its full profile. Preserve independently inspectable header
+        # provenance for the durable invalid-artifact record without allowing
+        # that metadata to alter the structural validation decision.
+        failure_metadata: dict | None = {}
+        try:
+            caller_provenance = inspect_caller_provenance(p)
+            if caller_provenance.get("identity_status") != "UNKNOWN":
+                failure_metadata["caller_provenance"] = caller_provenance
+        except (OSError, EOFError, gzip.BadGzipFile, UnicodeError):
+            pass
         if bcftools_version is not None:
-            failure_metadata = {
+            failure_metadata.update({
                 "bcftools_version": bcftools_version,
                 "expected_bcftools_version": settings.bcftools_version,
                 "htslib_version": htslib_version,
                 "expected_htslib_version": settings.htslib_version,
                 "bcftools_profile_id": settings.bcftools_profile_id,
                 "toolchain_validation_status": "PASS",
-            }
+            })
+        if not failure_metadata:
+            failure_metadata = None
         return ValidationResult(
             "INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat,
             failure_metadata,

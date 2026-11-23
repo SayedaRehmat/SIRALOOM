@@ -422,6 +422,107 @@ def test_more_evidence_updates_status_and_history():
     assert db.query(ReviewAction).count() == 1
 
 
+def test_reviewed_criterion_recomputes_baseline_classification_into_new_proposal():
+    db, reviewer, _, analysis, variant, assessment, classification = seed()
+    evidence = add_review_evidence(db, reviewer, analysis, variant)
+    assessment.automated_assessment = {
+        "strength": "SUPPORTING", "direction": "PATHOGENIC",
+        "evidence_ids": [str(evidence.id)], "reason": "Initial evidence proposal",
+    }
+    classification.metadata_json = {
+        "combination_method": "STANDARD_ACMG_AMP",
+        "criterion_snapshot": [{
+            "criterion": "PM2", "strength": "SUPPORTING",
+            "direction": "PATHOGENIC", "evidence_ids": [str(evidence.id)],
+        }],
+    }
+    db.commit()
+
+    review_criterion(
+        db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2",
+        mutation=ReviewMutation("MODIFY", "MODERATE", "Updated strength after evidence review.", (evidence.id,), 0),
+        reviewer=reviewer,
+    )
+    db.commit()
+
+    latest = db.query(Classification).filter_by(analysis_id=analysis.id, variant_id=variant.id).order_by(Classification.version.desc()).first()
+    assert latest.version == 2
+    assert latest.result == "VUS"
+    assert latest.review_status == ReviewStatus.NOT_STARTED
+    assert latest.supersedes_classification_id == classification.id
+    assert latest.metadata_json["reviewed_criterion_recombination"] is True
+    assert latest.metadata_json["criterion_snapshot"][0]["strength"] == "MODERATE"
+
+    from backend.app.review.service import start_review
+    active = start_review(db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer)
+    approved = approve_classification(
+        db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer,
+        expected_version=active.review_version, reason="Reviewed recalculated proposal.",
+    )
+    db.commit()
+    assert approved.result == "VUS"
+    assert approved.review_status == ReviewStatus.APPROVED
+    assert approved.version == 3
+
+def test_criterion_review_without_recomputable_snapshot_blocks_approval():
+    db, reviewer, _, analysis, variant, _, classification = seed()
+    evidence = add_review_evidence(db, reviewer, analysis, variant)
+    review_criterion(
+        db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2",
+        mutation=ReviewMutation("MODIFY", "MODERATE", "Changed criterion without a source snapshot.", (evidence.id,), 0),
+        reviewer=reviewer,
+    )
+    db.commit()
+    with pytest.raises(ReviewError, match="Reassessment or a new documented manual classification"):
+        approve_classification(
+            db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer,
+            expected_version=classification.review_version, reason="Attempt stale approval.",
+        )
+
+def test_stale_classification_can_be_superseded_by_audited_manual_reassessment():
+    db, reviewer, _, analysis, variant, _, classification = seed()
+    evidence = add_review_evidence(db, reviewer, analysis, variant)
+    classification.metadata_json = {
+        "criterion_review_requires_reassessment": True,
+        "criterion_review_reassessment_reason": "No qualified combination engine for this specification.",
+    }
+    db.add(Annotation(
+        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+        provider_name="VEP", provider_version="test-1", resource_name="VEP",
+        resource_version="test-1", request_fingerprint="a" * 64,
+        response_sha256="b" * 64, request_metadata={}, observed_at=datetime.now(timezone.utc),
+        retry_count=0, payload={},
+    ))
+    db.add(WorkflowStep(
+        id=uuid4(), analysis_id=analysis.id, step_id="acmg_assessment", step_order=6,
+        status="REQUIRES_REVIEW", attempt=1, error_code="CLASSIFICATION_COMBINATION_REQUIRES_REVIEW",
+        error_message="Unsupported combination method.", metadata_json={},
+    ))
+    db.commit()
+
+    proposal = propose_manual_classification(
+        db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer,
+        result="VUS", reason="Documented manual reassessment using linked evidence.",
+        evidence_ids=(evidence.id,),
+    )
+    db.commit()
+    assert proposal.version == classification.version + 1
+    assert proposal.supersedes_classification_id == classification.id
+    assert proposal.state == "PROPOSED"
+    assert proposal.metadata_json["decision_mode"] == "MANUAL"
+
+    from backend.app.review.service import start_review
+    active = start_review(db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer)
+    approved = approve_classification(
+        db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer,
+        expected_version=active.review_version, reason="Manual reassessment reviewed.",
+    )
+    db.commit()
+    assert approved.result == "VUS"
+    assert approved.review_status == ReviewStatus.APPROVED
+    assert approved.version == proposal.version + 1
+
+
 def test_approval_creates_new_immutable_classification_version():
     db, reviewer, _, analysis, variant, _, classification = seed()
     new = approve_classification(db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer, expected_version=0, reason="Evidence reviewed and approved")

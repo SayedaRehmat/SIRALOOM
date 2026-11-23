@@ -81,3 +81,52 @@ def test_analysis_allows_explicitly_mapped_sample_from_multisample_vcf():
 
     with pytest.raises(ValueError, match="Multisample VCF analysis requires"):
         validate_analysis_input_artifact(artifact, "GRCh38")
+
+@pytest.mark.parametrize(
+    "compatibility_status",
+    [
+        "MISSING_REQUIRED_FORMAT_FIELD",
+        "DECLARATION_MISMATCH",
+        "CONFLICTED_CALLER_METADATA",
+    ],
+)
+def test_analysis_rejects_structurally_valid_vcf_with_caller_review_required(compatibility_status):
+    artifact = SimpleNamespace(
+        artifact_type="VCF",
+        validation_status="VALID",
+        genome_build="GRCh38",
+        metadata_json={
+            "validation": {
+                "sample_names": ["PROBAND"],
+                "caller_provenance": {
+                    "caller_semantic_compatibility_status": compatibility_status,
+                },
+            },
+            "workflow_eligibility": "REVIEW_REQUIRED",
+            "workflow_eligibility_reason": {
+                "code": "CALLER_SEMANTIC_COMPATIBILITY_REVIEW_REQUIRED",
+                "compatibility_status": compatibility_status,
+            },
+        },
+    )
+
+    with pytest.raises(ValueError, match="requires caller semantic compatibility review"):
+        validate_analysis_input_artifact(artifact, "GRCh38", "PROBAND")
+
+def test_analysis_rejects_sample_vcf_marked_ineligible_for_missing_gt():
+    artifact = SimpleNamespace(
+        artifact_type="VCF",
+        validation_status="VALID",
+        genome_build="GRCh38",
+        metadata_json={
+            "validation": {"sample_names": ["PROBAND"]},
+            "workflow_eligibility": "INELIGIBLE",
+            "workflow_eligibility_reason": {
+                "code": "SAMPLE_GENOTYPE_FIELD_MISSING_FOR_ANALYSIS",
+            },
+        },
+    )
+
+    with pytest.raises(ValueError, match="not eligible for genotype-based clinical analysis"):
+        validate_analysis_input_artifact(artifact, "GRCh38", "PROBAND")
+

@@ -388,10 +388,14 @@ class VEPProvider(ScientificResourceProvider):
         self.validate_response(result)
         variants = inputs["variants"]
         normalized: list[dict[str, Any]] = []
-        by_key = {
-            f"{v.chromosome}:{v.position}:{v.reference}:{v.alternate}": v
+        variant_keys = [
+            f"{v.chromosome}:{v.position}:{v.reference}:{v.alternate}"
             for v in variants
-        }
+        ]
+        if len(set(variant_keys)) != len(variant_keys):
+            raise VEPProviderError("VEP request contains duplicate normalized alleles.")
+        by_key = dict(zip(variant_keys, variants, strict=True))
+        observed_keys: set[str] = set()
         for record in result.payload:
             start = record.get("start")
             seq_region = record.get("seq_region_name")
@@ -399,9 +403,14 @@ class VEPProvider(ScientificResourceProvider):
             ref = allele_string.split("/", 1)[0] if "/" in allele_string else None
             alt = allele_string.split("/", 1)[1] if "/" in allele_string else None
             key = f"{seq_region}:{start}:{ref}:{alt}" if ref and alt else None
-            original = by_key.get(key) if key else None
-            if original is None:
-                continue
+            if key is None or key not in by_key:
+                raise VEPProviderError(
+                    "VEP returned a record that does not match a requested normalized allele."
+                )
+            if key in observed_keys:
+                raise VEPProviderError("VEP returned duplicate records for a requested normalized allele.")
+            observed_keys.add(key)
+            original = by_key[key]
 
             transcripts = record.get("transcript_consequences") or []
             selected, selection_status = self._select_display_transcript(transcripts)
@@ -438,18 +447,11 @@ class VEPProvider(ScientificResourceProvider):
                 },
             })
 
-        expected = {
-            f"{v.chromosome}:{v.position}:{v.reference}:{v.alternate}"
-            for v in variants
-        }
-        observed = {
-            f"{r['chr']}:{r['pos']}:{r['ref']}:{r['alt']}"
-            for r in normalized
-        }
-        if observed != expected:
+        expected = set(variant_keys)
+        if observed_keys != expected:
             raise VEPProviderError(
                 f"VEP result set does not match the requested batch; "
-                f"missing={len(expected - observed)}, extra={len(observed - expected)}"
+                f"missing={len(expected - observed_keys)}, extra={len(observed_keys - expected)}"
             )
         return ProviderNormalizedResult("annotate", tuple(normalized), result.metadata)
 

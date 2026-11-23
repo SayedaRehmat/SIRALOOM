@@ -7,9 +7,13 @@ from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from backend.app.api.v1 import artifacts
 from backend.app.auth.principal import Principal
+from backend.app.infrastructure.db.base import Base
+from backend.app.infrastructure.db.models import Artifact, Case, Organization, User
 
 
 @pytest.mark.parametrize("storage_uri", ["gs://lab-bucket/cases/other-tenant/file.vcf", "file:///other/case/file.vcf"])
@@ -158,3 +162,61 @@ def test_cloud_artifact_download_verifies_bytes_before_response(monkeypatch, cor
         assert response_path.read_bytes() == payload
         asyncio.run(response.background())
         assert not response_path.exists()
+
+
+def test_artifact_download_denies_foreign_tenant_using_persisted_rows(tmp_path, monkeypatch):
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'tenant-download.db'}")
+    Base.metadata.create_all(engine)
+    foreign_org_id, caller_org_id, owner_id, case_id, artifact_id = (uuid4() for _ in range(5))
+    with Session(engine) as db:
+        db.add_all([
+            Organization(id=foreign_org_id, name="Foreign Lab", external_identifier=str(foreign_org_id)),
+            Organization(id=caller_org_id, name="Caller Lab", external_identifier=str(caller_org_id)),
+        ])
+        db.flush()
+        db.add(User(
+            id=owner_id,
+            organization_id=foreign_org_id,
+            external_subject=str(owner_id),
+            email=f"{owner_id}@foreign.test",
+            display_name="Foreign Owner",
+            role="organization_admin",
+            status="ACTIVE",
+        ))
+        db.flush()
+        db.add(Case(
+            id=case_id,
+            organization_id=foreign_org_id,
+            case_identifier=f"FOREIGN-{case_id}",
+            status="OPEN",
+            clinical_context={},
+            language="en",
+            created_by=owner_id,
+        ))
+        db.add(Artifact(
+            id=artifact_id,
+            case_id=case_id,
+            artifact_type="VCF",
+            filename="foreign.vcf",
+            media_type="text/vcf",
+            size_bytes=1,
+            sha256="0" * 64,
+            storage_uri="file:///foreign-lab/foreign.vcf",
+            validation_status="VALID",
+            metadata_json={},
+        ))
+        db.commit()
+
+        def storage_must_not_be_resolved(*_args, **_kwargs):
+            raise AssertionError("foreign tenant authorization must fail before storage lookup")
+
+        monkeypatch.setattr(artifacts, "artifact_store_for_uri", storage_must_not_be_resolved)
+        with pytest.raises(HTTPException) as error:
+            artifacts.download_artifact(
+                str(artifact_id),
+                db,
+                Principal(uuid4(), caller_org_id, "read_only", "caller"),
+            )
+
+    engine.dispose()
+    assert error.value.status_code == 404

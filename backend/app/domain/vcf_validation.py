@@ -6,8 +6,11 @@ import re
 import struct
 import zlib
 from contextlib import contextmanager
-from math import comb, isnan
+from math import comb, isfinite, isnan
 from pathlib import Path
+from typing import Any
+
+from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
@@ -108,6 +111,11 @@ def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
         "DP": ("1", "Integer"),
         "FT": ("1", "String"),
         "GL": ("3", "Float"),
+        # VCFv4.0 describes GQ/HQ as numeric (not an integer-only type).
+        # Float is the permissive implicit representation; explicit headers
+        # may declare either Integer or Float.
+        "GQ": ("1", "Float"),
+        "HQ": ("2", "Float"),
     }
     definition = reserved.get(field_id)
     if definition is None:
@@ -798,9 +806,20 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     reserved_vcf40_definition = None
     if fileformat == "VCFv4.0" and kind == "FORMAT":
         reserved_vcf40_definition = _reserved_vcf40_format_definition(identifier)
+    reserved_vcf40_type_matches = (
+        parsed["Type"] == reserved_vcf40_definition["Type"]
+        if reserved_vcf40_definition is not None
+        else True
+    )
+    if (
+        fileformat == "VCFv4.0"
+        and kind == "FORMAT"
+        and identifier in {"GQ", "HQ"}
+    ):
+        reserved_vcf40_type_matches = parsed["Type"] in {"Integer", "Float"}
     if reserved_vcf40_definition is not None and (
         number != reserved_vcf40_definition["Number"]
-        or parsed["Type"] != reserved_vcf40_definition["Type"]
+        or not reserved_vcf40_type_matches
     ):
         raise StrictVCFValidationError(
             f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
@@ -1056,6 +1075,7 @@ def _validate_declared_value(
     local_allele_count: int | None = None,
     base_modification_cardinality: int | None = None,
     allow_empty_values: bool = False,
+    allow_phred_gp: bool = False,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
@@ -1115,7 +1135,10 @@ def _validate_declared_value(
             if valid:
                 numeric_value = float(item)
                 if (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
-                    valid = 0.0 <= numeric_value <= 1.0
+                    if field_scope == "FORMAT" and key == "GP" and allow_phred_gp:
+                        valid = isfinite(numeric_value) and numeric_value >= 0.0
+                    else:
+                        valid = 0.0 <= numeric_value <= 1.0
                 if (field_scope, key) in NONNEGATIVE_FLOAT_FIELDS:
                     valid = numeric_value >= 0.0
                 if _base_modification_field_kind(key) == "fraction":
@@ -1487,15 +1510,15 @@ def _validate_record(
         keys = fmt.split(":")
         if len(keys) != len(set(keys)) or any(not FORMAT_KEY_RE.fullmatch(k) for k in keys):
             raise StrictVCFValidationError(f"Malformed or duplicate FORMAT key at line {line_no}", code="VCF_FORMAT_INVALID")
+        if fileformat == "VCFv4.0" and len(fields) > 9 and "GT" not in keys:
+            raise StrictVCFValidationError(
+                f"VCFv4.0 sample genotype data require FORMAT/GT at line {line_no}",
+                code="VCF_FORMAT_INVALID",
+            )
         if "GT" in keys and keys[0] != "GT":
             raise StrictVCFValidationError(
                 f"GT must be the first FORMAT key when present at line {line_no}",
                 code="VCF_FORMAT_INVALID",
-            )
-        if fileformat == "VCFv4.0" and "GL" in keys and len(alts) > 1:
-            raise StrictVCFValidationError(
-                f"VCFv4.0 FORMAT/GL is defined only for biallelic records at line {line_no}",
-                code="VCF_FIELD_CARDINALITY_INVALID",
             )
         base_modification_keys = [
             key
@@ -1563,15 +1586,132 @@ def _validate_record(
     return chrom, pos, alts
 
 
-def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None = None) -> dict:
+def _verify_dragen_42_gp_attestation(
+    path: Path,
+    attestation: dict[str, Any],
+) -> dict[str, Any]:
+    """Verify the pinned public DRAGEN 4.2 fixture before applying GP semantics.
+
+    This is deliberately an exact public-dataset allowlist, not a general
+    caller-controlled override. Production run attestations require a separate
+    governed trust/signature mechanism.
+    """
+    expected = {
+        "schema_version": 1,
+        "caller_profile_id": "dragen_snv_germline",
+        "caller_release": "4.2",
+        "source_record_url": "https://zenodo.org/records/8350256",
+        "source_filename": "HG002_35x.hard-filtered.vcf.gz",
+        "source_md5": "388f58faa52a8811fe19b06533d2c3d5",
+        "semantic_deviation": "FORMAT/GP_PHRED_SCALE",
+    }
+    for key, value in expected.items():
+        if attestation.get(key) != value:
+            raise StrictVCFValidationError(
+                f"DRAGEN GP semantic attestation has an invalid {key}",
+                code="VCF_CALLER_ATTESTATION_INVALID",
+            )
+    source_sha256 = attestation.get("source_sha256")
+    artifact_sha256 = attestation.get("artifact_sha256")
+    source_artifact_path = attestation.get("source_artifact_path")
+    if not isinstance(source_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", source_sha256):
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation lacks a valid source SHA-256",
+            code="VCF_CALLER_ATTESTATION_INVALID",
+        )
+    if not isinstance(artifact_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", artifact_sha256):
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation lacks a valid artifact SHA-256",
+            code="VCF_CALLER_ATTESTATION_INVALID",
+        )
+    if not isinstance(source_artifact_path, str) or not source_artifact_path:
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation lacks its source artifact path",
+            code="VCF_CALLER_ATTESTATION_INVALID",
+        )
+    source_path = Path(source_artifact_path)
+    if not source_path.is_file():
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation source artifact is unavailable",
+            code="VCF_CALLER_ATTESTATION_SOURCE_MISSING",
+        )
+    source_sha = hashlib.sha256()
+    source_md5 = hashlib.md5(usedforsecurity=False)
+    with source_path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            source_sha.update(chunk)
+            source_md5.update(chunk)
+    if (
+        source_sha.hexdigest() != source_sha256
+        or source_md5.hexdigest() != expected["source_md5"]
+    ):
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation does not match the pinned Zenodo source artifact",
+            code="VCF_CALLER_ATTESTATION_DIGEST_MISMATCH",
+        )
+    artifact_sha = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            artifact_sha.update(chunk)
+    observed_sha256 = artifact_sha.hexdigest()
+    if observed_sha256 != artifact_sha256:
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation artifact SHA-256 does not match the VCF bytes",
+            code="VCF_CALLER_ATTESTATION_DIGEST_MISMATCH",
+        )
+    provenance = inspect_caller_provenance(path)
+    if provenance.get("caller_profile_id") != expected["caller_profile_id"]:
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation conflicts with the VCF caller-family declaration",
+            code="VCF_CALLER_ATTESTATION_CALLER_CONFLICT",
+        )
+    declared_release = provenance.get("caller_version")
+    if declared_release:
+        normalized_release = declared_release.removeprefix("v")
+        if normalized_release not in {"4.2", "4.2.0"}:
+            raise StrictVCFValidationError(
+                "DRAGEN GP semantic attestation conflicts with the VCF-declared caller release",
+                code="VCF_CALLER_ATTESTATION_RELEASE_CONFLICT",
+            )
+    return {
+        "status": "VERIFIED_PINNED_PUBLIC_DATASET_FIXTURE",
+        "caller_profile_id": expected["caller_profile_id"],
+        "caller_release": expected["caller_release"],
+        "field": "FORMAT/GP",
+        "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+        "clinical_review_required": True,
+        "source_record_url": expected["source_record_url"],
+        "source_filename": expected["source_filename"],
+        "source_md5": expected["source_md5"],
+        "source_sha256": source_sha256,
+        "artifact_sha256": observed_sha256,
+    }
+
+
+def validate_vcf_strict(
+    path: str | Path,
+    *,
+    reference_contigs: set[str] | None = None,
+    caller_attestation: dict[str, Any] | None = None,
+) -> dict:
     source = Path(path)
+    caller_semantic_attestation = (
+        _verify_dragen_42_gp_attestation(source, caller_attestation)
+        if caller_attestation is not None
+        else None
+    )
+    dragen_gp_phred_semantics_applicable = caller_semantic_attestation is not None
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
+    # Caller header declarations are provenance evidence only. They cannot
+    # authorize caller-specific changes to VCF-reserved value semantics.
     fileformat: str | None = None
     chrom_header: list[str] | None = None
     found_header = False
     records = 0
+    sample_record_count = 0
+    sample_records_without_gt = 0
     alternate_allele_count = 0
     multiallelic = 0
     reference_only = 0
@@ -1722,6 +1862,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_HEADER_INVALID",
                 )
             fields = line.split("\t")
+            if len(fields) > 9:
+                sample_record_count += 1
+                record_format_keys = fields[8].split(":") if fields[8] not in {"", "."} else []
+                if "GT" not in record_format_keys:
+                    sample_records_without_gt += 1
             if chrom_header is None or len(fields) != len(chrom_header):
                 expected = len(chrom_header) if chrom_header is not None else 0
                 raise StrictVCFValidationError(
@@ -1735,7 +1880,9 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         or _reserved_base_modification_format_definition(format_key) is not None
                     ):
                         base_modification_format_fields.add(format_key)
-            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat, format_definitions)
+            _chrom, _pos, alts = _validate_record(
+                fields, line_no, reference_contigs, fileformat, format_definitions,
+            )
             if fileformat == "VCFv4.5" and _pos > 0:
                 _validate_vcf45_reference_block_coverage(
                     fields,
@@ -1870,6 +2017,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
             gt_index = format_keys.index("GT") if "GT" in format_keys else None
+            if fileformat == "VCFv4.0" and "GL" in format_keys and len(alts) != 1:
+                gl_index = format_keys.index("GL")
+                for sample_index, sample in enumerate(fields[9:], start=1):
+                    gl_values = sample.split(":")
+                    gl_value = gl_values[gl_index] if gl_index < len(gl_values) else "."
+                    if gl_value not in {"", "."}:
+                        raise StrictVCFValidationError(
+                            f"VCFv4.0 FORMAT/GL is defined only for biallelic records at line {line_no}, sample {sample_index}",
+                            code="VCF_FIELD_CARDINALITY_INVALID",
+                        )
             for sample_index, sample in enumerate(fields[9:], start=1):
                 sample_values = sample.split(":")
                 if "PSL" in format_keys:
@@ -2044,6 +2201,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
+                            allow_phred_gp=dragen_gp_phred_semantics_applicable,
                         )
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
@@ -2188,8 +2346,33 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 "reason_code": "UNRESOLVED_SPANNING_DELETION_CONTEXT",
             })
 
+    caller_provenance = inspect_caller_provenance(
+        path,
+        fileformat=fileformat,
+        gvcf_marker_count=gvcf_markers,
+        sample_record_count=sample_record_count,
+        sample_records_without_gt=sample_records_without_gt,
+    )
+    if caller_semantic_attestation is not None:
+        caller_provenance["caller_semantic_compatibility_status"] = "CALLER_SPEC_SEMANTIC_DEVIATION"
+        caller_provenance["caller_semantic_compatibility_review_required"] = True
+        caller_provenance["dragen_gp_phred_semantics_applicable"] = True
+        caller_provenance["field_semantic_deviations"] = [
+            *caller_provenance.get("field_semantic_deviations", []),
+            {
+                "namespace": "FORMAT",
+                "field_id": "GP",
+                "status": "CALLER_SPEC_SEMANTIC_DEVIATION",
+                "caller_release": "4.2",
+                "scale": "PHRED_SCALED_POSTERIOR_GENOTYPE_VALUES",
+                "clinical_interpretation": "REVIEW_REQUIRED",
+            },
+        ]
     return {
         "fileformat": fileformat,
+        "caller_semantic_attestation": caller_semantic_attestation,
+        "caller_semantic_compatibility_review_required": dragen_gp_phred_semantics_applicable,
+        "caller_provenance": caller_provenance,
         "records": records,
         "alternate_allele_count": alternate_allele_count,
         "reference_only_records": reference_only,

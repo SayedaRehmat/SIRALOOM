@@ -527,6 +527,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 "command": "bcftools view -A && bcftools norm -f ref.fa -c e -m -any",
                 "source_record_mapping_tag": "SIRALOOM_ORIG",
                 "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
+                "multiallelic_mode": "SPLIT_WITH_BCFTOOLS",
+                "multiallelic_overlap_policy": "MISSING_OTHER_ALT",
                 "compression": "BGZF", "index": "CSI", "index_path": str(index),
             }
 

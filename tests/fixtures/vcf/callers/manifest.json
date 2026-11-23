@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "path": "tests/fixtures/vcf/callers/gatk_haplotypecaller_v4_2_6_1_doc_example.vcf",
+      "caller": "GATK HaplotypeCaller",
+      "release": "4.2.6.1",
+      "vcf_version": "VCFv4.2",
+      "evidence_type": "DOCUMENTATION_DERIVED_MINIMAL_FIXTURE",
+      "source": "https://gatk.broadinstitute.org/hc/en-us/articles/360035531692-VCF-Variant-Call-Format",
+      "qualification": "NOT_A_CALLER_EXECUTION_OR_CLINICAL_VALIDATION"
+    },
+    {
+      "path": "tests/fixtures/vcf/callers/deepvariant_1_10_0_golden.vcf",
+      "caller": "DeepVariant",
+      "release": "1.10.0",
+      "vcf_version": "VCFv4.2",
+      "evidence_type": "UPSTREAM_GOLDEN_TEST_FIXTURE",
+      "source": "https://github.com/google/deepvariant/blob/r1.10/deepvariant/testdata/golden.postprocess_single_site_output.vcf",
+      "qualification": "UPSTREAM_SOFTWARE_TEST_FIXTURE_NOT_CLINICAL_VALIDATION"
+    },
+    {
+      "path": "tests/fixtures/vcf/callers/dragen_snv_v4_3_doc_example.vcf",
+      "caller": "Illumina DRAGEN Small Variant Caller",
+      "release": "4.3",
+      "vcf_version": "VCFv4.2",
+      "evidence_type": "OFFICIAL_DOCUMENTATION_EXAMPLE",
+      "source": "https://help.dragen.illumina.com/dragen-v4.3/product-guide/dragen-v4.3/dragen-dna-pipeline/small-variant-calling",
+      "qualification": "DOCUMENTATION_EXAMPLE_NOT_A_CALLER_EXECUTION_OR_CLINICAL_VALIDATION"
+    }
+  ],
+  "policy": "Header-based caller identity is unverified metadata. None of these fixtures qualifies a caller release or assay for clinical use."
+}
