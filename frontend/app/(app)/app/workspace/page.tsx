@@ -40,6 +40,7 @@ type ReviewBundle = {
     review_status?: string;
     version?: number;
     review_version?: number;
+    metadata?: Record<string, unknown>;
   } | null;
   criteria: Array<{
     criterion: string;
@@ -1440,9 +1441,11 @@ export default function Home() {
           <div className="panel-head"><div><div className="section-kicker">{t("workspace.reviewSection")}</div><h3>{t("workspace.humanDecisionWorkspace")}</h3></div>{review?.review_status && <span className={`badge ${statusTone(review.review_status)}`}>{prettyStatus(review.review_status)}</span>}</div>
           {!review ? <div className="empty"><strong>{t("workspace.reviewPending")}</strong><p>{t("workspace.automatedOutputProposed")}</p></div> : <>
             <div className="classification-banner"><span>{t("workspace.proposedCurrent")}</span><strong>{String(review.classification?.result ?? t("workspace.noClassification"))}</strong><small>Review revision {String(review.classification?.review_version ?? 0)}</small></div>
-            {!review.classification && review.review_status === "NOT_STARTED" && (analysis?.steps as Step[] | undefined)?.some(step => step.step_id === "acmg_assessment" && step.status === "REQUIRES_REVIEW" && ["NO_AUTOMATABLE_CLINGEN_CONTEXT", "ACMG_VARIANTS_REQUIRE_REVIEW", "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"].includes(String(step.error_code))) && <div className="manual-classification-form">
+            {(!review.classification || Boolean(review.classification.metadata?.criterion_review_requires_reassessment)) && (analysis?.steps as Step[] | undefined)?.some(step => step.step_id === "acmg_assessment" && step.status === "REQUIRES_REVIEW" && ["NO_AUTOMATABLE_CLINGEN_CONTEXT", "ACMG_VARIANTS_REQUIRE_REVIEW", "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"].includes(String(step.error_code))) && <div className="manual-classification-form">
               <div className="section-kicker">{t("workspace.manualClassificationTitle")}</div>
-              <p>{t("workspace.manualClassificationHelp")}</p>
+              {review.classification?.metadata?.criterion_review_requires_reassessment
+                ? <p className="quiet">{String(review.classification.metadata.criterion_review_reassessment_reason ?? t("workspace.manualClassificationHelp"))} A documented manual reassessment with linked evidence is required before approval.</p>
+                : <p>{t("workspace.manualClassificationHelp")}</p>}
               <label>{t("workspace.manualClassificationResult")}
                 <select value={manualClassificationResult} onChange={event => setManualClassificationResult(event.target.value)}>
                   <option value="PATHOGENIC">{t("workspace.classPathogenic")}</option>
