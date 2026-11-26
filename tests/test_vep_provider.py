@@ -396,7 +396,7 @@ def test_vep_annotation_verifies_pinned_binary_and_offline_cache(monkeypatch, tm
 
     def fake_run(command, **kwargs):
         calls.append(command)
-        if command[-1] == "--version":
+        if command[-1] == "--help":
             return SimpleNamespace(returncode=0, stdout="ensembl-vep 115.2", stderr="")
         return SimpleNamespace(
             returncode=0,
@@ -557,7 +557,7 @@ def test_vep_blocks_when_offline_cache_cannot_be_loaded(monkeypatch, tmp_path):
 
     def fake_run(command, **kwargs):
         calls.append(command)
-        if command[-1] == "--version":
+        if command[-1] == "--help":
             return SimpleNamespace(returncode=0, stdout="ensembl-vep 115.2", stderr="")
         return SimpleNamespace(returncode=1, stdout="cache release missing", stderr="")
 
@@ -655,7 +655,15 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
     toolchain, _cache_file = _manifested_toolchain(tmp_path, binary, vep_version="115.2")
     toolchain["execution_profile_id"] = "vep-115-linux-amd64"
     provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
-    provider.verify_local_runtime = lambda _assembly: {"status": "VERIFIED"}
+    cache_check = provider._verify_cache_manifest("GRCh38")
+    provider.verify_local_runtime = lambda _assembly: {
+        "status": "VERIFIED",
+        "cache_tree_sha256": cache_check["tree_sha256"],
+    }
+    provider._runtime_checks["GRCh38"] = {
+        "status": "VERIFIED",
+        "cache_tree_sha256": cache_check["tree_sha256"],
+    }
 
     environment = SimpleNamespace(profile_json={"runtime_image_digest": None})
     calls = []
@@ -710,5 +718,11 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
     assert tool_request.operation == "annotate"
     assert tool_request.inputs[0].name == "vep-input.vcf"
     assert tool_request.outputs[0].name == "vep-output.json"
+    cache_binding = next(
+        item for item in tool_request.resources
+        if item.resource_id.startswith("ensembl-vep-cache-tree:")
+    )
+    assert Path(cache_binding.path) == Path(provider.cache_dir)
+    assert cache_binding.sha256 == cache_check["tree_sha256"]
     assert result.metadata["tool_execution_record_id"]
     assert result.payload[0]["allele_string"] == "A/G"

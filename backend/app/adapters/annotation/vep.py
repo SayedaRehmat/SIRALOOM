@@ -220,7 +220,7 @@ class VEPProvider(ScientificResourceProvider):
                     executable_sha256=self.expected_binary_sha256,
                     platform=current_platform_id(),
                     qualification_status="SOFTWARE_QUALIFIED",
-                    version_args=("--version",),
+                    version_args=("--help",),
                     version_output_contains=expected_version_match,
                     supported_operations=("annotate",),
                     runtime_image_digest=environment_registration.profile_json.get("runtime_image_digest"),
@@ -230,6 +230,10 @@ class VEPProvider(ScientificResourceProvider):
                 cache_tree_digest = str(
                     (self._runtime_checks.get(build) or {}).get("cache_tree_sha256") or ""
                 )
+                if not re.fullmatch(r"[0-9a-f]{64}", cache_tree_digest):
+                    raise VEPProviderError(
+                        "Persistent VEP annotation requires the verified cache tree SHA-256."
+                    )
                 resource_bindings = (
                     ScientificResourceBinding(
                         resource_id=f"ensembl-vep-cache-manifest:{self.species}:{self.cache_version}:{build}",
@@ -237,6 +241,13 @@ class VEPProvider(ScientificResourceProvider):
                         sha256=self.cache_manifest_sha256,
                         assembly=build,
                         path=self.cache_manifest,
+                    ),
+                    ScientificResourceBinding(
+                        resource_id=f"ensembl-vep-cache-tree:{self.species}:{self.cache_version}:{build}",
+                        version=self.cache_version,
+                        sha256=cache_tree_digest,
+                        assembly=build,
+                        path=self.cache_dir,
                     ),
                 )
                 if self.fasta:
@@ -579,7 +590,7 @@ class VEPProvider(ScientificResourceProvider):
             executable_sha256=self.expected_binary_sha256,
             platform=current_platform_id(),
             qualification_status="SOFTWARE_QUALIFIED",
-            version_args=("--version",),
+            version_args=("--help",),
             version_output_contains=expected_version_match,
             supported_operations=("validate", "annotate"),
             runtime_image_digest=registration.profile_json.get("runtime_image_digest"),
@@ -649,7 +660,7 @@ class VEPProvider(ScientificResourceProvider):
             )
         try:
             version_result = self._run_runtime_check_command(
-                [self.binary, "--version"],
+                [self.binary, "--help"],
                 assembly=assembly,
                 operation_label="version",
                 timeout_seconds=30,
@@ -671,7 +682,7 @@ class VEPProvider(ScientificResourceProvider):
                 "VEP execution contract must pin a parseable tool version in provider_version or toolchain.vep_version."
             )
         if actual_version is None:
-            raise VEPProviderError("VEP --version returned output without a parseable release version.")
+            raise VEPProviderError("VEP --help returned output without a parseable release version.")
         expected_full_version = _extract_vep_version(expected_version)
         version_matches = (
             actual_version == expected_full_version
@@ -704,6 +715,13 @@ class VEPProvider(ScientificResourceProvider):
                 sha256=self.cache_manifest_sha256,
                 assembly=assembly,
                 path=self.cache_manifest,
+            ),
+            ScientificResourceBinding(
+                resource_id=f"ensembl-vep-cache-tree:{self.species}:{self.cache_version}:{assembly}",
+                version=self.cache_version,
+                sha256=cache_manifest_check["tree_sha256"],
+                assembly=assembly,
+                path=self.cache_dir,
             ),
         )
         try:

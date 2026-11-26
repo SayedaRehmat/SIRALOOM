@@ -193,43 +193,72 @@ def test_register_public_file_resource_assigns_organization_scoped_destination(m
         engine.dispose()
 
 
-def test_resource_qualification_is_recorded_in_the_audit_chain(monkeypatch, tmp_path):
-    from backend.app.domain import resource_qualification
-
+def test_resource_qualification_is_durably_queued_for_tool_enabled_worker(monkeypatch, tmp_path):
     engine, db = _db()
     try:
         organization_id = uuid4()
         db.add(Organization(id=organization_id, name="Resource Lab", external_identifier="resource-lab"))
-        root = tmp_path / "cache"
-        monkeypatch.setattr(settings, "resource_cache_root", str(root))
-        resource, _ = _seed_remote_resource(db, organization_id, root)
+        resource, _ = _seed_remote_resource(db, organization_id, tmp_path / "cache")
         db.commit()
-        monkeypatch.setattr(
-            resource_qualification,
-            "qualify_resource",
-            lambda *_args, **_kwargs: SimpleNamespace(
-                qualification_version="qualification-test-v1",
-                checks={"passed": True, "qualification_outcome": "PASS"},
-                passed=True,
-                blockers=[],
-            ),
-        )
         principal = _principal(organization_id)
+        dispatched = []
+        monkeypatch.setattr(
+            "backend.app.infrastructure.queue.celery_app.run_resource_qualification_task.apply_async",
+            lambda **kwargs: dispatched.append(kwargs),
+        )
 
         result = resources_api.qualify_resource(
-            resource.id,
-            {"qualification_version": "qualification-test-v1"},
-            db,
-            principal,
+            resource.id, {"qualification_version": "qualification-test-v1"}, db, principal,
         )
 
-        event = db.query(AuditEvent).filter_by(event_type="RESOURCE_QUALIFICATION_RECORDED").one()
+        db.refresh(resource)
+        qualification = db.query(ResourceQualification).filter_by(resource_id=resource.id).one()
+        event = db.query(AuditEvent).filter_by(event_type="RESOURCE_QUALIFICATION_QUEUED").one()
+        assert result["outcome"] == "QUEUED"
+        assert result["qualification_status"] == "QUEUED"
+        assert result["passed"] is None
+        assert resource.status == "CANDIDATE"
+        assert qualification.status == "QUEUED"
+        assert qualification.checks_json["dispatch"]["status"] == "PUBLISHED"
+        assert qualification.checks_json["dispatch"]["task_id"] == dispatched[0]["task_id"]
+        assert dispatched[0]["args"] == [str(qualification.id)]
         assert event.actor_id == str(principal.user_id)
         assert event.subject_id == str(resource.id)
-        assert event.before_state == {"status": "CANDIDATE"}
-        assert event.after_state["status"] == "QUALIFIED"
         assert event.after_state["qualification_id"] == result["qualification_id"]
-        assert event.after_state["qualification_status"] == "QUALIFIED"
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_resource_qualification_queue_failure_is_persisted_for_retry(monkeypatch, tmp_path):
+    engine, db = _db()
+    try:
+        organization_id = uuid4()
+        db.add(Organization(id=organization_id, name="Resource Lab", external_identifier="resource-lab"))
+        resource, _ = _seed_remote_resource(db, organization_id, tmp_path / "cache")
+        db.commit()
+
+        def fail_dispatch(**_kwargs):
+            raise RuntimeError("broker unavailable; do not persist this detail")
+
+        monkeypatch.setattr(
+            "backend.app.infrastructure.queue.celery_app.run_resource_qualification_task.apply_async",
+            fail_dispatch,
+        )
+        with pytest.raises(HTTPException) as exc:
+            resources_api.qualify_resource(
+                resource.id, {"qualification_version": "qualification-test-v1"},
+                db, _principal(organization_id),
+            )
+
+        assert exc.value.status_code == 503
+        qualification = db.query(ResourceQualification).filter_by(resource_id=resource.id).one()
+        assert qualification.status == "DISPATCH_FAILED"
+        assert qualification.checks_json["passed"] is None
+        assert qualification.checks_json["dispatch"]["retryable"] is True
+        assert qualification.checks_json["dispatch"]["error_type"] == "RuntimeError"
+        assert "do not persist" not in repr(qualification.checks_json)
+        assert resource.status == "CANDIDATE"
     finally:
         db.close()
         engine.dispose()

@@ -61,7 +61,7 @@ def build_manifest(
     for path in sorted(root.rglob("*")):
         if path.is_symlink():
             raise ValueError(f"cache contains a symlink: {path.relative_to(root)}")
-        mode = path.stat(follow_symlinks=False).st_mode
+        mode = path.lstat().st_mode
         if stat.S_ISDIR(mode):
             continue
         if not stat.S_ISREG(mode):

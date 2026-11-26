@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from backend.app.api.v1.analyses import list_variants
-from backend.app.infrastructure.db.models import AnalysisPartition, Case, PopulationObservation, Resource, WorkflowStep
+from backend.app.infrastructure.db.models import AnalysisPartition, Annotation, Case, PopulationObservation, Resource, WorkflowStep
 from backend.app.reporting.variant_report import build_variant_rows, render_json
 from tests.test_review_queue import seed
 
@@ -31,6 +31,21 @@ def test_legacy_analysis_without_normalization_manifest_keeps_annotation_fallbac
 
     assert [row["variant_id"] for row in listed] == [str(variant.id)]
     assert [row["variant_id"] for row in report_rows] == [str(variant.id)]
+
+
+def test_legacy_variant_listing_deduplicates_multiple_annotation_rows():
+    db, principal, analysis, variant = seed()
+    db.add(Annotation(
+        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+        provider_name="second-transcript-provider", provider_version="2",
+        resource_name="test", resource_version="2",
+        payload={"normalized": {"gene": "BRCA1", "consequence": "splice_region_variant"}},
+    ))
+    db.commit()
+
+    listed = list_variants(analysis.id, db=db, principal=principal)
+
+    assert [row["variant_id"] for row in listed] == [str(variant.id)]
 
 
 def test_completed_empty_normalization_step_does_not_enable_legacy_fallback():

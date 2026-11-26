@@ -1564,6 +1564,101 @@ if Celery is not None:
                     staging_lock_connection.close()
 
 
+    def _resource_qualification_dispatch_matches(row, task_id):
+        checks = dict(getattr(row, "checks_json", None) or {})
+        dispatch = dict(checks.get("dispatch") or {})
+        return bool(task_id and dispatch.get("task_id") == task_id and
+                    str(dispatch.get("status") or "").upper() in {"QUEUING", "PUBLISHED", "RUNNING"})
+
+
+    @celery_app.task(bind=True, name="siraloom.qualify_resource", autoretry_for=(), acks_late=True, max_retries=3)
+    def run_resource_qualification_task(self, qualification_id):
+        from datetime import datetime, timezone
+        from uuid import UUID
+        from sqlalchemy import select, text
+        from backend.app.domain.resource_qualification import qualify_resource as run_qualification
+        from backend.app.domain.resources import qualify_resource_version
+        from backend.app.infrastructure.audit.service import AuditService
+        from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceStaging
+        from backend.app.infrastructure.db.session import SessionLocal, engine
+        qid=UUID(qualification_id)
+        lock=engine.connect() if engine.dialect.name == "postgresql" else None
+        key=None
+        db=SessionLocal()
+        try:
+            if lock is not None:
+                key=int.from_bytes(hashlib.sha256(f"resource-qualification:{qid}".encode()).digest()[:8],"big",signed=True)
+                acquired=bool(lock.execute(text("SELECT pg_try_advisory_lock(:lock_key)"),{"lock_key":key}).scalar_one())
+                lock.commit()
+                if not acquired:
+                    return {"qualification_id":qualification_id,"status":"ALREADY_CLAIMED"}
+            q=db.get(ResourceQualification,qid,with_for_update=True)
+            if q is None:
+                return {"qualification_id":qualification_id,"status":"NOT_FOUND"}
+            if not _resource_qualification_dispatch_matches(q,self.request.id):
+                return {"qualification_id":qualification_id,"status":"REJECTED_STALE_DISPATCH"}
+            if q.status in {"QUALIFIED","BLOCKED"}:
+                return {"qualification_id":qualification_id,"status":q.status}
+            if q.status not in {"QUEUED","RUNNING"}:
+                return {"qualification_id":qualification_id,"status":q.status}
+            checks=dict(q.checks_json or {})
+            dispatch=dict(checks.get("dispatch") or {})
+            dispatch.update({"status":"RUNNING","started_at":datetime.now(timezone.utc).isoformat()})
+            checks.update({"execution_status":"RUNNING","dispatch":dispatch})
+            q.status="RUNNING"; q.checks_json=checks; db.add(q); db.commit()
+            resource=db.get(Resource,q.resource_id)
+            if resource is None:
+                raise RuntimeError("Qualification resource no longer exists")
+            staging=db.scalar(select(ResourceStaging).where(
+                ResourceStaging.resource_id==resource.id,
+                ResourceStaging.resource_version==resource.version
+            ).order_by(ResourceStaging.updated_at.desc(),ResourceStaging.created_at.desc()).limit(1))
+            result=run_qualification(resource,staging=staging,qualification_version=q.qualification_version)
+            saved=qualify_resource_version(db,resource_id=resource.id,
+                qualification_version=result.qualification_version,checks=result.checks,qualified_by=q.qualified_by)
+            checks=dict(saved.checks_json or {})
+            checks.update({"execution_status":"COMPLETED","dispatch":{
+                **dispatch,"status":"COMPLETED","completed_at":datetime.now(timezone.utc).isoformat()}})
+            saved.checks_json=checks; db.add(saved)
+            AuditService(db).record(event_type="RESOURCE_QUALIFICATION_RECORDED",case_id=None,
+                analysis_id=None,actor_type="SYSTEM",actor_id="celery",
+                subject_type="RESOURCE",subject_id=str(resource.id),operation="QUALIFY",
+                before_state={"status":"RUNNING"},
+                after_state={"status":resource.status,"qualification_id":str(saved.id),
+                    "qualification_version":saved.qualification_version,"qualification_status":saved.status,
+                    "passed":result.passed,"outcome":result.checks.get("qualification_outcome")},
+                workflow={"domain":"resource_registry",
+                    "organization_id":str(resource.organization_id) if resource.organization_id else None})
+            db.commit()
+            return {"qualification_id":qualification_id,"status":saved.status,"passed":result.passed}
+        except Exception as exc:
+            db.rollback()
+            try:
+                raise self.retry(exc=exc,countdown=30)
+            except self.MaxRetriesExceededError:
+                current=db.get(ResourceQualification,qid,with_for_update=True)
+                if current is not None and _resource_qualification_dispatch_matches(current,self.request.id):
+                    checks=dict(current.checks_json or {})
+                    checks.update({"execution_status":"FAILED","passed":None,
+                        "error":{"code":"QUALIFICATION_EXECUTION_FAILED","error_type":type(exc).__name__},
+                        "dispatch":{**dict(checks.get("dispatch") or {}),"status":"FAILED",
+                            "retryable":True,"failed_at":datetime.now(timezone.utc).isoformat()}})
+                    current.status="FAILED"; current.checks_json=checks; db.add(current); db.commit()
+                return {"qualification_id":qualification_id,"status":"FAILED",
+                        "error_code":"QUALIFICATION_EXECUTION_FAILED"}
+        finally:
+            db.close()
+            if lock is not None:
+                try:
+                    if key is not None:
+                        lock.execute(text("SELECT pg_advisory_unlock(:lock_key)"),{"lock_key":key}).scalar_one()
+                        lock.commit()
+                except Exception:
+                    lock.invalidate()
+                finally:
+                    lock.close()
+
+
 else:
     class _UnavailableTask:
         def delay(self, *_args, **_kwargs):
@@ -1574,4 +1669,5 @@ else:
     run_analysis_task = _UnavailableTask()
     run_case_export_task = _UnavailableTask()
     run_resource_staging_task = _UnavailableTask()
+    run_resource_qualification_task = _UnavailableTask()
     discover_scientific_resources = _UnavailableTask()

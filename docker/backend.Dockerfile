@@ -1,8 +1,9 @@
-ARG BCFTOOLS_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock
+ARG BCFTOOLS_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.25-samtools-1.25-linux-64.lock
 ARG BCFTOOLS_PLATFORM=linux-64
 ARG BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64
 ARG BCFTOOLS_VERSION=1.25
 ARG HTSLIB_VERSION=1.25
+ARG SAMTOOLS_VERSION=1.25
 ARG BCFTOOLS_BASE_IMAGE=python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30
 ARG DEBIAN_SNAPSHOT_TIMESTAMP=20261105T000000Z
 ARG UV_VERSION=0.10.0
@@ -26,10 +27,11 @@ FROM ${BCFTOOLS_BASE_IMAGE}
 ARG BCFTOOLS_PROFILE_ID
 ARG BCFTOOLS_VERSION
 ARG HTSLIB_VERSION
+ARG SAMTOOLS_VERSION
 ARG DEBIAN_SNAPSHOT_TIMESTAMP
 ARG UV_VERSION
 ARG UV_ARCHIVE_SHA256
-ENV BCFTOOLS_PROFILE_ID=${BCFTOOLS_PROFILE_ID} BCFTOOLS_VERSION=${BCFTOOLS_VERSION} HTSLIB_VERSION=${HTSLIB_VERSION} BCFTOOLS_EXECUTABLE=/opt/conda/bin/bcftools CELERY_QUEUES=celery,bioinformatics.bcftools.1_25
+ENV BCFTOOLS_PROFILE_ID=${BCFTOOLS_PROFILE_ID} BCFTOOLS_VERSION=${BCFTOOLS_VERSION} HTSLIB_VERSION=${HTSLIB_VERSION} SAMTOOLS_VERSION=${SAMTOOLS_VERSION} BCFTOOLS_EXECUTABLE=/opt/conda/bin/bcftools CELERY_QUEUES=celery,bioinformatics.bcftools.1_25
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_NO_PROGRESS=1
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs
@@ -58,9 +60,9 @@ ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 # The lock manager itself is pinned and removed from the final runtime image.
 COPY pyproject.toml uv.lock ./
 RUN set -eux \
-    && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie main" > /etc/apt/sources.list \
-    && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-updates main" >> /etc/apt/sources.list \
-    && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-security main" >> /etc/apt/sources.list \
+    && printf '%s\n' "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie main" > /etc/apt/sources.list \
+    && printf '%s\n' "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-updates main" >> /etc/apt/sources.list \
+    && printf '%s\n' "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-security main" >> /etc/apt/sources.list \
     && rm -f /etc/apt/sources.list.d/debian.sources \
     && apt_update_succeeded=0 \
     && for attempt in 1 2 3 4 5; do \
@@ -91,6 +93,7 @@ COPY migrations ./migrations
 COPY workflows ./workflows
 COPY configs ./configs
 COPY scripts ./scripts
+RUN chmod +x scripts/start_worker.sh scripts/start_api_with_worker.sh
 
 RUN lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
     && uv sync --python /usr/local/bin/python --locked --no-dev --no-editable \
@@ -98,6 +101,7 @@ RUN lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
     && python -c "import redis; import kombu.transport.redis; import backend.app" \
     && test "$(bcftools --version | head -n1)" = "bcftools ${BCFTOOLS_VERSION}" \
     && test "$(bcftools --version | sed -n '2s/.*htslib //p')" = "${HTSLIB_VERSION}" \
+    && test "$(samtools --version | head -n1)" = "samtools ${SAMTOOLS_VERSION}" \
     && rm -f /usr/local/bin/uv
 
 RUN chmod +x scripts/start_api_with_worker.sh

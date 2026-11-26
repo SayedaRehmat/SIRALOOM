@@ -48,6 +48,7 @@ def test_every_registered_application_task_has_an_explicit_scope_classification(
         "backend.app.infrastructure.queue.celery_app.run_case_export_task",
         "siraloom.run_artifact_validation",
         "siraloom.stage_resource_release",
+        "siraloom.qualify_resource",
     }
     system_tasks = {
         "siraloom.discover_scientific_resources",

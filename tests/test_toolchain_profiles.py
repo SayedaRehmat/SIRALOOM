@@ -27,7 +27,7 @@ def test_resolves_registered_software_qualified_patched_profile():
     assert profile["platform"] == "linux-64"
     assert "# platform: linux-64" in (ROOT / profile["lock_file"]).read_text(encoding="utf-8")
     assert profile["security_review"]["status"] == "PATCHED_UPSTREAM_RELEASE"
-    assert profile["lock_file"] == "configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock"
+    assert profile["lock_file"] == "configs/bioinformatics/profiles/bcftools-1.25-samtools-1.25-linux-64.lock"
 
 
 def test_1_24_1_profile_is_software_qualified_after_runtime_image_gate_passes():
@@ -110,8 +110,8 @@ def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     assert "printf '%s\\n'" in dockerfile
     assert "trixie main" in dockerfile
 
-    assert "printf '%s\\n' \"deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-updates main\"" in dockerfile
-    assert "printf '%s\\n' \"deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-security main\"" in dockerfile
+    assert "printf '%s\\n' \"deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-updates main\"" in dockerfile
+    assert "printf '%s\\n' \"deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-security main\"" in dockerfile
     assert "main\\\\\\\\n" not in dockerfile
     assert "APT::Update::Error-Mode=any update" in dockerfile
     assert "for attempt in 1 2 3 4 5; do" in dockerfile
@@ -134,6 +134,8 @@ def test_default_runtime_dockerfile_pins_all_inputs_and_fails_closed_outside_amd
     assert "FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS bcftools" in dockerfile
     assert "ARG BCFTOOLS_BASE_IMAGE=python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30" in dockerfile
     assert "FROM ${BCFTOOLS_BASE_IMAGE}" in dockerfile
+    assert "ARG SAMTOOLS_VERSION=1.25" in dockerfile
+    assert "samtools --version | head -n1" in dockerfile
     assert "x86_64:linux-64) ;;" in dockerfile
     assert "aarch64:linux-aarch64" not in dockerfile
     assert "ARG DEBIAN_SNAPSHOT_TIMESTAMP=20261105T000000Z" in dockerfile

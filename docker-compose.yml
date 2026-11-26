@@ -39,16 +39,29 @@ services:
       - "8000:8000"
     volumes:
       - artifact_data:/data/siraloom/artifacts
+      - type: bind
+        source: ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-./resource_cache_data}
+        target: /data/siraloom/resource-cache
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SIRALOOM_REFERENCE_HOST_PATH:-./reference_data}
+        target: /data/references
+        read_only: true
+        bind:
+          create_host_path: true
 
   worker:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
       args:
-        BCFTOOLS_LOCK_FILE: ${BCFTOOLS_LOCK_FILE:-configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock}
+        BCFTOOLS_LOCK_FILE: ${BCFTOOLS_LOCK_FILE:-configs/bioinformatics/profiles/bcftools-1.25-samtools-1.25-linux-64.lock}
         BCFTOOLS_PROFILE_ID: ${BCFTOOLS_PROFILE_ID:-bcftools-1.25-htslib-1.25-linux-64}
         BCFTOOLS_VERSION: ${BCFTOOLS_VERSION:-1.25}
         HTSLIB_VERSION: ${HTSLIB_VERSION:-1.25}
+        SAMTOOLS_VERSION: ${SAMTOOLS_VERSION:-1.25}
     command: ./scripts/start_worker.sh
     env_file: .env
     depends_on:
@@ -58,6 +71,22 @@ services:
         condition: service_healthy
     volumes:
       - artifact_data:/data/siraloom/artifacts
+      - type: bind
+        source: ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-./resource_cache_data}
+        target: /data/siraloom/resource-cache
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SIRALOOM_SCRATCH_HOST_PATH:-./scratch_data}
+        target: /data/siraloom/scratch
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SIRALOOM_REFERENCE_HOST_PATH:-./reference_data}
+        target: /data/references
+        read_only: true
+        bind:
+          create_host_path: true
 
   beat:
     build:

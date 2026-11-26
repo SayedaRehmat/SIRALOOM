@@ -26,7 +26,7 @@ from backend.app.domain.reference_package import (
 )
 from backend.app.domain.resource_staging import stage_resource_release
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, Resource, ResourceStaging
+from backend.app.infrastructure.db.models import Organization, Resource, ResourceQualification, ResourceStaging
 
 
 def _principal(organization_id):
@@ -206,19 +206,43 @@ def test_lab_reference_package_registration_and_preacquired_staging(monkeypatch,
         assert Path(resource.location).read_bytes().startswith(b">1\n")
         assert not list(Path(resource.location).parent.glob(".*.staging-*"))
 
+        from backend.app.infrastructure.queue.celery_app import run_resource_qualification_task
+
+        dispatched = []
+        monkeypatch.setattr(
+            run_resource_qualification_task,
+            "apply_async",
+            lambda *, args, task_id: dispatched.append({"args": args, "task_id": task_id}),
+        )
+        qualification_version = "siraloom-reference-package-api-test-v1"
         qualification = resources_api.qualify_resource(
             resource.id,
-            {"qualification_version": "siraloom-reference-package-api-test-v1"},
+            {"qualification_version": qualification_version},
             db,
             _principal(organization_id),
         )
         db.refresh(resource)
-        assert qualification["passed"] is True, qualification["checks"].get("bcftools_execution")
-        assert qualification["status"] == "QUALIFIED"
-        assert qualification["checks"]["bcftools_execution"]["tests"]["valid_snv"]["status"] == "PASS"
-        assert qualification["checks"]["bcftools_execution"]["tests"]["valid_small_indel"]["left_aligned"] is True
-        assert qualification["checks"]["bcftools_execution"]["tests"]["incorrect_ref_rejected"]["reference_mismatch_reported"] is True
-        assert resource.status == "QUALIFIED"
+        persisted = db.get(ResourceQualification, UUID(qualification["qualification_id"]))
+        assert qualification["passed"] is None
+        assert qualification["qualification_status"] == "QUEUED"
+        assert persisted.status == "QUEUED"
+        assert persisted.checks_json["dispatch"]["status"] == "PUBLISHED"
+        assert len(dispatched) == 1
+        assert dispatched[0]["args"] == [str(persisted.id)]
+        assert dispatched[0]["task_id"] == persisted.checks_json["dispatch"]["task_id"]
+
+        from backend.app.domain.resource_qualification import qualify_resource as run_qualification
+
+        scientific_result = run_qualification(
+            resource,
+            staging=staging,
+            qualification_version=qualification_version,
+        )
+        assert scientific_result.passed is True, scientific_result.checks.get("bcftools_execution")
+        assert scientific_result.checks["bcftools_execution"]["tests"]["valid_snv"]["status"] == "PASS"
+        assert scientific_result.checks["bcftools_execution"]["tests"]["valid_small_indel"]["left_aligned"] is True
+        assert scientific_result.checks["bcftools_execution"]["tests"]["incorrect_ref_rejected"]["reference_mismatch_reported"] is True
+        assert resource.status == "CANDIDATE"
     finally:
         db.close()
         engine.dispose()

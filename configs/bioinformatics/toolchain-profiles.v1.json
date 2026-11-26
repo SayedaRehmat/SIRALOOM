@@ -27,7 +27,7 @@
       "bcftools_version": "1.25",
       "htslib_version": "1.25",
       "environment_file": "configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml",
-      "lock_file": "configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock",
+      "lock_file": "configs/bioinformatics/profiles/bcftools-1.25-samtools-1.25-linux-64.lock",
       "executable": "bcftools",
       "security_review": {
         "status": "PATCHED_UPSTREAM_RELEASE",
@@ -47,8 +47,9 @@
         "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.25/",
         "reviewed_on": "2026-11-05"
       },
-      "qualification_scope": "SIRALOOM software regression suite and production backend image checks only; not clinical or laboratory qualification",
-      "worker_queue": "bioinformatics.bcftools.1_25"
+      "qualification_scope": "Linux AMD64 runtime image uses pinned BCFtools 1.25, HTSlib 1.25 and SAMtools 1.25; software qualification only, not clinical or laboratory qualification.",
+      "worker_queue": "bioinformatics.bcftools.1_25",
+      "samtools_version": "1.25"
     },
     {
       "id": "bcftools-1.24.1-htslib-1.24.1-linux-64-source",

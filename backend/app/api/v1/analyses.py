@@ -495,14 +495,17 @@ def list_variants(
     else:
         # Compatibility fallback for analyses created before the partition
         # manifest carried persisted variant IDs.
+        # Avoid DISTINCT over the ORM entity: Variant.identifiers is a JSON
+        # column, and PostgreSQL has no equality operator for the JSON type.
+        # A subquery deduplicates annotation variant IDs without asking the
+        # database to compare every selected JSON field.
         rows = db.scalars(
             select(Variant)
-            .join(
-                Annotation,
-                Annotation.variant_id == Variant.id,
+            .where(
+                Variant.id.in_(
+                    select(Annotation.variant_id).where(Annotation.analysis_id == aid)
+                )
             )
-            .where(Annotation.analysis_id == aid)
-            .distinct()
             .order_by(
                 Variant.chromosome,
                 Variant.position,

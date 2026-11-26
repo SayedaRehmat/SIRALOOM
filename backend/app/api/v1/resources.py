@@ -35,6 +35,7 @@ from backend.app.infrastructure.db.models import (
     AuditEvent,
     Resource,
     ResourceApproval,
+    ResourceQualification,
     ResourceStaging,
 )
 from backend.app.infrastructure.db.session import get_db
@@ -820,76 +821,93 @@ def get_resource(
 
 
 @router.post("/{resource_id}/qualify")
-def qualify_resource(
-    resource_id: UUID,
-    payload: dict,
-    db: Session = Depends(get_db),
-    principal: Principal = Depends(get_current_principal),
-):
+def qualify_resource(resource_id: UUID, payload: dict, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    """Queue scientific qualification in the worker image that owns the tools."""
     require_role(principal, frozenset({"platform_admin", "lab_director", "bioinformatician"}))
-    row = _require_resource_lifecycle_access(db.get(Resource, resource_id), principal)
-    before_status = row.status
-    try:
-        from backend.app.domain.resource_qualification import qualify_resource as run_qualification
-        from backend.app.domain.resources import qualify_resource_version
-
-        qualification_version = str(
-            payload.get("qualification_version") or "siraloom-resource-qualification-v1"
-        )
-        staging = db.scalar(
-            select(ResourceStaging)
-            .where(
-                ResourceStaging.resource_id == row.id,
-                ResourceStaging.resource_version == row.version,
-            )
-            .order_by(ResourceStaging.updated_at.desc(), ResourceStaging.created_at.desc())
-            .limit(1)
-        )
-        result = run_qualification(
-            row,
-            staging=staging,
-            qualification_version=qualification_version,
-        )
-        qualification = qualify_resource_version(
-            db,
-            resource_id=resource_id,
-            qualification_version=result.qualification_version,
-            checks=result.checks,
-            qualified_by=principal.user_id,
-        )
-    except ResourceRegistryError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    AuditService(db).record(
-        event_type="RESOURCE_QUALIFICATION_RECORDED",
-        case_id=None,
-        analysis_id=None,
-        actor_type="HUMAN",
-        actor_id=str(principal.user_id),
-        subject_type="RESOURCE",
-        subject_id=str(row.id),
-        operation="QUALIFY",
-        before_state={"status": before_status},
-        after_state={
-            "status": row.status,
-            "qualification_id": str(qualification.id),
-            "qualification_version": qualification.qualification_version,
-            "qualification_status": qualification.status,
-            "passed": result.passed,
-            "outcome": result.checks.get("qualification_outcome"),
-        },
-        workflow={"domain": "resource_registry", "organization_id": str(row.organization_id) if row.organization_id else None},
-    )
+    resource = _require_resource_lifecycle_access(db.get(Resource, resource_id), principal)
+    if resource.status not in {"CANDIDATE", "QUALIFIED"}:
+        raise HTTPException(status_code=409, detail=f"Resource status {resource.status!r} cannot be qualified")
+    version = str(payload.get("qualification_version") or "siraloom-resource-qualification-v1").strip()
+    if not version:
+        raise HTTPException(status_code=422, detail="qualification_version is required")
+    qualification = db.scalar(select(ResourceQualification).where(
+        ResourceQualification.resource_id == resource.id,
+        ResourceQualification.qualification_version == version,
+    ))
+    if qualification is not None and qualification.status in {"QUALIFIED", "BLOCKED"}:
+        checks = dict(qualification.checks_json or {})
+        return {"resource_id": str(resource.id), "status": resource.status,
+                "qualification_id": str(qualification.id), "qualification_version": version,
+                "qualification_status": qualification.status, "passed": checks.get("passed"),
+                "outcome": checks.get("qualification_outcome"),
+                "activation_blockers": checks.get("activation_blockers", []), "checks": checks}
+    if qualification is not None and qualification.status in {"QUEUED", "RUNNING"}:
+        checks = dict(qualification.checks_json or {})
+        dispatch = dict(checks.get("dispatch") or {})
+        if qualification.status == "RUNNING" or not _staging_dispatch_is_definitively_dead(
+            dispatch, now=datetime.now(timezone.utc), task_state_lookup=_celery_task_state
+        ):
+            return {"resource_id": str(resource.id), "status": resource.status,
+                    "qualification_id": str(qualification.id), "qualification_version": version,
+                    "qualification_status": qualification.status, "passed": None,
+                    "outcome": "IN_PROGRESS", "activation_blockers": [], "checks": checks}
+    if qualification is None:
+        qualification = ResourceQualification(id=uuid4(), resource_id=resource.id,
+            qualification_version=version, status="QUEUED", checks_json={},
+            qualified_by=principal.user_id, qualified_at=None)
+        db.add(qualification)
+        db.flush()
+    task_id = f"siraloom-resource-qualification-{qualification.id}-{uuid4()}"
+    checks = dict(qualification.checks_json or {})
+    checks.update({"execution_status": "QUEUING", "passed": None,
+                   "dispatch": {"status": "QUEUING", "task_id": task_id,
+                                "queued_at": datetime.now(timezone.utc).isoformat()}})
+    qualification.status = "QUEUED"
+    qualification.qualified_by = principal.user_id
+    qualification.checks_json = checks
+    db.add(qualification)
+    AuditService(db).record(event_type="RESOURCE_QUALIFICATION_QUEUED", case_id=None,
+        analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
+        subject_type="RESOURCE", subject_id=str(resource.id), operation="QUEUE_QUALIFICATION",
+        before_state={"status": resource.status},
+        after_state={"qualification_id": str(qualification.id), "qualification_version": version,
+                     "qualification_status": "QUEUED"},
+        workflow={"domain": "resource_registry",
+                  "organization_id": str(resource.organization_id) if resource.organization_id else None})
     db.commit()
-    return {
-        "resource_id": str(resource_id),
-        "status": row.status,
-        "qualification_id": str(qualification.id),
-        "qualification_version": qualification.qualification_version,
-        "passed": result.passed,
-        "outcome": result.checks.get("qualification_outcome"),
-        "activation_blockers": result.blockers,
-        "checks": result.checks,
-    }
+    db.refresh(qualification)
+    try:
+        from backend.app.infrastructure.queue.celery_app import run_resource_qualification_task
+        run_resource_qualification_task.apply_async(args=[str(qualification.id)], task_id=task_id)
+    except Exception as exc:
+        current = db.get(ResourceQualification, qualification.id)
+        if current is not None:
+            checks = dict(current.checks_json or {})
+            checks["execution_status"] = "DISPATCH_FAILED"
+            checks["dispatch"] = {**dict(checks.get("dispatch") or {}),
+                "status": "DISPATCH_FAILED", "failed_at": datetime.now(timezone.utc).isoformat(),
+                "error_type": type(exc).__name__, "retryable": True}
+            current.status = "DISPATCH_FAILED"
+            current.checks_json = checks
+            db.add(current)
+            db.commit()
+        raise HTTPException(status_code=503, detail="Resource qualification could not be queued; its durable record is preserved for retry.") from exc
+    current = db.get(ResourceQualification, qualification.id)
+    if current is not None:
+        checks = dict(current.checks_json or {})
+        dispatch = dict(checks.get("dispatch") or {})
+        if dispatch.get("task_id") == task_id and dispatch.get("status") == "QUEUING":
+            checks["execution_status"] = "QUEUED"
+            checks["dispatch"] = {**dispatch, "status": "PUBLISHED",
+                "published_at": datetime.now(timezone.utc).isoformat()}
+            current.checks_json = checks
+            db.add(current)
+            db.commit()
+        qualification = current
+    return {"resource_id": str(resource.id), "status": resource.status,
+            "qualification_id": str(qualification.id), "qualification_version": version,
+            "qualification_status": qualification.status, "passed": None, "outcome": "QUEUED",
+            "activation_blockers": [], "checks": qualification.checks_json}
 
 
 @router.post("/{resource_id}/activate")

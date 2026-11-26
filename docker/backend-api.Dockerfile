@@ -33,9 +33,9 @@ ENV HOME=/home/siraloom SIRALOOM_CONFIG_ROOT=/app
 
 COPY pyproject.toml uv.lock ./
 RUN set -eux \
-    && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie main" > /etc/apt/sources.list \
-    && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-updates main" >> /etc/apt/sources.list \
-    && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-security main" >> /etc/apt/sources.list \
+    && printf '%s\n' "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie main" > /etc/apt/sources.list \
+    && printf '%s\n' "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-updates main" >> /etc/apt/sources.list \
+    && printf '%s\n' "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-security main" >> /etc/apt/sources.list \
     && rm -f /etc/apt/sources.list.d/debian.sources \
     && apt_update_succeeded=0 \
     && for attempt in 1 2 3 4 5; do \
@@ -66,6 +66,7 @@ COPY migrations ./migrations
 COPY workflows ./workflows
 COPY configs ./configs
 COPY scripts ./scripts
+RUN chmod +x scripts/start_api.sh scripts/start_api_with_worker.sh scripts/start_beat.sh
 
 RUN lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
     && uv sync --python /usr/local/bin/python --locked --no-dev --no-editable \
